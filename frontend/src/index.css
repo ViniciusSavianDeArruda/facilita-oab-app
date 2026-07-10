@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-ink-950 text-cream-50 font-sans antialiased;
+  font-feature-settings: 'ss01', 'cv11';
+}
+
+/* Scrollbar minimalista */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #252220;
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3A3630;
+}
+
+/* Estilos para markdown do mentor */
+.markdown p {
+  margin-bottom: 0.75em;
+  line-height: 1.65;
+}
+.markdown p:last-child {
+  margin-bottom: 0;
+}
+.markdown strong {
+  @apply text-brass font-medium;
+}
+.markdown code {
+  @apply bg-ink-800 text-brass px-1.5 py-0.5 rounded text-[0.9em];
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+.markdown ul,
+.markdown ol {
+  margin-left: 1.25em;
+  margin-bottom: 0.75em;
+}
+.markdown ul {
+  list-style-type: disc;
+}
+.markdown ol {
+  list-style-type: decimal;
+}
+.markdown li {
+  margin-bottom: 0.35em;
+  line-height: 1.6;
+}
+.markdown h1,
+.markdown h2,
+.markdown h3 {
+  @apply font-serif text-cream-50 mt-4 mb-2;
+  font-weight: 500;
+}
+.markdown h1 { font-size: 1.25em; }
+.markdown h2 { font-size: 1.15em; }
+.markdown h3 { font-size: 1.05em; }
+.markdown blockquote {
+  @apply border-l-2 border-brass-dim pl-3 text-cream-400 italic my-2;
+}
+
+/* Cursor pulsando enquanto o mentor "digita" */
+.typing-cursor::after {
+  content: '▋';
+  @apply text-brass ml-0.5;
+  animation: blink 1s steps(2) infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* Fade-in sutil pra novas mensagens */
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
