@@ -5,9 +5,16 @@
  *   - reviewing: mostra gabarito, resposta dada, explicação
  */
 
-export default function QuestionCard({ questao, mode, selected, onSelect, index, total }) {
-  const isReview = mode === 'review'
-  const respostaCorreta = questao.correta
+export default function QuestionCard({
+  questao,
+  mode,
+  selected,
+  onSelect,
+  index,
+  total,
+}) {
+  const isReview = mode === "review";
+  const respostaCorreta = questao.correta;
 
   return (
     <div>
@@ -22,35 +29,40 @@ export default function QuestionCard({ questao, mode, selected, onSelect, index,
         )}
       </div>
 
-      <div className="font-serif text-lg md:text-xl leading-relaxed text-cream-50 mb-8" style={{ fontVariationSettings: '"opsz" 60' }}>
+      <div
+        className="font-serif text-lg md:text-xl leading-relaxed text-cream-50 mb-8"
+        style={{ fontVariationSettings: '"opsz" 60' }}
+      >
         {questao.enunciado}
       </div>
 
       <div className="space-y-2">
-        {['A', 'B', 'C', 'D', 'E'].map((letra) => {
-          const texto = questao.alternativas[letra]
-          const isSelected = selected === letra
-          const isCorrect = isReview && letra === respostaCorreta
-          const isWrong = isReview && isSelected && !isCorrect
+        {["A", "B", "C", "D", "E"].map((letra) => {
+          const texto = questao.alternativas[letra];
+          const isSelected = selected === letra;
+          const isCorrect = isReview && letra === respostaCorreta;
+          const isWrong = isReview && isSelected && !isCorrect;
 
-          let cls = 'border-ink-800 bg-ink-900 hover:border-brass-dim'
-          if (isSelected && !isReview) cls = 'border-brass bg-brass/10'
-          if (isCorrect) cls = 'border-emerald-700/60 bg-emerald-950/40'
-          if (isWrong) cls = 'border-alert/60 bg-alert/10'
+          let cls = "border-ink-800 bg-ink-900 hover:border-brass-dim";
+          if (isSelected && !isReview) cls = "border-brass bg-brass/10";
+          if (isCorrect) cls = "border-emerald-600/60 bg-emerald-500/10";
+          if (isWrong) cls = "border-alert/60 bg-alert/10";
 
           return (
             <button
               key={letra}
               disabled={isReview}
               onClick={() => onSelect?.(letra)}
-              className={`w-full text-left flex gap-4 items-start px-4 py-3 rounded-xl border transition-colors ${cls} ${isReview ? 'cursor-default' : 'cursor-pointer'}`}
+              className={`w-full text-left flex gap-4 items-start px-4 py-3 rounded-xl border transition-colors ${cls} ${isReview ? "cursor-default" : "cursor-pointer"}`}
             >
-              <span className={`shrink-0 font-serif text-lg mt-0.5 ${isCorrect ? 'text-emerald-500' : isWrong ? 'text-alert' : isSelected ? 'text-brass' : 'text-brass-dim'}`}>
+              <span
+                className={`shrink-0 font-serif text-lg mt-0.5 ${isCorrect ? "text-emerald-500" : isWrong ? "text-alert" : isSelected ? "text-brass" : "text-brass-dim"}`}
+              >
                 {letra}
               </span>
               <span className="text-cream-50 leading-snug">{texto}</span>
             </button>
-          )
+          );
         })}
       </div>
 
@@ -68,5 +80,5 @@ export default function QuestionCard({ questao, mode, selected, onSelect, index,
         </div>
       )}
     </div>
-  )
+  );
 }

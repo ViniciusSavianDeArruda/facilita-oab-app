@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html,
@@ -26,11 +26,11 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #252220;
+  background: #F0DEDE;
   border-radius: 6px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3A3630;
+  background: #DCBDBD;
 }
 
 /* Estilos para markdown do mentor */

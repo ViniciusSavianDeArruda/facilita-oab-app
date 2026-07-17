@@ -1,16 +1,16 @@
-import { useState } from 'react'
-import { loadSettings, saveSettings } from '../lib/settings'
+import { useState } from "react";
+import { logout } from "../lib/authClient";
+import { loadSettings, saveSettings } from "../lib/settings";
 
 export default function Settings({ onBack }) {
-  const initial = loadSettings()
-  const [nome, setNome] = useState(initial.nome)
-  const [dataProva, setDataProva] = useState(initial.dataProva || '')
-  const [saved, setSaved] = useState(false)
+  const initial = loadSettings();
+  const [nome, setNome] = useState(initial.nome);
+  const [saved, setSaved] = useState(false);
 
   function handleSave() {
-    saveSettings({ nome: nome.trim(), dataProva: dataProva || null })
-    setSaved(true)
-    setTimeout(() => onBack(), 500)
+    saveSettings({ nome: nome.trim() });
+    setSaved(true);
+    setTimeout(() => onBack(), 500);
   }
 
   return (
@@ -23,7 +23,10 @@ export default function Settings({ onBack }) {
           <span aria-hidden>←</span> voltar
         </button>
 
-        <h2 className="font-serif text-3xl text-cream-50 leading-tight tracking-tight mb-2" style={{ fontVariationSettings: '"opsz" 96' }}>
+        <h2
+          className="font-serif text-3xl text-cream-50 leading-tight tracking-tight mb-2"
+          style={{ fontVariationSettings: '"opsz" 96' }}
+        >
           Ajustes
         </h2>
         <p className="text-cream-400 text-sm mb-10">
@@ -46,22 +49,6 @@ export default function Settings({ onBack }) {
               Aparece na saudação do Início.
             </p>
           </div>
-
-          <div>
-            <label className="text-[11px] tracking-widest uppercase text-brass-dim font-medium block mb-2">
-              Data da prova
-            </label>
-            <input
-              type="date"
-              value={dataProva}
-              onChange={(e) => setDataProva(e.target.value)}
-              className="w-full bg-ink-900 border border-ink-800 rounded-xl px-4 py-3 text-cream-50 placeholder:text-cream-600 focus:border-brass-dim focus:outline-none"
-              style={{ colorScheme: 'dark' }}
-            />
-            <p className="text-xs text-cream-600 mt-2">
-              Usada pra contagem regressiva no Início.
-            </p>
-          </div>
         </div>
 
         <button
@@ -69,9 +56,16 @@ export default function Settings({ onBack }) {
           disabled={saved}
           className="w-full mt-10 bg-brass hover:bg-brass-hover disabled:bg-brass-dim text-ink-950 font-medium py-3 rounded-xl transition-colors"
         >
-          {saved ? 'Salvo ✓' : 'Salvar'}
+          {saved ? "Salvo ✓" : "Salvar"}
+        </button>
+
+        <button
+          onClick={logout}
+          className="w-full mt-3 text-xs text-cream-600 hover:text-alert transition-colors py-2"
+        >
+          Sair
         </button>
       </div>
     </div>
-  )
+  );
 }

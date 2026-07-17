@@ -9,29 +9,29 @@ export default {
       },
       colors: {
         ink: {
-          950: '#0F0E0C',
-          900: '#1A1815',
-          800: '#252220',
-          700: '#3A3630',
+          950: '#FFF8F8',
+          900: '#FFF8F8',
+          800: '#F0DEDE',
+          700: '#DCBDBD',
         },
         cream: {
-          50: '#F0E9D8',
-          400: '#807A6D',
-          600: '#4A473F',
+          50: '#241A0F',
+          400: '#6B5D46',
+          600: '#9C8D72',
         },
         brass: {
-          DEFAULT: '#E4A853',
-          hover: '#F0B85C',
-          dim: '#8B6832',
+          DEFAULT: '#BA1E4A',
+          hover: '#9E1A3F',
+          dim: '#C15D78',
         },
         alert: {
-          DEFAULT: '#D4614A',
+          DEFAULT: '#C23B2E',
         },
       },
       typography: {
         DEFAULT: {
           css: {
-            color: '#F0E9D8',
+            color: '#241A0F',
           },
         },
       },
