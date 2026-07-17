@@ -5,3 +5,7 @@ __pycache__/
 venv/
 .pytest_cache/
 *.db
+*.db-wal
+*.db-shm
+*.db.bak
+app_backup/
