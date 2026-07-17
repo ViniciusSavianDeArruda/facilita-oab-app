@@ -1,86 +1,94 @@
-import { useState, useEffect, useRef } from 'react'
-import QuestionCard from './QuestionCard'
+import { useEffect, useRef, useState } from "react";
+import QuestionCard from "./QuestionCard";
 
-const STORAGE_KEY = 'oab-simulado-current'
+const STORAGE_KEY = "oab-simulado-current";
 
 export default function SimuladoRun({ simulado, onFinish, onExit }) {
   // Restaura estado do localStorage se for o mesmo simulado
   const [answers, setAnswers] = useState(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
-      if (saved && saved.id === simulado.id) return saved.answers
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+      if (saved && saved.id === simulado.id) return saved.answers;
     } catch {}
-    return {}
-  })
+    return {};
+  });
   const [currentIdx, setCurrentIdx] = useState(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
-      if (saved && saved.id === simulado.id) return saved.currentIdx
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+      if (saved && saved.id === simulado.id) return saved.currentIdx;
     } catch {}
-    return 0
-  })
+    return 0;
+  });
   const startedAt = useRef(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
-      if (saved && saved.id === simulado.id) return saved.startedAt
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+      if (saved && saved.id === simulado.id) return saved.startedAt;
     } catch {}
-    return Date.now()
-  }).current()
+    return Date.now();
+  }).current();
 
-  const [elapsedSec, setElapsedSec] = useState(0)
+  const [elapsedSec, setElapsedSec] = useState(0);
 
   // Timer
   useEffect(() => {
     const iv = setInterval(() => {
-      setElapsedSec(Math.floor((Date.now() - startedAt) / 1000))
-    }, 1000)
-    return () => clearInterval(iv)
-  }, [startedAt])
+      setElapsedSec(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+    return () => clearInterval(iv);
+  }, [startedAt]);
 
   // Persistir estado
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      id: simulado.id,
-      answers,
-      currentIdx,
-      startedAt,
-    }))
-  }, [answers, currentIdx, startedAt, simulado.id])
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        id: simulado.id,
+        answers,
+        currentIdx,
+        startedAt,
+      }),
+    );
+  }, [answers, currentIdx, startedAt, simulado.id]);
 
-  const total = simulado.questoes.length
-  const questao = simulado.questoes[currentIdx]
-  const respondidas = Object.keys(answers).length
-  const isLast = currentIdx === total - 1
+  const total = simulado.questoes.length;
+  const questao = simulado.questoes[currentIdx];
+  const respondidas = Object.keys(answers).length;
+  const isLast = currentIdx === total - 1;
 
   function selecionar(letra) {
-    setAnswers({ ...answers, [currentIdx]: letra })
+    setAnswers({ ...answers, [currentIdx]: letra });
   }
 
   function proxima() {
     if (isLast) {
-      finalizar()
+      finalizar();
     } else {
-      setCurrentIdx(currentIdx + 1)
+      setCurrentIdx(currentIdx + 1);
     }
   }
 
   function anterior() {
-    if (currentIdx > 0) setCurrentIdx(currentIdx - 1)
+    if (currentIdx > 0) setCurrentIdx(currentIdx - 1);
   }
 
   function finalizar() {
-    localStorage.removeItem(STORAGE_KEY)
-    onFinish({ simulado, answers, elapsedSec })
+    localStorage.removeItem(STORAGE_KEY);
+    onFinish({ simulado, answers, elapsedSec });
   }
 
   function sairComConfirmacao() {
-    if (respondidas === 0 || confirm('Sair do simulado? Seu progresso fica salvo aqui neste navegador.')) {
-      onExit()
+    if (
+      respondidas === 0 ||
+      confirm(
+        "Sair do simulado? Seu progresso fica salvo aqui neste navegador.",
+      )
+    ) {
+      onExit();
     }
   }
 
-  const mm = String(Math.floor(elapsedSec / 60)).padStart(2, '0')
-  const ss = String(elapsedSec % 60).padStart(2, '0')
+  const mm = String(Math.floor(elapsedSec / 60)).padStart(2, "0");
+  const ss = String(elapsedSec % 60).padStart(2, "0");
 
   return (
     <div className="h-full flex flex-col">
@@ -101,10 +109,10 @@ export default function SimuladoRun({ simulado, onFinish, onExit }) {
                 onClick={() => setCurrentIdx(i)}
                 className={`w-2 h-2 rounded-full transition-colors ${
                   i === currentIdx
-                    ? 'bg-brass ring-2 ring-brass/30'
+                    ? "bg-brass ring-2 ring-brass/30"
                     : answers[i] !== undefined
-                    ? 'bg-brass-dim'
-                    : 'bg-ink-800 hover:bg-ink-700'
+                      ? "bg-brass-dim"
+                      : "bg-ink-800 hover:bg-ink-700"
                 }`}
                 aria-label={`Questão ${i + 1}`}
               />
@@ -151,7 +159,9 @@ export default function SimuladoRun({ simulado, onFinish, onExit }) {
               onClick={finalizar}
               disabled={respondidas < total}
               className="px-5 py-2 rounded-lg text-sm bg-brass hover:bg-brass-hover disabled:bg-ink-800 disabled:text-cream-600 text-ink-950 font-medium transition-colors"
-              title={respondidas < total ? 'Responda todas antes de finalizar' : ''}
+              title={
+                respondidas < total ? "Responda todas antes de finalizar" : ""
+              }
             >
               Finalizar
             </button>
@@ -166,5 +176,5 @@ export default function SimuladoRun({ simulado, onFinish, onExit }) {
         </div>
       </div>
     </div>
-  )
+  );
 }

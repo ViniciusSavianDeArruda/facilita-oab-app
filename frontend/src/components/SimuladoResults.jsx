@@ -1,54 +1,66 @@
-import { useState, useMemo, useEffect } from 'react'
-import QuestionCard from './QuestionCard'
-import { salvarErroSimulado } from '../lib/caderno'
-import { saveLastSimulado } from '../lib/lastActivity'
+import { useEffect, useMemo, useRef, useState } from "react";
+import { enviarResultadoSimulado } from "../lib/simulados";
+import QuestionCard from "./QuestionCard";
 
-export default function SimuladoResults({ result, onRetry, onExit, onDiscussWithMentor }) {
-  const { simulado, answers, elapsedSec } = result
-  const [expandedIdx, setExpandedIdx] = useState(null)
+export default function SimuladoResults({
+  result,
+  onRetry,
+  onExit,
+  onDiscussWithMentor,
+}) {
+  const { simulado, answers, elapsedSec } = result;
+  const [expandedIdx, setExpandedIdx] = useState(null);
 
   const stats = useMemo(() => {
-    const total = simulado.questoes.length
-    let acertos = 0
-    const porMateria = {}
+    const total = simulado.questoes.length;
+    let acertos = 0;
+    const porMateria = {};
 
     simulado.questoes.forEach((q, i) => {
-      const acertou = answers[i] === q.correta
-      if (acertou) acertos++
-      if (!porMateria[q.materia]) porMateria[q.materia] = { total: 0, acertos: 0 }
-      porMateria[q.materia].total++
-      if (acertou) porMateria[q.materia].acertos++
-    })
+      const acertou = answers[i] === q.correta;
+      if (acertou) acertos++;
+      if (!porMateria[q.materia])
+        porMateria[q.materia] = { total: 0, acertos: 0 };
+      porMateria[q.materia].total++;
+      if (acertou) porMateria[q.materia].acertos++;
+    });
 
-    return { total, acertos, porMateria }
-  }, [simulado, answers])
+    return { total, acertos, porMateria };
+  }, [simulado, answers]);
 
-  const percent = Math.round((stats.acertos / stats.total) * 100)
-  const eticaStats = stats.porMateria['Ética']
-  const eticaAlerta =
-    eticaStats && eticaStats.acertos / eticaStats.total < 0.5
+  const percent = Math.round((stats.acertos / stats.total) * 100);
+  const eticaStats = stats.porMateria["Ética"];
+  const eticaAlerta = eticaStats && eticaStats.acertos / eticaStats.total < 0.5;
 
-  // Auto-salva erros no caderno E salva última atividade na primeira renderização
-  const [savedCount, setSavedCount] = useState(0)
+  // Envia o resultado pro backend: grava histórico + insere erros no caderno (com dedup).
+  // sentRef evita disparo duplicado sob o double-invoke de efeitos do StrictMode em dev
+  // (cada POST cria uma linha de histórico nova — não é seguro deixar isso repetir).
+  const [savedCount, setSavedCount] = useState(0);
+  const sentRef = useRef(false);
   useEffect(() => {
-    let count = 0
-    simulado.questoes.forEach((q, i) => {
-      if (answers[i] !== q.correta) {
-        const saved = salvarErroSimulado({ questao: q, respostaDada: answers[i] })
-        if (saved) count++
-      }
-    })
-    setSavedCount(count)
-    saveLastSimulado({
+    if (sentRef.current) return;
+    sentRef.current = true;
+    let cancelled = false;
+    enviarResultadoSimulado({
+      simulado,
+      answers,
+      elapsedSec,
       acertos: stats.acertos,
       total: stats.total,
-      materias: stats.porMateria,
+      porMateria: stats.porMateria,
     })
+      .then((saved) => {
+        if (!cancelled) setSavedCount(saved.savedCount);
+      })
+      .catch((e) => console.error("Falha ao salvar resultado do simulado:", e));
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []);
 
-  const mm = String(Math.floor(elapsedSec / 60)).padStart(2, '0')
-  const ss = String(elapsedSec % 60).padStart(2, '0')
+  const mm = String(Math.floor(elapsedSec / 60)).padStart(2, "0");
+  const ss = String(elapsedSec % 60).padStart(2, "0");
 
   return (
     <div className="h-full overflow-y-auto">
@@ -59,10 +71,16 @@ export default function SimuladoResults({ result, onRetry, onExit, onDiscussWith
             Resultado
           </div>
           <div className="flex items-baseline gap-4 mb-1">
-            <div className="font-serif text-6xl text-cream-50 leading-none" style={{ fontVariationSettings: '"opsz" 144' }}>
+            <div
+              className="font-serif text-6xl text-cream-50 leading-none"
+              style={{ fontVariationSettings: '"opsz" 144' }}
+            >
               {stats.acertos}
             </div>
-            <div className="font-serif text-3xl text-cream-400 leading-none" style={{ fontVariationSettings: '"opsz" 96' }}>
+            <div
+              className="font-serif text-3xl text-cream-400 leading-none"
+              style={{ fontVariationSettings: '"opsz" 96' }}
+            >
               / {stats.total}
             </div>
             <div className="text-cream-400 text-sm ml-auto">
@@ -78,7 +96,9 @@ export default function SimuladoResults({ result, onRetry, onExit, onDiscussWith
               Atenção — Ética
             </div>
             <p className="text-sm text-cream-50 leading-relaxed">
-              Você acertou {eticaStats.acertos} de {eticaStats.total} em Ética. Ética tem peso alto na aprovação — vale revisar as questões erradas e treinar essa matéria antes de outros temas.
+              Você acertou {eticaStats.acertos} de {eticaStats.total} em Ética.
+              Ética tem peso alto na aprovação — vale revisar as questões
+              erradas e treinar essa matéria antes de outros temas.
             </p>
           </div>
         )}
@@ -87,7 +107,7 @@ export default function SimuladoResults({ result, onRetry, onExit, onDiscussWith
         {savedCount > 0 && (
           <p className="text-xs text-brass-dim mb-6">
             {savedCount === 1
-              ? '1 questão foi para o seu caderno.'
+              ? "1 questão foi para o seu caderno."
               : `${savedCount} questões foram para o seu caderno.`}
           </p>
         )}
@@ -100,11 +120,17 @@ export default function SimuladoResults({ result, onRetry, onExit, onDiscussWith
             </div>
             <div className="space-y-1">
               {Object.entries(stats.porMateria)
-                .sort((a, b) => a[1].acertos / a[1].total - b[1].acertos / b[1].total)
+                .sort(
+                  (a, b) =>
+                    a[1].acertos / a[1].total - b[1].acertos / b[1].total,
+                )
                 .map(([materia, s]) => {
-                  const p = Math.round((s.acertos / s.total) * 100)
+                  const p = Math.round((s.acertos / s.total) * 100);
                   return (
-                    <div key={materia} className="flex items-center gap-3 text-sm py-1.5">
+                    <div
+                      key={materia}
+                      className="flex items-center gap-3 text-sm py-1.5"
+                    >
                       <span className="w-40 text-cream-50">{materia}</span>
                       <div className="flex-1 h-1 bg-ink-800 rounded-full overflow-hidden">
                         <div
@@ -116,7 +142,7 @@ export default function SimuladoResults({ result, onRetry, onExit, onDiscussWith
                         {s.acertos}/{s.total}
                       </span>
                     </div>
-                  )
+                  );
                 })}
             </div>
           </div>
@@ -128,13 +154,13 @@ export default function SimuladoResults({ result, onRetry, onExit, onDiscussWith
         </div>
         <div className="space-y-2 mb-10">
           {simulado.questoes.map((q, i) => {
-            const acertou = answers[i] === q.correta
-            const isExpanded = expandedIdx === i
+            const acertou = answers[i] === q.correta;
+            const isExpanded = expandedIdx === i;
             return (
               <div
                 key={i}
                 className={`border rounded-xl transition-colors ${
-                  acertou ? 'border-ink-800' : 'border-alert/30'
+                  acertou ? "border-ink-800" : "border-alert/30"
                 }`}
               >
                 <button
@@ -144,15 +170,15 @@ export default function SimuladoResults({ result, onRetry, onExit, onDiscussWith
                   <span
                     className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
                       acertou
-                        ? 'bg-emerald-950/60 text-emerald-500 border border-emerald-700/60'
-                        : 'bg-alert/10 text-alert border border-alert/40'
+                        ? "bg-emerald-950/60 text-emerald-500 border border-emerald-700/60"
+                        : "bg-alert/10 text-alert border border-alert/40"
                     }`}
                   >
                     {i + 1}
                   </span>
                   <span className="flex-1 text-sm text-cream-50 truncate">
                     {q.enunciado.slice(0, 80)}
-                    {q.enunciado.length > 80 && '…'}
+                    {q.enunciado.length > 80 && "…"}
                   </span>
                   <span className="text-[10px] text-cream-400 tracking-wider uppercase shrink-0">
                     {q.materia}
@@ -177,7 +203,7 @@ export default function SimuladoResults({ result, onRetry, onExit, onDiscussWith
                   </div>
                 )}
               </div>
-            )
+            );
           })}
         </div>
 
@@ -198,5 +224,5 @@ export default function SimuladoResults({ result, onRetry, onExit, onDiscussWith
         </div>
       </div>
     </div>
-  )
+  );
 }
