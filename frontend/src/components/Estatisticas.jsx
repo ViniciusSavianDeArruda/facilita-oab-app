@@ -55,7 +55,7 @@ export default function Estatisticas({ onGoto }) {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="w-full mx-auto px-6 py-8 md:px-8 md:max-w-[1000px]">
+      <div className="mx-auto w-full px-6 py-8 md:px-8 md:max-w-[1000px]">
         <p className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-2">
           Estatísticas
         </p>
@@ -255,9 +255,7 @@ function TrendChart({ trend }) {
   const yFor = (nota) =>
     PAD_TOP + (1 - nota / 10) * (chartH - PAD_TOP - PAD_BOTTOM);
   const stepX =
-    trend.length > 1
-      ? (CHART_W - padLeft - padRight) / (trend.length - 1)
-      : 0;
+    trend.length > 1 ? (CHART_W - padLeft - padRight) / (trend.length - 1) : 0;
   const coords = notas.map((nota, i) => {
     const x =
       trend.length > 1
