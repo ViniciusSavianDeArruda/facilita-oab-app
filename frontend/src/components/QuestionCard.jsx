@@ -37,7 +37,7 @@ export default function QuestionCard({
       </div>
 
       <div className="space-y-2">
-        {["A", "B", "C", "D", "E"].map((letra) => {
+        {["A", "B", "C", "D"].map((letra) => {
           const texto = questao.alternativas[letra];
           const isSelected = selected === letra;
           const isCorrect = isReview && letra === respostaCorreta;

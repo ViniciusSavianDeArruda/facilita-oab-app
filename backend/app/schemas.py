@@ -123,14 +123,13 @@ class Alternatives(BaseModel):
     B: str
     C: str
     D: str
-    E: str
 
 
 class Question(BaseModel):
     materia: str = Field(description="Nome curto da matéria: Constitucional, Civil, etc.")
     enunciado: str = Field(description="Enunciado narrativo estilo FGV, 3-8 linhas.")
     alternativas: Alternatives
-    correta: str = Field(pattern="^[A-E]$", description="Letra da alternativa correta.")
+    correta: str = Field(pattern="^[A-D]$", description="Letra da alternativa correta.")
     explicacao: str = Field(description="Explica por que a correta está certa e as outras erradas.")
     fundamento_legal: str = Field(description="Artigo(s) e lei(s) específicos.")
 
