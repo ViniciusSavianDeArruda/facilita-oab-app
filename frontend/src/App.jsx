@@ -222,7 +222,7 @@ O gabarito é a **${questao.correta}**: "${correta}"` +
         {view === 'cronograma-completo' && (
           <CronogramaCalendario onBack={() => setView('cronograma')} />
         )}
-        {view === 'estatisticas' && <Estatisticas />}
+        {view === 'estatisticas' && <Estatisticas onGoto={goto} />}
       </main>
 
       {showBottomNav && (
