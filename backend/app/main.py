@@ -71,6 +71,7 @@ import uuid
 from .security import require_authentication
 from .auth import login as authenticate
 from . import backup as backup_service
+from .materias import canonicalizar_materia
 
 # Converte datetimes para ISO em UTC para respostas da API.
 def to_iso_utc(moment: datetime | None) -> str | None:
@@ -528,6 +529,12 @@ async def create_simulation(mode: str, subject: str | None = None) -> Simulation
 	if subject:
 		for question in questions:
 			question.materia = subject
+	else:
+		# Modo rapido: sem subject pedido, entao normaliza o que o Gemini
+		# escreveu por questao. Materia desconhecida vira "Geral" em vez
+		# de arriscar uma categorizacao errada.
+		for question in questions:
+			question.materia = canonicalizar_materia(question.materia)
 
 	return Simulation(
 		id=str(uuid.uuid4()),
