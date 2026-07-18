@@ -358,9 +358,24 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-	title="OAB Companion API",
+	title="Facilita OAB API",
+	description=(
+		"API do Facilita OAB — companion de estudo para a 1ª fase do Exame "
+		"da OAB, com chat mentor, simulados gerados por IA, caderno de "
+		"erros, cronograma automático e estatísticas de progresso."
+	),
 	version="0.3.0",
 	lifespan=lifespan,
+	openapi_tags=[
+		{"name": "Autenticação", "description": "Login por senha única e emissão de token de sessão."},
+		{"name": "Perfil", "description": "Dados do próprio usuário: nome e última conversa."},
+		{"name": "Chat", "description": "Chat com o mentor (streaming) e histórico de conversas."},
+		{"name": "Simulados", "description": "Geração de simulados via IA e histórico de resultados."},
+		{"name": "Caderno", "description": "Caderno de erros: questões e dúvidas salvas para revisão."},
+		{"name": "Cronograma", "description": "Configuração e plano de estudo automático."},
+		{"name": "Estatísticas", "description": "Indicadores de progresso agregados."},
+		{"name": "Backup", "description": "Exportação e importação completa dos dados do usuário."},
+	],
 )
 
 app.state.limiter = limiter
@@ -377,10 +392,15 @@ app.add_middleware(
 
 
 # Router de autenticacao.
-auth_router = APIRouter(prefix="/auth", tags=["auth"])
+auth_router = APIRouter(prefix="/auth", tags=["Autenticação"])
 
 
-@auth_router.post("/login", response_model=TokenResponse)
+@auth_router.post(
+	"/login",
+	response_model=TokenResponse,
+	summary="Login",
+	description="Autentica com a senha única do app e retorna um token JWT de sessão.",
+)
 @limiter.limit("5/minute")
 def login(request: Request, body: LoginRequest):
 	token = authenticate(body.password)
@@ -388,7 +408,7 @@ def login(request: Request, body: LoginRequest):
 
 
 # Router das informacoes do proprio usuario.
-me_router = APIRouter(prefix="/me", tags=["me"], dependencies=[Depends(require_authentication)])
+me_router = APIRouter(prefix="/me", tags=["Perfil"], dependencies=[Depends(require_authentication)])
 
 
 # Converte o model do banco para o schema exposto pela API.
@@ -672,55 +692,93 @@ def cronograma_delete_plan(db: Session) -> None:
 		db.commit()
 
 
-@me_router.get("", response_model=ProfileResponse)
+@me_router.get(
+	"",
+	response_model=ProfileResponse,
+	summary="Obter perfil",
+	description="Retorna o nome salvo e o resumo da última conversa do chat.",
+)
 def me_get_profile(db: Session = Depends(get_session)):
 	return _to_profile_response(profile_get(db))
 
 
-@me_router.patch("", response_model=ProfileResponse)
+@me_router.patch(
+	"",
+	response_model=ProfileResponse,
+	summary="Atualizar perfil",
+	description="Atualiza o nome do usuário.",
+)
 def update_profile(body: UpdateProfileRequest, db: Session = Depends(get_session)):
 	profile = profile_update(db, body)
 	return _to_profile_response(profile)
 
 
-@me_router.put("/last-chat", response_model=ProfileResponse)
+@me_router.put(
+	"/last-chat",
+	response_model=ProfileResponse,
+	summary="Salvar última conversa",
+	description="Salva um resumo da conversa mais recente do chat, exibido na tela inicial.",
+)
 def save_last_chat(body: LastConversationRequest, db: Session = Depends(get_session)):
 	profile = profile_save_last_chat(db, body)
 	return _to_profile_response(profile)
 
 
 # Rotas do caderno.
-caderno_router = APIRouter(prefix="/me/caderno", tags=["caderno"], dependencies=[Depends(require_authentication)])
+caderno_router = APIRouter(prefix="/me/caderno", tags=["Caderno"], dependencies=[Depends(require_authentication)])
 
 
-@caderno_router.get("")
+@caderno_router.get(
+	"",
+	summary="Listar itens",
+	description="Lista todos os itens do caderno de erros, de origem simulado ou chat.",
+)
 def route_list_items(db: Session = Depends(get_session)):
 	return [caderno_serialize_item(item) for item in caderno_list_items(db)]
 
 
-@caderno_router.post("", status_code=201)
+@caderno_router.post(
+	"",
+	status_code=201,
+	summary="Criar item",
+	description="Salva uma pergunta e resposta do chat como um novo item no caderno.",
+)
 def route_create_from_chat(body: CreateNotebookItemFromChat, request: Request, db: Session = Depends(get_session)):
 	item = caderno_create_from_chat(db, body, get_client_today(request))
 	return caderno_serialize_item(item)
 
 
-@caderno_router.patch("/{item_id}")
+@caderno_router.patch(
+	"/{item_id}",
+	summary="Atualizar item",
+	description="Atualiza o status (aberto/revisando/dominado) ou a anotação pessoal de um item.",
+)
 def route_update_item(item_id: int, body: UpdateNotebookItem, request: Request, db: Session = Depends(get_session)):
 	item = caderno_update_item(db, item_id, body, get_client_today(request))
 	return caderno_serialize_item(item)
 
 
-@caderno_router.delete("/{item_id}", status_code=204)
+@caderno_router.delete(
+	"/{item_id}",
+	status_code=204,
+	summary="Remover item",
+	description="Remove um item do caderno permanentemente.",
+)
 def route_delete_item(item_id: int, db: Session = Depends(get_session)):
 	caderno_delete_item(db, item_id)
 	return None
 
 
 # Rotas do cronograma.
-cronograma_router = APIRouter(prefix="/me/cronograma", tags=["cronograma"], dependencies=[Depends(require_authentication)])
+cronograma_router = APIRouter(prefix="/me/cronograma", tags=["Cronograma"], dependencies=[Depends(require_authentication)])
 
 
-@cronograma_router.get("/config", response_model=ConfigScheduleResponse)
+@cronograma_router.get(
+	"/config",
+	response_model=ConfigScheduleResponse,
+	summary="Obter configuração",
+	description="Retorna as horas de estudo por dia e as matérias marcadas como fracas.",
+)
 def cronograma_route_get_config(db: Session = Depends(get_session)):
 	config = cronograma_get_config(db)
 
@@ -738,7 +796,12 @@ def cronograma_route_get_config(db: Session = Depends(get_session)):
 	)
 
 
-@cronograma_router.put("/config", response_model=ConfigScheduleResponse)
+@cronograma_router.put(
+	"/config",
+	response_model=ConfigScheduleResponse,
+	summary="Salvar configuração",
+	description="Define horas de estudo por dia e matérias fracas usadas para gerar o plano.",
+)
 def cronograma_route_save_config(body: ConfigScheduleRequest, db: Session = Depends(get_session)):
 	config = cronograma_save_config(db, body)
 
@@ -749,7 +812,12 @@ def cronograma_route_save_config(body: ConfigScheduleRequest, db: Session = Depe
 	)
 
 
-@cronograma_router.get("/plano", response_model=SchedulePlanResponse | None)
+@cronograma_router.get(
+	"/plano",
+	response_model=SchedulePlanResponse | None,
+	summary="Obter plano",
+	description="Retorna o plano de estudo atual, se houver um gerado.",
+)
 def cronograma_route_get_plan(db: Session = Depends(get_session)):
 	plan = cronograma_get_plan(db)
 
@@ -764,7 +832,12 @@ def cronograma_route_get_plan(db: Session = Depends(get_session)):
 	)
 
 
-@cronograma_router.put("/plano", response_model=SchedulePlanResponse)
+@cronograma_router.put(
+	"/plano",
+	response_model=SchedulePlanResponse,
+	summary="Salvar plano",
+	description="Salva um novo plano de estudo gerado no cliente (com ou sem data de prova definida).",
+)
 def cronograma_route_save_plan(body: SchedulePlanRequest, db: Session = Depends(get_session)):
 	plan = cronograma_save_plan(db, body)
 
@@ -776,17 +849,26 @@ def cronograma_route_save_plan(body: SchedulePlanRequest, db: Session = Depends(
 	)
 
 
-@cronograma_router.delete("/plano", status_code=204)
+@cronograma_router.delete(
+	"/plano",
+	status_code=204,
+	summary="Excluir plano",
+	description="Remove o plano de estudo atual.",
+)
 def cronograma_route_delete_plan(db: Session = Depends(get_session)):
 	cronograma_delete_plan(db)
 	return None
 
 
 # Rotas de simulados.
-simulados_router = APIRouter(prefix="/me/simulados", tags=["simulados"], dependencies=[Depends(require_authentication)])
+simulados_router = APIRouter(prefix="/me/simulados", tags=["Simulados"], dependencies=[Depends(require_authentication)])
 
 
-@simulados_router.get("")
+@simulados_router.get(
+	"",
+	summary="Listar resultados",
+	description="Retorna o histórico completo de simulados já realizados.",
+)
 def simulados_list_results(db: Session = Depends(get_session)):
 	results = db.scalars(
 		select(ResultadoSimulado).order_by(ResultadoSimulado.criado_em.desc())
@@ -795,17 +877,27 @@ def simulados_list_results(db: Session = Depends(get_session)):
 	return [serialize_result(item) for item in results]
 
 
-@simulados_router.post("", status_code=201)
+@simulados_router.post(
+	"",
+	status_code=201,
+	summary="Salvar resultado",
+	description="Salva o resultado de um simulado concluído e adiciona as questões erradas ao caderno.",
+)
 def simulados_save_result(body: CreateSimulationResult, request: Request, db: Session = Depends(get_session)):
 	result, saved = save_simulation_result(db, body, get_client_today(request))
 	return {**serialize_result(result), "savedCount": saved}
 
 
 # Rota de geracao de um novo simulado via Gemini.
-simulado_router = APIRouter(tags=["simulado"], dependencies=[Depends(require_authentication)])
+simulado_router = APIRouter(tags=["Simulados"], dependencies=[Depends(require_authentication)])
 
 
-@simulado_router.post("/simulado", response_model=Simulation)
+@simulado_router.post(
+	"/simulado",
+	response_model=Simulation,
+	summary="Gerar simulado",
+	description="Gera um novo simulado de 10 questões inéditas via IA, no modo rápido ou focado em uma matéria.",
+)
 async def route_create_simulation(body: SimuladoRequest):
 	try:
 		return await create_simulation(body.modo, body.materia)
@@ -814,34 +906,52 @@ async def route_create_simulation(body: SimuladoRequest):
 
 
 # Rotas de estatisticas.
-stats_router = APIRouter(prefix="/me/stats", tags=["stats"], dependencies=[Depends(require_authentication)])
+stats_router = APIRouter(prefix="/me/stats", tags=["Estatísticas"], dependencies=[Depends(require_authentication)])
 
 
-@stats_router.get("", response_model=StatisticsResponse)
+@stats_router.get(
+	"",
+	response_model=StatisticsResponse,
+	summary="Obter estatísticas",
+	description="Retorna nota por simulado ao longo do tempo, acerto por matéria, sequência de estudo e funil do caderno.",
+)
 def get_stats(request: Request, db: Session = Depends(get_session)):
 	return get_statistics_inline(db, get_client_today(request))
 
 
 # Rotas de exportacao e importacao do backup.
-backup_router = APIRouter(prefix="/me", tags=["backup"], dependencies=[Depends(require_authentication)])
+backup_router = APIRouter(prefix="/me", tags=["Backup"], dependencies=[Depends(require_authentication)])
 
 
-@backup_router.get("/export")
+@backup_router.get(
+	"/export",
+	summary="Exportar dados",
+	description="Exporta todos os dados do usuário (caderno, cronograma, simulados) em JSON.",
+)
 def export_all(db: Session = Depends(get_session)):
 	return backup_service.export_all(db)
 
 
-@backup_router.post("/import")
+@backup_router.post(
+	"/import",
+	summary="Importar dados",
+	description="Importa itens do caderno a partir de um backup em JSON, evitando duplicatas.",
+)
 def import_all(body: ImportRequest, db: Session = Depends(get_session)):
 	imported_count = backup_service.import_all(db, body)
 	return {"cadernoImportado": imported_count}
 
 
 # Rotas de conversas do chat (histórico).
-conversas_router = APIRouter(prefix="/chat/conversas", tags=["chat"], dependencies=[Depends(require_authentication)])
+conversas_router = APIRouter(prefix="/chat/conversas", tags=["Chat"], dependencies=[Depends(require_authentication)])
 
 
-@conversas_router.get("", response_model=list[ConversaResumo])
+@conversas_router.get(
+	"",
+	response_model=list[ConversaResumo],
+	summary="Listar conversas",
+	description="Lista o histórico de conversas do chat, mais recentes primeiro.",
+)
 def conversas_listar(db: Session = Depends(get_session)):
 	conversas = db.scalars(select(Conversa).order_by(Conversa.atualizado_em.desc())).all()
 
@@ -851,7 +961,13 @@ def conversas_listar(db: Session = Depends(get_session)):
 	]
 
 
-@conversas_router.post("", status_code=201, response_model=ConversaCriada)
+@conversas_router.post(
+	"",
+	status_code=201,
+	response_model=ConversaCriada,
+	summary="Criar conversa",
+	description="Cria uma conversa vazia, sem mensagens ainda.",
+)
 def conversas_criar(db: Session = Depends(get_session)):
 	agora = datetime.utcnow()
 	conversa = Conversa(titulo="Nova conversa", criado_em=agora, atualizado_em=agora)
@@ -863,7 +979,12 @@ def conversas_criar(db: Session = Depends(get_session)):
 	return ConversaCriada(id=conversa.id, titulo=conversa.titulo)
 
 
-@conversas_router.get("/{conversa_id}", response_model=ConversaDetalhe)
+@conversas_router.get(
+	"/{conversa_id}",
+	response_model=ConversaDetalhe,
+	summary="Obter conversa",
+	description="Retorna uma conversa com todas as suas mensagens.",
+)
 def conversas_obter(conversa_id: int, db: Session = Depends(get_session)):
 	conversa = db.get(Conversa, conversa_id)
 
@@ -886,7 +1007,12 @@ def conversas_obter(conversa_id: int, db: Session = Depends(get_session)):
 	)
 
 
-@conversas_router.patch("/{conversa_id}", response_model=ConversaCriada)
+@conversas_router.patch(
+	"/{conversa_id}",
+	response_model=ConversaCriada,
+	summary="Renomear conversa",
+	description="Atualiza o título de uma conversa existente.",
+)
 def conversas_renomear(conversa_id: int, body: AtualizarTituloRequest, db: Session = Depends(get_session)):
 	conversa = db.get(Conversa, conversa_id)
 
@@ -901,7 +1027,12 @@ def conversas_renomear(conversa_id: int, body: AtualizarTituloRequest, db: Sessi
 	return ConversaCriada(id=conversa.id, titulo=conversa.titulo)
 
 
-@conversas_router.delete("/{conversa_id}", status_code=204)
+@conversas_router.delete(
+	"/{conversa_id}",
+	status_code=204,
+	summary="Excluir conversa",
+	description="Remove uma conversa e todas as suas mensagens.",
+)
 def conversas_deletar(conversa_id: int, db: Session = Depends(get_session)):
 	conversa = db.get(Conversa, conversa_id)
 
@@ -916,10 +1047,15 @@ def conversas_deletar(conversa_id: int, db: Session = Depends(get_session)):
 
 
 # Rota de chat em streaming SSE.
-chat_router = APIRouter(tags=["chat"])
+chat_router = APIRouter(tags=["Chat"])
 
 
-@chat_router.post("/chat", dependencies=[Depends(require_authentication)])
+@chat_router.post(
+	"/chat",
+	dependencies=[Depends(require_authentication)],
+	summary="Enviar mensagem",
+	description="Envia uma mensagem ao mentor e transmite a resposta via streaming (SSE), criando uma conversa nova se necessário.",
+)
 async def chat(body: ChatRequest, request: Request, db: Session = Depends(get_session)):
 	# Registra atividade do usuário antes de iniciar o streaming.
 	register_activity(db, get_client_today(request))
