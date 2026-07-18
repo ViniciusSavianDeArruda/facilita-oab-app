@@ -1,5 +1,3 @@
-import { useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
 import {
   Bars3Icon,
   EllipsisHorizontalIcon,
@@ -8,10 +6,10 @@ import {
   TrashIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { streamChat } from "../lib/api";
 import { salvarDoChat } from "../lib/caderno";
-import { mensagemErroAmigavel } from "../lib/erros";
-import { saveLastChat } from "../lib/lastActivity";
 import {
   carregarConversa,
   deletarConversa,
@@ -23,6 +21,8 @@ import {
   salvarConversaAtivaStorage,
   subscribeConversas,
 } from "../lib/conversas";
+import { mensagemErroAmigavel } from "../lib/erros";
+import { saveLastChat } from "../lib/lastActivity";
 
 const SUGGESTIONS = [
   "qual o prazo do mandado de segurança?",
@@ -65,7 +65,10 @@ export default function Chat({
       .then((detalhe) => {
         setConversaAtivaId(detalhe.id);
         setMessages(
-          detalhe.mensagens.map((m) => ({ role: m.papel, content: m.conteudo })),
+          detalhe.mensagens.map((m) => ({
+            role: m.papel,
+            content: m.conteudo,
+          })),
         );
       })
       .catch(() => {
@@ -317,7 +320,9 @@ export default function Chat({
                         ativa={c.id === conversaAtivaId}
                         maxChars={40}
                         onClick={() => selecionarConversa(c.id)}
-                        onRenomear={(titulo) => renomearConversaItem(c.id, titulo)}
+                        onRenomear={(titulo) =>
+                          renomearConversaItem(c.id, titulo)
+                        }
                         onDeletar={() => deletarConversaItem(c.id)}
                       />
                     ))}
@@ -332,7 +337,10 @@ export default function Chat({
             (max-w-[680px]) mesmo com a coluna ocupando o resto da tela,
             senão bubbles ficam esticadas demais em telas largas. */}
         <div className="flex-1 min-w-0 flex flex-col min-h-0">
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 md:px-8 py-8">
+          <div
+            ref={scrollRef}
+            className="flex-1 overflow-y-auto px-6 md:px-8 py-8"
+          >
             <div className="max-w-[680px] mx-auto">
               {isEmpty ? (
                 <EmptyState onPick={send} />
@@ -349,7 +357,9 @@ export default function Chat({
                         msg.role === "assistant"
                       }
                       pergunta={
-                        msg.role === "assistant" ? messages[i - 1]?.content : null
+                        msg.role === "assistant"
+                          ? messages[i - 1]?.content
+                          : null
                       }
                       materia={materia}
                     />
@@ -489,7 +499,9 @@ function ItemConversa({
   return (
     <div
       className={`group relative w-full rounded-lg border transition-colors ${
-        ativa ? "bg-brass/10 border-brass" : "border-transparent hover:bg-ink-900"
+        ativa
+          ? "bg-brass/10 border-brass"
+          : "border-transparent hover:bg-ink-900"
       }`}
     >
       <button onClick={onClick} className="w-full text-left px-3 py-2.5 pr-9">
