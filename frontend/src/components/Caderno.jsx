@@ -1,3 +1,8 @@
+import {
+  CheckCircleIcon,
+  PencilSquareIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
 import { useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import {
@@ -34,7 +39,11 @@ export default function Caderno({ onDiscussWithMentor }) {
 
   const filtered = items.filter((i) => {
     if (filtroMateria !== "todas" && i.materia !== filtroMateria) return false;
-    if (filtroStatus !== "todos" && i.status !== filtroStatus) return false;
+    if (filtroStatus === "com_anotacao") {
+      if (!i.anotacao || !i.anotacao.trim()) return false;
+    } else if (filtroStatus !== "todos" && i.status !== filtroStatus) {
+      return false;
+    }
     return true;
   });
 
@@ -42,6 +51,7 @@ export default function Caderno({ onDiscussWithMentor }) {
     aberto: items.filter((i) => i.status === "aberto").length,
     revisando: items.filter((i) => i.status === "revisando").length,
     dominado: items.filter((i) => i.status === "dominado").length,
+    comAnotacao: items.filter((i) => i.anotacao && i.anotacao.trim()).length,
   };
 
   if (items.length === 0) {
@@ -96,6 +106,10 @@ export default function Caderno({ onDiscussWithMentor }) {
                 <span className="text-cream-600">{contagens.dominado}</span>{" "}
                 dominado
               </span>
+              <span>
+                <span className="text-brass-dim">{contagens.comAnotacao}</span>{" "}
+                Minhas anotação
+              </span>
             </div>
           </div>
         </div>
@@ -121,6 +135,13 @@ export default function Caderno({ onDiscussWithMentor }) {
                 {STATUS_LABELS[s]}
               </FilterPill>
             ))}
+            <FilterPill
+              selected={filtroStatus === "com_anotacao"}
+              onClick={() => setFiltroStatus("com_anotacao")}
+            >
+              <PencilSquareIcon className="w-3 h-3 inline -mt-0.5 mr-1" />
+              Com anotação
+            </FilterPill>
           </div>
           {materias.length > 1 && (
             <div className="flex flex-wrap gap-2 items-center">
@@ -215,6 +236,10 @@ function CadernoRow({ item, expanded, onToggle, onDiscussWithMentor }) {
     setTimeout(() => setSavedFlash(false), 1500);
   }
 
+  function deletarItem() {
+    if (confirm("Remover este item do caderno?")) remover(item.id);
+  }
+
   function discutir() {
     if (item.origin === "simulado") {
       onDiscussWithMentor(item.questao, item.respostaDada, null, {
@@ -233,7 +258,7 @@ function CadernoRow({ item, expanded, onToggle, onDiscussWithMentor }) {
 
   return (
     <div
-      className={`border rounded-xl transition-colors ${
+      className={`group relative border rounded-xl transition-colors ${
         expanded ? "md:col-span-2 " : ""
       }${
         item.status === "dominado"
@@ -243,15 +268,39 @@ function CadernoRow({ item, expanded, onToggle, onDiscussWithMentor }) {
     >
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-ink-900/50 transition-colors rounded-xl"
+        className="w-full flex items-center gap-3 px-4 py-3 pr-9 text-left hover:bg-ink-900/50 transition-colors rounded-xl"
       >
-        <span className={`shrink-0 w-2 h-2 rounded-full ${statusColor}`}></span>
-        <span className="flex-1 text-sm text-cream-50 truncate">{preview}</span>
+        {item.status === "dominado" ? (
+          <CheckCircleIcon className="w-4 h-4 text-emerald-600 shrink-0" />
+        ) : (
+          <span className={`shrink-0 w-2 h-2 rounded-full ${statusColor}`}></span>
+        )}
+        <span
+          className={`flex-1 text-sm text-cream-50 truncate ${
+            item.status === "dominado" ? "line-through text-cream-500" : ""
+          }`}
+        >
+          {preview}
+        </span>
         <span className="text-[10px] text-cream-400 tracking-wider uppercase shrink-0 hidden sm:inline">
           {item.materia}
         </span>
         <span className="text-[10px] text-cream-600 shrink-0">{dataStr}</span>
       </button>
+
+      {!expanded && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            deletarItem();
+          }}
+          className="absolute right-2 top-2 p-1 rounded-md text-cream-600 hover:text-alert transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100"
+          aria-label="Remover"
+          title="Remover"
+        >
+          <TrashIcon className="w-4 h-4" />
+        </button>
+      )}
 
       {expanded && (
         <div className="border-t border-ink-800 p-6 space-y-6">
@@ -328,10 +377,7 @@ function CadernoRow({ item, expanded, onToggle, onDiscussWithMentor }) {
                 Conversar com o mentor →
               </button>
               <button
-                onClick={() => {
-                  if (confirm("Remover este item do caderno?"))
-                    remover(item.id);
-                }}
+                onClick={deletarItem}
                 className="px-4 py-2.5 rounded-lg text-sm text-cream-600 hover:text-alert transition-colors"
                 title="Remover"
               >
