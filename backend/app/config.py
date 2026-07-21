@@ -14,6 +14,11 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    # Default "production" é proposital: se a variável não for setada em
+    # algum ambiente (esquecimento no deploy, por exemplo), o app cai pro
+    # lado seguro (docs desabilitada) em vez do lado aberto.
+    ENV: str = "production"
+
     GEMINI_API_KEY: str
     GEMINI_MODEL: str = "gemini-flash-latest"
 

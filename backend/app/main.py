@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, APIRouter, Depends, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -13,6 +14,17 @@ from slowapi.errors import RateLimitExceeded
 
 # Limita tentativas de login por IP, pra dificultar força bruta na senha.
 limiter = Limiter(key_func=get_remote_address)
+
+
+# Headers de resposta padrão pra hardening básico (sem HSTS — o Fly.io já
+# aplica na borda — nem CSP, que fica pra depois).
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+	async def dispatch(self, request: Request, call_next):
+		response = await call_next(request)
+		response.headers["X-Content-Type-Options"] = "nosniff"
+		response.headers["X-Frame-Options"] = "DENY"
+		response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+		return response
 
 # Configuracoes globais e acesso ao banco de dados.
 from .config import settings
@@ -357,6 +369,10 @@ async def lifespan(app: FastAPI):
 	yield
 
 
+# Docs interativas só em dev — nao expor /docs, /redoc, /openapi.json
+# publicamente em produção.
+_is_dev = settings.ENV == "dev"
+
 app = FastAPI(
 	title="Facilita OAB API",
 	description=(
@@ -366,6 +382,9 @@ app = FastAPI(
 	),
 	version="0.3.0",
 	lifespan=lifespan,
+	docs_url="/docs" if _is_dev else None,
+	redoc_url="/redoc" if _is_dev else None,
+	openapi_url="/openapi.json" if _is_dev else None,
 	openapi_tags=[
 		{"name": "Autenticação", "description": "Login por senha única e emissão de token de sessão."},
 		{"name": "Perfil", "description": "Dados do próprio usuário: nome e última conversa."},
@@ -389,6 +408,8 @@ app.add_middleware(
 	allow_methods=["*"],
 	allow_headers=["*"],
 )
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 # Router de autenticacao.
@@ -898,7 +919,8 @@ simulado_router = APIRouter(tags=["Simulados"], dependencies=[Depends(require_au
 	summary="Gerar simulado",
 	description="Gera um novo simulado de 10 questões inéditas via IA, no modo rápido ou focado em uma matéria.",
 )
-async def route_create_simulation(body: SimuladoRequest):
+@limiter.limit("30/hour")
+async def route_create_simulation(body: SimuladoRequest, request: Request):
 	try:
 		return await create_simulation(body.modo, body.materia)
 	except Exception as error:
@@ -1056,6 +1078,7 @@ chat_router = APIRouter(tags=["Chat"])
 	summary="Enviar mensagem",
 	description="Envia uma mensagem ao mentor e transmite a resposta via streaming (SSE), criando uma conversa nova se necessário.",
 )
+@limiter.limit("60/minute")
 async def chat(body: ChatRequest, request: Request, db: Session = Depends(get_session)):
 	# Registra atividade do usuário antes de iniciar o streaming.
 	register_activity(db, get_client_today(request))
