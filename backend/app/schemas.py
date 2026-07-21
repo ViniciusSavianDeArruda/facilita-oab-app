@@ -14,7 +14,7 @@ class TokenResponse(BaseModel):
 # --- chat ---
 class Message(BaseModel):
     role: str
-    content: str
+    content: str = Field(max_length=10_000)
 
 
 class ChatRequest(BaseModel):
@@ -51,7 +51,7 @@ class ConversaDetalhe(BaseModel):
 
 
 class AtualizarTituloRequest(BaseModel):
-    titulo: str
+    titulo: str = Field(max_length=200)
 
 
 # --- caderno ---
@@ -63,7 +63,7 @@ class CreateNotebookItemFromChat(BaseModel):
 
 class UpdateNotebookItem(BaseModel):
     status: str | None = None
-    anotacao: str | None = None
+    anotacao: str | None = Field(default=None, max_length=5_000)
 
 
 # --- cronograma ---
