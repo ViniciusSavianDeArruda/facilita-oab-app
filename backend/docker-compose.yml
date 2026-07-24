@@ -1,6 +1,23 @@
 name: facilita-oab
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: facilita-oab-postgres
+    environment:
+      POSTGRES_USER: facilita
+      POSTGRES_PASSWORD: dev_local_only
+      POSTGRES_DB: facilita
+    ports:
+      - "5433:5432"
+    volumes:
+      - facilita_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U facilita -d facilita"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   backend:
     build: .
     ports:
@@ -8,11 +25,11 @@ services:
     env_file:
       - ./.env
     environment:
-      # Sobrescreve o .env pra gravar o banco num volume nomeado, assim o
-      # facilita.db sobrevive a rebuilds/restarts do container.
-      DATABASE_URL: sqlite:////app/data/facilita.db
-    volumes:
-      - facilita_data:/app/data
+      # Sobrescreve o .env — Postgres é o banco padrão de dev/produção.
+      DATABASE_URL: postgresql+psycopg2://facilita:dev_local_only@postgres:5432/facilita
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
-  facilita_data:
+  facilita_postgres_data:
