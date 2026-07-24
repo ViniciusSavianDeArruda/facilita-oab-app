@@ -23,6 +23,7 @@ import {
 } from "../lib/conversas";
 import { mensagemErroAmigavel } from "../lib/erros";
 import { saveLastChat } from "../lib/lastActivity";
+import ChatComposer from "./ChatComposer";
 
 const SUGGESTIONS = [
   "qual o prazo do mandado de segurança?",
@@ -38,7 +39,6 @@ export default function Chat({
   onInitialConsumed,
 }) {
   const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState(null);
   const [conversas, setConversas] = useState(listarConversas());
@@ -46,7 +46,6 @@ export default function Chat({
   const [mostrarDrawer, setMostrarDrawer] = useState(false);
   const abortRef = useRef(null);
   const scrollRef = useRef(null);
-  const textareaRef = useRef(null);
   const enviouInicialRef = useRef(false);
 
   useEffect(() => {
@@ -83,13 +82,6 @@ export default function Chat({
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
-
-  useEffect(() => {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    ta.style.height = "auto";
-    ta.style.height = Math.min(ta.scrollHeight, 200) + "px";
-  }, [input]);
 
   // Deep-link: quando a tela de resultado passa uma mensagem inicial,
   // envia automaticamente ao entrar no chat.
@@ -165,7 +157,6 @@ export default function Chat({
     if (!content || isStreaming) return;
 
     setError(null);
-    setInput("");
 
     const newMessages = [...messages, { role: "user", content }];
     setMessages([...newMessages, { role: "assistant", content: "" }]);
@@ -213,13 +204,6 @@ export default function Chat({
     } finally {
       setIsStreaming(false);
       abortRef.current = null;
-    }
-  }
-
-  function handleKeyDown(e) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      send(input);
     }
   }
 
@@ -374,50 +358,15 @@ export default function Chat({
             </div>
           </div>
 
-          <div className="border-t border-ink-800 bg-ink-950/80 backdrop-blur px-6 md:px-8 py-4">
-            <div className="max-w-[680px] mx-auto">
-              <div className="flex items-end gap-3 bg-ink-900 border border-ink-800 rounded-2xl px-4 py-3 focus-within:border-brass-dim transition-colors">
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={
-                    materia
-                      ? `Pergunte sobre ${materia}...`
-                      : "Sua dúvida jurídica..."
-                  }
-                  rows={1}
-                  className="flex-1 bg-transparent resize-none outline-none placeholder:text-cream-600 text-cream-50 leading-relaxed py-1"
-                  disabled={isStreaming}
-                />
-                {isStreaming ? (
-                  <button
-                    onClick={cancel}
-                    className="shrink-0 h-9 w-9 rounded-full bg-ink-800 hover:bg-ink-700 text-cream-400 flex items-center justify-center transition-colors"
-                    aria-label="Parar"
-                    title="Parar"
-                  >
-                    <StopIcon />
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => send(input)}
-                    disabled={!input.trim()}
-                    className="shrink-0 h-9 w-9 rounded-full bg-brass hover:bg-brass-hover disabled:bg-ink-800 disabled:text-cream-600 text-ink-950 flex items-center justify-center transition-colors"
-                    aria-label="Enviar"
-                    title="Enviar (Enter)"
-                  >
-                    <ArrowIcon />
-                  </button>
-                )}
-              </div>
-              <p className="text-xs text-cream-600 mt-2 px-1">
-                Enter envia · Shift+Enter quebra linha · o mentor pode errar em
-                jurisprudência específica, sempre confira números de súmula.
-              </p>
-            </div>
-          </div>
+          <ChatComposer
+            onSend={send}
+            onCancel={cancel}
+            disabled={isStreaming}
+            streaming={isStreaming}
+            placeholder={
+              materia ? `Pergunte sobre ${materia}...` : "Sua dúvida jurídica..."
+            }
+          />
         </div>
       </div>
     </div>
@@ -639,27 +588,5 @@ function EmptyState({ onPick }) {
         </div>
       </div>
     </div>
-  );
-}
-
-function ArrowIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <path
-        d="M8 2L8 14M8 2L3 7M8 2L13 7"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function StopIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-      <rect x="2" y="2" width="8" height="8" rx="1.5" />
-    </svg>
   );
 }
