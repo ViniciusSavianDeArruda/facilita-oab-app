@@ -84,25 +84,13 @@ from .security import require_authentication
 from .auth import login as authenticate
 from . import backup as backup_service
 from .materias import canonicalizar_materia
-
-# Converte datetimes para ISO em UTC para respostas da API.
-def to_iso_utc(moment: datetime | None) -> str | None:
-	if moment is None:
-		return None
-	from datetime import timezone
-
-	return moment.replace(tzinfo=timezone.utc).isoformat()
-
-
-# Remove timezone para salvar datas no formato esperado pelo banco.
-def to_naive_utc(moment: datetime) -> datetime:
-	from datetime import timezone
-
-	if moment.tzinfo is not None:
-		return moment.astimezone(timezone.utc).replace(tzinfo=None)
-
-	return moment
-
+from .serializers import (
+	to_iso_utc,
+	to_naive_utc,
+	caderno_serialize_item,
+	serialize_result,
+	get_or_create_profile,
+)
 
 # Usa o offset enviado pelo frontend para calcular o dia local do cliente.
 def get_client_today(request: Request) -> date:
@@ -136,21 +124,6 @@ def register_activity(db: Session, day: date | None = None) -> None:
 
 
 # Regras do caderno: serializacao, criacao, edicao e exclusao de itens.
-def caderno_serialize_item(item: ItemCaderno) -> dict:
-	return {
-		"id": str(item.id),
-		"createdAt": to_iso_utc(item.criado_em),
-		"origin": item.origem,
-		"status": item.status,
-		"materia": item.materia,
-		"anotacao": item.anotacao,
-		"questao": item.questao_json,
-		"respostaDada": item.resposta_dada,
-		"pergunta": item.pergunta,
-		"resposta": item.resposta,
-	}
-
-
 def caderno_list_items(db: Session) -> list[ItemCaderno]:
 	return db.scalars(
 		select(ItemCaderno).order_by(ItemCaderno.criado_em.desc())
@@ -209,26 +182,6 @@ def caderno_delete_item(db: Session, item_id: int) -> None:
 
 
 # Regras do perfil: carregar, criar e persistir os dados do usuario.
-def get_or_create_profile(db: Session):
-	from sqlalchemy.exc import IntegrityError
-
-	profile = db.get(Perfil, 1)
-
-	if profile is None:
-		profile = Perfil(id=1)
-		db.add(profile)
-
-		try:
-			db.commit()
-		except IntegrityError:
-			db.rollback()
-			profile = db.get(Perfil, 1)
-		else:
-			db.refresh(profile)
-
-	return profile
-
-
 def profile_get(db: Session):
 	return get_or_create_profile(db)
 
@@ -489,7 +442,6 @@ async def stream_chat(messages: list[dict], subject: str | None = None):
 		system_instruction=instructions,
 		temperature=0.4,
 		max_output_tokens=2048,
-		thinking_config=types.ThinkingConfig(thinking_budget=0),
 	)
 
 	stream = await client.aio.models.generate_content_stream(
@@ -505,22 +457,6 @@ async def stream_chat(messages: list[dict], subject: str | None = None):
 
 # Fluxo de simulados: prompt, geracao, serializacao e persistencia.
 SYSTEM_PROMPT_SIM = load_prompt("simulado.md")
-
-
-# Formata um resultado salvo para resposta da API.
-def serialize_result(result: ResultadoSimulado) -> dict:
-	return {
-		"id": str(result.id),
-		"createdAt": to_iso_utc(result.criado_em),
-		"modo": result.modo,
-		"materiaFiltro": result.materia_filtro,
-		"acertos": result.acertos,
-		"total": result.total,
-		"elapsedSec": result.duracao_segundos,
-		"porMateria": result.por_materia_json,
-		"questoes": result.questoes_json,
-		"answers": result.respostas_json,
-	}
 
 
 # Monta a solicitacao em linguagem natural enviada ao modelo.
@@ -550,7 +486,6 @@ async def generate_questions(amount: int, subject: str | None = None) -> list[Qu
 			response_schema=QuestionList,
 			temperature=0.75,
 			max_output_tokens=16384,
-			thinking_config=types.ThinkingConfig(thinking_budget=0),
 		),
 	)
 
