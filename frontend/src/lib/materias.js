@@ -1,6 +1,6 @@
 /**
  * Fonte única das matérias da 1ª fase da OAB, com peso aproximado de
- * cada uma na prova real (FGV). Cronograma usa todas as 17; Simulado
+ * cada uma na prova real (FGV). Cronograma usa todas as 18; Simulado
  * filtra por peso (ver MATERIAS_SIMULADO abaixo). Pra mudar o corte
  * do Simulado no futuro, mexe só em PESO_MINIMO_SIMULADO.
  */
@@ -23,6 +23,7 @@ export const MATERIAS = [
   { nome: "Ambiental", pesoFgv: 1 },
   { nome: "Financeiro", pesoFgv: 1 },
   { nome: "ECA", pesoFgv: 1 },
+  { nome: "Consumidor", pesoFgv: 4 },
 ];
 
 // Lookup nome -> peso, mesmo formato que cronograma.js já usa hoje
