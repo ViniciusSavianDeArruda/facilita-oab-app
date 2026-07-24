@@ -98,6 +98,7 @@ class ItemCaderno(Base):
             "enunciado",
             unique=True,
             sqlite_where=text("origem = 'simulado'"),
+            postgresql_where=text("origem = 'simulado'"),
         ),
     )
 
