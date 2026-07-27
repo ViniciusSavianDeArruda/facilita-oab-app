@@ -1,4 +1,4 @@
-"""Exportação e importação de dados do app."""
+"""Exportação e importação dos dados persistidos da aplicação."""
 
 from datetime import date, datetime
 
@@ -59,6 +59,8 @@ def export_all(db: Session) -> dict:
     }
 
 
+# Importa um backup da aplicação, restaurando os dados e evitando
+# duplicatas de questões provenientes de simulados.
 def import_all(db: Session, body: ImportRequest) -> int:
     profile = get_or_create_profile(db)
 
@@ -112,7 +114,11 @@ def import_all(db: Session, body: ImportRequest) -> int:
     if body.cronogramaPlano is not None:
         plan = get_or_create(db, PlanoCronograma)
         plan.gerado_em = to_naive_utc(datetime.fromisoformat(body.cronogramaPlano.geradoEm))
-        plan.data_prova = date.fromisoformat(body.cronogramaPlano.dataProva) if body.cronogramaPlano.dataProva else None
+        plan.data_prova = (
+            date.fromisoformat(body.cronogramaPlano.dataProva)
+            if body.cronogramaPlano.dataProva
+            else None
+        )
         plan.horas_por_dia = body.cronogramaPlano.horasPorDia
         plan.dias_json = body.cronogramaPlano.dias
         db.add(plan)

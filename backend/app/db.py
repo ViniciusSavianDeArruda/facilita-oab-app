@@ -3,6 +3,7 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from .config import settings
 
+# Configura a conexão com o banco de dados da aplicação.
 engine = create_engine(
     settings.DATABASE_URL,
     connect_args={
@@ -11,9 +12,8 @@ engine = create_engine(
 )
 
 
-# Pragmas do SQLite aplicadas em toda conexão nova — sem isso, foreign keys
-# não são de fato aplicadas pelo banco (só existem como documentação do
-# schema), e o modo de journal padrão trava mais sob concorrência.
+# Aplica configurações específicas do SQLite para garantir integridade
+# referencial e melhor desempenho em acessos concorrentes.
 if settings.DATABASE_URL.startswith("sqlite"):
     @event.listens_for(engine, "connect")
     def _configurar_pragmas_sqlite(conexao_dbapi, _record):
@@ -28,6 +28,7 @@ class Base(DeclarativeBase):
     pass
 
 
+# Fábrica de sessões utilizada para acessar o banco de dados.
 SessionLocal = sessionmaker(
     bind=engine,
     autoflush=False,
@@ -35,6 +36,7 @@ SessionLocal = sessionmaker(
 )
 
 
+# Fornece uma sessão durante a requisição e garante seu fechamento.
 def get_session():
     db = SessionLocal()
     try:
@@ -43,11 +45,12 @@ def get_session():
         db.close()
 
 
+# Recupera um registro pelo ID ou cria uma nova instância quando necessário.
 def get_or_create(db, model, id: int = 1):
     return db.get(model, id) or model(id=id)
 
 
-# --- Models consolidated from app/*/model.py ---
+# Modelos persistidos da aplicação.
 from datetime import date, datetime
 
 from sqlalchemy import (
@@ -161,7 +164,7 @@ class MensagemChat(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     conversa_id: Mapped[int] = mapped_column(ForeignKey("conversas.id", ondelete="CASCADE"))
-    # "user" ou "assistant" — mesmos valores usados na integração com o Gemini.
+    # Valores compatíveis com os papéis utilizados pela API do Gemini.
     papel: Mapped[str] = mapped_column(String)
     conteudo: Mapped[str] = mapped_column(Text)
     criado_em: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

@@ -1,7 +1,8 @@
-# Serialização e helpers compartilhados entre main.py e backup.py — antes
-# duplicados nos dois arquivos, com risco real de divergência (a versão de
-# get_or_create_profile em backup.py não tratava a IntegrityError de
-# corrida que a de main.py já tratava).
+"""Funções auxiliares de serialização e compartilhamento de dados.
+
+Centraliza conversões utilizadas por diferentes módulos para evitar
+duplicação de lógica e inconsistências entre implementações.
+"""
 
 from datetime import datetime
 
@@ -10,14 +11,17 @@ from sqlalchemy.orm import Session
 from .db import ItemCaderno, ResultadoSimulado, Perfil
 
 
+# Converte uma data para o formato ISO em UTC.
 def to_iso_utc(moment: datetime | None) -> str | None:
 	if moment is None:
 		return None
+
 	from datetime import timezone
 
 	return moment.replace(tzinfo=timezone.utc).isoformat()
 
 
+# Remove informações de timezone mantendo o horário em UTC.
 def to_naive_utc(moment: datetime) -> datetime:
 	from datetime import timezone
 
@@ -27,6 +31,7 @@ def to_naive_utc(moment: datetime) -> datetime:
 	return moment
 
 
+# Converte um item do caderno para o formato utilizado pela API.
 def caderno_serialize_item(item: ItemCaderno) -> dict:
 	return {
 		"id": str(item.id),
@@ -42,6 +47,7 @@ def caderno_serialize_item(item: ItemCaderno) -> dict:
 	}
 
 
+# Converte o resultado de um simulado para o formato de resposta da aplicação.
 def serialize_result(result: ResultadoSimulado) -> dict:
 	return {
 		"id": str(result.id),
@@ -57,6 +63,7 @@ def serialize_result(result: ResultadoSimulado) -> dict:
 	}
 
 
+# Recupera o perfil único da aplicação ou cria caso ainda não exista.
 def get_or_create_profile(db: Session) -> Perfil:
 	from sqlalchemy.exc import IntegrityError
 
@@ -69,6 +76,8 @@ def get_or_create_profile(db: Session) -> Perfil:
 		try:
 			db.commit()
 		except IntegrityError:
+			# Trata possíveis conflitos quando duas requisições criam o perfil
+			# ao mesmo tempo.
 			db.rollback()
 			profile = db.get(Perfil, 1)
 		else:

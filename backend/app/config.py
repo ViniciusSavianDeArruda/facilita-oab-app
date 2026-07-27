@@ -1,22 +1,17 @@
-# Configuração central via variáveis de ambiente.
-#
-# App de usuário único: proteção por senha fixa (APP_PASSWORD), não por
-# cadastro/conta. Falha de forma clara no startup se faltar algo essencial.
+# Configurações centralizadas da aplicação carregadas do ambiente.
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    # extra="ignore": variáveis extras no .env (de outra ferramenta, por
-    # exemplo) não derrubam o app. Apenas as declaradas abaixo são lidas.
+    # Ignora variáveis extras presentes no .env que não são utilizadas.
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",
     )
 
-    # Default "production" é proposital: se a variável não for setada em
-    # algum ambiente (esquecimento no deploy, por exemplo), o app cai pro
-    # lado seguro (docs desabilitada) em vez do lado aberto.
+    # Mantém o ambiente em produção por padrão, priorizando a configuração
+    # mais segura caso a variável ENV não seja definida.
     ENV: str = "production"
 
     GEMINI_API_KEY: str
@@ -30,6 +25,7 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "sqlite:///./facilita.db"
 
+    # Converte a lista de origens do CORS em uma lista de strings.
     @property
     def cors_origins_list(self) -> list[str]:
         return [

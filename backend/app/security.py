@@ -1,4 +1,4 @@
-"""Primitivas de segurança do app.
+"""Primitivas de segurança da aplicação.
 
 Senha única + JWT para proteger as rotas autenticadas.
 """
@@ -14,6 +14,7 @@ from .config import settings
 ALGORITHM = "HS256"
 
 
+# Compara a senha informada com a senha configurada de forma segura.
 def verify_password(password: str) -> bool:
     return hmac.compare_digest(
         password.encode("utf-8"),
@@ -21,6 +22,7 @@ def verify_password(password: str) -> bool:
     )
 
 
+# Gera um token JWT com tempo de expiração configurável.
 def create_access_token() -> str:
     expires_at = datetime.now(timezone.utc) + timedelta(
         days=settings.ACCESS_TOKEN_EXPIRE_DAYS
@@ -29,6 +31,7 @@ def create_access_token() -> str:
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=ALGORITHM)
 
 
+# Valida o token enviado na requisição antes de permitir o acesso.
 def require_authentication(request: Request) -> None:
     authorization = request.headers.get("Authorization", "")
 
