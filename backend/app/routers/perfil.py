@@ -1,10 +1,11 @@
-from datetime import date, datetime
+from datetime import datetime
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from .. import backup as backup_service
 from ..db import get_session
+from ..parsers import _parse_date
 from ..schemas import (
 	ImportRequest,
 	LastConversation,
@@ -31,7 +32,7 @@ def profile_update(db: Session, body: UpdateProfileRequest):
 		profile.nome = body.nome
 
 	if "dataProva" in body.model_fields_set:
-		profile.data_prova = date.fromisoformat(body.dataProva) if body.dataProva else None
+		profile.data_prova = _parse_date(body.dataProva, "dataProva") if body.dataProva else None
 
 	db.commit()
 	db.refresh(profile)

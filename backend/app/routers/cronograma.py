@@ -1,9 +1,10 @@
-from datetime import date, datetime
+from datetime import datetime
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from ..db import ConfiguracaoCronograma, get_or_create, get_session, PlanoCronograma
+from ..parsers import _parse_date, _parse_datetime
 from ..schemas import ConfigScheduleRequest, ConfigScheduleResponse, SchedulePlanRequest, SchedulePlanResponse
 from ..security import require_authentication
 from ..serializers import to_iso_utc, to_naive_utc
@@ -40,8 +41,8 @@ def cronograma_get_plan(db: Session) -> PlanoCronograma | None:
 def cronograma_save_plan(db: Session, body: SchedulePlanRequest) -> PlanoCronograma:
 	plan = get_or_create(db, PlanoCronograma)
 
-	plan.gerado_em = to_naive_utc(datetime.fromisoformat(body.geradoEm))
-	plan.data_prova = date.fromisoformat(body.dataProva) if body.dataProva else None
+	plan.gerado_em = to_naive_utc(_parse_datetime(body.geradoEm, "geradoEm"))
+	plan.data_prova = _parse_date(body.dataProva, "dataProva") if body.dataProva else None
 	plan.horas_por_dia = body.horasPorDia
 	plan.dias_json = body.dias
 

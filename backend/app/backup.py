@@ -1,6 +1,6 @@
 """Exportação e importação dos dados persistidos da aplicação."""
 
-from datetime import date, datetime
+from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -12,6 +12,7 @@ from .db import (
     ResultadoSimulado,
     get_or_create,
 )
+from .parsers import _parse_date, _parse_datetime
 from .schemas import ImportRequest
 from .serializers import (
     to_iso_utc,
@@ -68,7 +69,7 @@ def import_all(db: Session, body: ImportRequest) -> int:
         profile.nome = body.nome
 
     if body.dataProva is not None:
-        profile.data_prova = date.fromisoformat(body.dataProva)
+        profile.data_prova = _parse_date(body.dataProva, "dataProva")
 
     existing_questions = set(
         db.scalars(select(ItemCaderno.enunciado).where(ItemCaderno.origem == "simulado"))
@@ -76,7 +77,7 @@ def import_all(db: Session, body: ImportRequest) -> int:
 
     imported_count = 0
 
-    for legacy_item in body.caderno:
+    for index, legacy_item in enumerate(body.caderno):
         enunciado = (
             (legacy_item.questao or {}).get("enunciado")
             if legacy_item.origin == "simulado"
@@ -90,7 +91,7 @@ def import_all(db: Session, body: ImportRequest) -> int:
 
         db.add(
             ItemCaderno(
-                criado_em=to_naive_utc(datetime.fromisoformat(legacy_item.createdAt)),
+                criado_em=to_naive_utc(_parse_datetime(legacy_item.createdAt, f"caderno[{index}].createdAt")),
                 origem=legacy_item.origin,
                 status=legacy_item.status,
                 materia=legacy_item.materia,
@@ -113,9 +114,9 @@ def import_all(db: Session, body: ImportRequest) -> int:
 
     if body.cronogramaPlano is not None:
         plan = get_or_create(db, PlanoCronograma)
-        plan.gerado_em = to_naive_utc(datetime.fromisoformat(body.cronogramaPlano.geradoEm))
+        plan.gerado_em = to_naive_utc(_parse_datetime(body.cronogramaPlano.geradoEm, "cronogramaPlano.geradoEm"))
         plan.data_prova = (
-            date.fromisoformat(body.cronogramaPlano.dataProva)
+            _parse_date(body.cronogramaPlano.dataProva, "cronogramaPlano.dataProva")
             if body.cronogramaPlano.dataProva
             else None
         )
