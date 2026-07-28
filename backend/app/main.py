@@ -92,6 +92,7 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 # Endpoint simples para verificacao de saude da API.
 @app.get("/health")
+@app.head("/health")
 async def health_check():
 	return {"status": "ok"}
 
