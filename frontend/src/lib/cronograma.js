@@ -113,8 +113,7 @@ export function subscribeCrono(cb) {
   return () => window.removeEventListener("crono:changed", handler);
 }
 
-// ============ ALGORITMO DE GERAÇÃO ============
-
+//ALGORITMO DE GERAÇÃO
 // Quantos dias gerar de uma vez quando não há data da prova (rodízio sem fim definido).
 const DIAS_ROTATIVO = 180;
 
@@ -292,9 +291,9 @@ export function planoEstaValido(plano, dataProvaAtual) {
   if (!plano || !plano.dias || plano.dias.length === 0) return false;
   if (plano.dataProva !== dataProvaAtual) return false;
   const hoje = new Date().toISOString().slice(0, 10);
-  const primeiroDia = plano.dias[0]?.data;
-  // Se o primeiro dia é anterior a hoje, precisa recompactar
-  return primeiroDia >= hoje;
+  // Plano ainda tem dias futuros ou de hoje — continua válido
+  const ultimoDia = plano.dias[plano.dias.length - 1]?.data;
+  return ultimoDia >= hoje;
 }
 
 export function planoDeHoje(plano) {
