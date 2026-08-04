@@ -315,23 +315,11 @@ export function proximos7Dias(plano, qtd = 7) {
 export function marcarItemConcluido(dataDia, idxItem, concluido) {
   const plano = loadPlano();
   if (!plano) return;
-
-  const novoPlano = {
-    ...plano,
-    dias: plano.dias.map((d) => {
-      if (d.data !== dataDia) return d;
-      const novosItens = d.itens.map((i, idx) =>
-        idx === idxItem ? { ...i, concluido } : i
-      );
-      return {
-        ...d,
-        itens: novosItens,
-        concluido: novosItens.every((i) => i.concluido),
-      };
-    }),
-  };
-
-  savePlano(novoPlano);
+  const dia = plano.dias.find((d) => d.data === dataDia);
+  if (!dia || !dia.itens[idxItem]) return;
+  dia.itens[idxItem].concluido = concluido;
+  dia.concluido = dia.itens.every((i) => i.concluido);
+  savePlano(plano);
 }
 
 /**
@@ -344,11 +332,7 @@ export function recompactarPlano() {
   const hoje = new Date().toISOString().slice(0, 10);
 
   const passados = plano.dias.filter((d) => d.data < hoje && !d.concluido);
-  if (passados.length === 0) return;
-
-  const futuros = plano.dias
-    .filter((d) => d.data >= hoje)
-    .map((d) => ({ ...d, itens: [...d.itens] }));
+  const futuros = plano.dias.filter((d) => d.data >= hoje);
 
   // Move itens pendentes dos passados pros primeiros dias futuros com espaço
   passados.forEach((diaPassado) => {
@@ -361,7 +345,9 @@ export function recompactarPlano() {
       });
   });
 
-  savePlano({ ...plano, dias: futuros });
+  if (passados.length === 0) return;
+  plano.dias = futuros;
+  savePlano(plano);
 }
 
 // ============ Utilities ============
