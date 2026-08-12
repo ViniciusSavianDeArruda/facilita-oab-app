@@ -19,12 +19,12 @@ const DEFAULT_CONFIG = {
 
 let _config = DEFAULT_CONFIG;
 let _plano = null;
-let _idsMigrados = false;
 
 function notify() {
   window.dispatchEvent(new CustomEvent("crono:changed"));
 }
 
+// ============ CONFIG ============
 
 export function loadConfig() {
   return _config;
@@ -67,38 +67,11 @@ export function loadPlano() {
   return _plano;
 }
 
-// Planos antigos podem ter itens sem `id` (campo introduzido depois).
-// Sem id único, o key={idx} do React confunde itens quando o array
-// reordena (ex.: recompactarPlano), fazendo clique marcar o item errado.
-function migrarIdsFaltantes(plano) {
-  let mudou = false;
-  const dias = plano.dias.map((d) => {
-    let diaMudou = false;
-    const itens = d.itens.map((i) => {
-      if (i.id) return i;
-      diaMudou = true;
-      return { ...i, id: crypto.randomUUID() };
-    });
-    if (!diaMudou) return d;
-    mudou = true;
-    return { ...d, itens };
-  });
-  return mudou ? { ...plano, dias } : plano;
-}
-
 export async function hydrateCronogramaPlano() {
   try {
     _plano = await authFetchJson("/me/cronograma/plano");
   } catch {
     _plano = null;
-  }
-  if (_plano && !_idsMigrados) {
-    _idsMigrados = true;
-    const migrado = migrarIdsFaltantes(_plano);
-    if (migrado !== _plano) {
-      _plano = migrado;
-      savePlano(migrado);
-    }
   }
   notify();
   return _plano;
@@ -229,8 +202,8 @@ export function gerarPlano(dataProvaStr, config) {
     let itens;
     if (isSimuladoDay) {
       itens = [
-        { id: crypto.randomUUID(), tipo: "simulado", minutos: 25, concluido: false },
-        { id: crypto.randomUUID(), tipo: "caderno", minutos: 20, concluido: false },
+        { tipo: "simulado", minutos: 25, concluido: false },
+        { tipo: "caderno", minutos: 20, concluido: false },
       ];
     } else {
       const materia =
@@ -241,17 +214,16 @@ export function gerarPlano(dataProvaStr, config) {
       if (totalMin >= 90) {
         itens = [
           {
-            id: crypto.randomUUID(),
             tipo: "revisar",
             materia,
             minutos: totalMin - 15,
             concluido: false,
           },
-          { id: crypto.randomUUID(), tipo: "caderno", minutos: 15, concluido: false },
+          { tipo: "caderno", minutos: 15, concluido: false },
         ];
       } else {
         itens = [
-          { id: crypto.randomUUID(), tipo: "revisar", materia, minutos: totalMin, concluido: false },
+          { tipo: "revisar", materia, minutos: totalMin, concluido: false },
         ];
       }
     }
@@ -293,12 +265,12 @@ function gerarPlanoRotativo(config) {
     let itens;
     if (totalMin >= 90) {
       itens = [
-        { id: crypto.randomUUID(), tipo: "revisar", materia, minutos: totalMin - 15, concluido: false },
-        { id: crypto.randomUUID(), tipo: "caderno", minutos: 15, concluido: false },
+        { tipo: "revisar", materia, minutos: totalMin - 15, concluido: false },
+        { tipo: "caderno", minutos: 15, concluido: false },
       ];
     } else {
       itens = [
-        { id: crypto.randomUUID(), tipo: "revisar", materia, minutos: totalMin, concluido: false },
+        { tipo: "revisar", materia, minutos: totalMin, concluido: false },
       ];
     }
 
@@ -343,23 +315,11 @@ export function proximos7Dias(plano, qtd = 7) {
 export function marcarItemConcluido(dataDia, idxItem, concluido) {
   const plano = loadPlano();
   if (!plano) return;
-
-  const novoPlano = {
-    ...plano,
-    dias: plano.dias.map((d) => {
-      if (d.data !== dataDia) return d;
-      const novosItens = d.itens.map((i, idx) =>
-        idx === idxItem ? { ...i, concluido } : i
-      );
-      return {
-        ...d,
-        itens: novosItens,
-        concluido: novosItens.every((i) => i.concluido),
-      };
-    }),
-  };
-
-  savePlano(novoPlano);
+  const dia = plano.dias.find((d) => d.data === dataDia);
+  if (!dia || !dia.itens[idxItem]) return;
+  dia.itens[idxItem].concluido = concluido;
+  dia.concluido = dia.itens.every((i) => i.concluido);
+  savePlano(plano);
 }
 
 /**
@@ -372,11 +332,7 @@ export function recompactarPlano() {
   const hoje = new Date().toISOString().slice(0, 10);
 
   const passados = plano.dias.filter((d) => d.data < hoje && !d.concluido);
-  if (passados.length === 0) return;
-
-  const futuros = plano.dias
-    .filter((d) => d.data >= hoje)
-    .map((d) => ({ ...d, itens: [...d.itens] }));
+  const futuros = plano.dias.filter((d) => d.data >= hoje);
 
   // Move itens pendentes dos passados pros primeiros dias futuros com espaço
   passados.forEach((diaPassado) => {
@@ -389,7 +345,9 @@ export function recompactarPlano() {
       });
   });
 
-  savePlano({ ...plano, dias: futuros });
+  if (passados.length === 0) return;
+  plano.dias = futuros;
+  savePlano(plano);
 }
 
 // ============ Utilities ============

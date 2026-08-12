@@ -233,7 +233,7 @@ export default function CronogramaCalendario({ onBack }) {
                 </div>
                 <div className="space-y-2">
                   {diaInfo.itens.map((item, idx) => (
-                    <div key={item.id ?? idx} className="flex items-start gap-2">
+                    <div key={idx} className="flex items-start gap-2">
                       <span className="w-1 h-1 rounded-full bg-brass-dim mt-2 shrink-0"></span>
                       <span
                         className={`flex-1 text-sm ${item.concluido ? "text-cream-600 line-through" : "text-cream-50"}`}

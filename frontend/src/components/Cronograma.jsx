@@ -216,7 +216,7 @@ function DiaCard({ dia, isHoje, onGoto }) {
       <div className="border-t border-ink-800 px-5 py-4 space-y-2">
         {dia.itens.map((item, idx) => (
           <ItemRow
-            key={item.id ?? idx}
+            key={idx}
             item={item}
             dataDia={dia.data}
             idxItem={idx}
