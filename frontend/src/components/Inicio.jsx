@@ -372,7 +372,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                       <div className="space-y-1.5">
                         {pendentes.slice(0, 3).map((item, i) => (
                           <div
-                            key={i}
+                            key={item.id ?? i}
                             className="flex items-start gap-2 text-sm text-cream-50"
                           >
                             <span className="w-1 h-1 rounded-full bg-brass mt-2 shrink-0"></span>
