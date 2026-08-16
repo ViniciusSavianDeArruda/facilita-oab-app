@@ -114,7 +114,7 @@ Getters síncronos após hidratação inicial. Não usa Redux/Zustand — cache 
 
 ## Chat streaming
 
-Chat usa Server-Sent Events (SSE) via `EventSource`:
+Chat usa Server-Sent Events (SSE) via `fetch` com leitura manual do stream (`ReadableStream`) — `EventSource` nativo não suporta header `Authorization` nem body `POST`:
 
 - Primeiro evento: `{conversaId}` — para novas conversas
 - Chunks intermediários: texto do mentor sendo gerado
