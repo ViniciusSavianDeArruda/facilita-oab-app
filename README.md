@@ -65,7 +65,7 @@ Depois de tirar as screenshots, descomente esse bloco:
 - **Chat mentor**: streaming em tempo real, histórico de conversas por sessão, contextualização automática com caderno de erros
 - **Simulados**: 10 questões inéditas via structured output do Gemini, modo rápido (variado) ou focado por matéria, alerta especial de Ética < 50%
 - **Caderno de erros unificado**: chat e simulado alimentam a mesma fonte, status por item (aberto → revisando → dominado), anotações com salvamento automático
-- **Cronograma adaptável**: com data de prova gera plano com reserva ~25% pra simulado/revisão, sem data vira rodízio contínuo pelas 17 matérias
+- **Cronograma adaptável**: com data de prova gera plano com reserva ~25% pra simulado/revisão, sem data vira rodízio contínuo pelas 18 matérias
 - **Estatísticas**: nota por simulado ao longo do tempo, acerto por matéria, sequência de dias estudando, funil aberto/revisando/dominado
 
 ## Arquitetura
@@ -121,7 +121,7 @@ backend/app/
 - **Headers**: X-Content-Type-Options, X-Frame-Options, Referrer-Policy
 - **Segredos**: env vars separadas por ambiente, `.env` fora do git
 - **/docs**: desabilitado em produção via `ENV=production`
-- **Dependências**: PyJWT e Starlette em versões sem CVEs conhecidos
+- **Dependências**: PyJWT pinado em versão sem CVEs conhecidos; Starlette (dependência transitiva do FastAPI) acompanhado via atualização do FastAPI
 
 ## Setup local
 
