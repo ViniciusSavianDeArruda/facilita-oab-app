@@ -166,6 +166,8 @@ Todas obrigatórias, exceto onde indicado:
 | `APP_PASSWORD` | Senha única do app | String forte |
 | `CORS_ORIGINS` | Domínios permitidos no CORS | `https://facilita-oab.vercel.app` |
 | `ENV` | Ambiente (opcional) | `production` ou vazio pra dev |
+| `GEMINI_MODEL` | Modelo do Gemini usado | Opcional, default `gemini-flash-latest` |
+| `ACCESS_TOKEN_EXPIRE_DAYS` | Validade do token JWT em dias | Opcional, default 30 |
 
 ## Prompts customizados
 
@@ -177,6 +179,7 @@ O comportamento das IAs é definido pelos `.md` em `app/prompts/`. Iterar qualid
 ## Segurança
 
 - **Auth**: `hmac.compare_digest` (timing-safe) + JWT HS256
+- **Dependências**: PyJWT pinado em versão sem CVEs conhecidos; Starlette (dependência transitiva do FastAPI) acompanhado via atualização do FastAPI
 - **Rate limit**: por IP via `slowapi` (5/min login, 60/min chat, 30/hour simulado)
 - **Headers**: X-Content-Type-Options, X-Frame-Options, Referrer-Policy
 - **CORS**: origem restrita em produção
