@@ -35,6 +35,11 @@ export function logout() {
   window.dispatchEvent(new CustomEvent('auth:changed'))
 }
 
+export function handleAuthExpired() {
+  localStorage.removeItem(TOKEN_KEY)
+  window.dispatchEvent(new CustomEvent('auth:expired'))
+}
+
 export function subscribeAuth(cb) {
   const handler = () => cb()
   window.addEventListener('auth:changed', handler)

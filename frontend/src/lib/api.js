@@ -6,7 +6,7 @@
  * - gerarSimulado: cria simulado com N questões
  */
 
-import { getToken } from "./authClient";
+import { getToken, handleAuthExpired } from "./authClient";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
 
@@ -40,7 +40,7 @@ export async function authFetch(path, options = {}) {
   const res = await fetch(apiUrl(path), { ...options, headers });
 
   if (res.status === 401) {
-    window.dispatchEvent(new CustomEvent("auth:expired"));
+    handleAuthExpired();
   }
 
   return res;
@@ -78,7 +78,7 @@ export async function* streamChat({
     signal,
   });
 
-  if (res.status === 401) window.dispatchEvent(new CustomEvent("auth:expired"));
+  if (res.status === 401) handleAuthExpired();
   if (!res.ok) {
     throw new Error(await parseErrorMessage(res));
   }
