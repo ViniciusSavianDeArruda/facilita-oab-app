@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..activity import get_client_today, register_activity
-from ..ai import client, load_prompt, model, resumo_erro_ia
+from ..ai import load_prompt, resumo_erro_ia, stream_with_fallback
 from ..db import Conversa, get_session, MensagemChat, SessionLocal
 from ..rate_limit import limiter
 from ..schemas import AtualizarTituloRequest, ChatRequest, ConversaCriada, ConversaDetalhe, ConversaResumo, MensagemChatResponse
@@ -57,8 +57,7 @@ async def stream_chat(messages: list[dict], subject: str | None = None):
 		max_output_tokens=2048,
 	)
 
-	stream = await client.aio.models.generate_content_stream(
-		model=model,
+	stream = stream_with_fallback(
 		contents=contents,
 		config=config,
 	)

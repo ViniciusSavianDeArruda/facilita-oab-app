@@ -15,7 +15,8 @@ class Settings(BaseSettings):
     ENV: str = "production"
 
     GEMINI_API_KEY: str
-    GEMINI_MODEL: str = "gemini-flash-latest"
+    GEMINI_MODEL: str = "gemini-3.5-flash"
+    GEMINI_MODEL_FALLBACK: str = "gemini-3.6-flash"
 
     CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
 

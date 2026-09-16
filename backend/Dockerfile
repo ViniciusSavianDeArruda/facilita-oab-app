@@ -1,5 +1,10 @@
 FROM python:3.12-slim
 
+# Sem isso, o stdout/stderr do Python fica bufferizado quando não há TTY
+# (caso do container) — logs (ex.: qual modelo Gemini foi usado) podem
+# demorar a aparecer ou nunca aparecer em `docker compose logs`.
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
 COPY requirements.txt .
@@ -11,8 +16,4 @@ COPY alembic.ini .
 
 EXPOSE 8000
 
-# Se for usar SQLite em produção, monte um volume persistente e aponte
-# DATABASE_URL pra ele, ex.: sqlite:////data/facilita.db (Fly.io volumes,
-# Railway volumes, disco persistente do Render). Sem isso, o arquivo é
-# apagado a cada redeploy/restart em plataformas com filesystem efêmero.
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

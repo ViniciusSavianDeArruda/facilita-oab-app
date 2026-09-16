@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..activity import get_client_today, register_activity
-from ..ai import client, load_prompt, model, resumo_erro_ia
+from ..ai import generate_with_fallback, load_prompt, resumo_erro_ia
 from ..db import get_session, ItemCaderno, ResultadoSimulado
 from ..materias import canonicalizar_materia
 from ..rate_limit import limiter
@@ -37,8 +37,7 @@ def _build_user_prompt(amount: int, subject: str | None) -> str:
 async def generate_questions(amount: int, subject: str | None = None) -> list[Question]:
 	user_prompt = _build_user_prompt(amount, subject)
 
-	response = await client.aio.models.generate_content(
-		model=model,
+	response = await generate_with_fallback(
 		contents=user_prompt,
 		config=types.GenerateContentConfig(
 			system_instruction=SYSTEM_PROMPT_SIM,

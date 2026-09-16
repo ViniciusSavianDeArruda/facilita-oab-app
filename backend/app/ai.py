@@ -1,10 +1,20 @@
+import logging
 from pathlib import Path
 import httpx
 from google import genai
 from google.genai import types
-from google.genai.errors import APIError
+from google.genai.errors import APIError, ServerError
 
 from .config import settings
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+	# Sem handler próprio, mensagens INFO some no lastResort (só mostra
+	# WARNING+) — precisamos que "qual modelo respondeu" sempre apareça.
+	_handler = logging.StreamHandler()
+	_handler.setFormatter(logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s"))
+	logger.addHandler(_handler)
 
 
 # Timeout configurado para suportar a geração completa dos simulados,
@@ -14,6 +24,52 @@ client = genai.Client(
 	http_options=types.HttpOptions(timeout=120_000)
 )
 model = settings.GEMINI_MODEL
+model_fallback = settings.GEMINI_MODEL_FALLBACK
+
+
+# Chamada não-streaming (simulado): se o modelo principal responder com
+# erro de servidor (5xx — indisponibilidade/sobrecarga), tenta de novo
+# com o modelo de fallback antes de desistir.
+async def generate_with_fallback(**kwargs):
+	try:
+		response = await client.aio.models.generate_content(model=model, **kwargs)
+		logger.info("Gemini: resposta gerada com modelo principal (%s)", model)
+		return response
+	except ServerError as error:
+		logger.warning(
+			"Gemini: modelo principal (%s) indisponível (%s %s), tentando fallback (%s)",
+			model, error.code, error.status, model_fallback,
+		)
+		response = await client.aio.models.generate_content(model=model_fallback, **kwargs)
+		logger.info("Gemini: resposta gerada com modelo fallback (%s)", model_fallback)
+		return response
+
+
+# Chamada em streaming (chat): só tenta o fallback se o erro acontecer
+# ANTES de qualquer chunk ter sido enviado — depois disso, reiniciar
+# duplicaria conteúdo já entregue ao cliente, então nesse caso propaga
+# o erro (chat.py já trata isso hoje, emitindo evento {error} no SSE).
+async def stream_with_fallback(**kwargs):
+	first_chunk_sent = False
+	try:
+		stream = await client.aio.models.generate_content_stream(model=model, **kwargs)
+		async for chunk in stream:
+			first_chunk_sent = True
+			yield chunk
+		logger.info("Gemini: stream concluído com modelo principal (%s)", model)
+		return
+	except ServerError as error:
+		if first_chunk_sent:
+			raise
+		logger.warning(
+			"Gemini: modelo principal (%s) indisponível antes do 1º chunk (%s %s), tentando fallback (%s)",
+			model, error.code, error.status, model_fallback,
+		)
+
+	stream = await client.aio.models.generate_content_stream(model=model_fallback, **kwargs)
+	async for chunk in stream:
+		yield chunk
+	logger.info("Gemini: stream concluído com modelo fallback (%s)", model_fallback)
 
 
 _PROMPTS_DIR = Path(__file__).parent / "prompts"
@@ -39,4 +95,4 @@ def resumo_erro_ia(erro: Exception) -> str:
 	return "Erro inesperado. Tenta de novo."
 
 
-__all__ = ["client", "model", "load_prompt", "resumo_erro_ia"]
+__all__ = ["client", "model", "generate_with_fallback", "stream_with_fallback", "load_prompt", "resumo_erro_ia"]
