@@ -27,6 +27,10 @@ services:
     environment:
       # Sobrescreve o .env — Postgres é o banco padrão de dev/produção.
       DATABASE_URL: postgresql+psycopg2://facilita:dev_local_only@postgres:5432/facilita
+      # Ajuda o hot-reload a funcionar corretamente no Windows
+      WATCHFILES_FORCE_POLLING: "true"
+    volumes:
+      - ./app:/app/app
     depends_on:
       postgres:
         condition: service_healthy
