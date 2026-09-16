@@ -53,7 +53,7 @@ Depois de tirar as screenshots, descomente esse bloco:
 - Migrations versionadas com Alembic
 
 **IA**
-- Google Gemini (`gemini-flash-latest`)
+- Google Gemini (`gemini-3.5-flash`, com fallback pra `gemini-3.6-flash` se indisponível)
 - Structured output pra geração de simulados
 
 **Monitoring**

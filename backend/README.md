@@ -9,7 +9,7 @@ Para visão geral do projeto, veja o [README principal](../README.md).
 - **Python 3.12** + FastAPI 0.116
 - **SQLAlchemy 2** + Alembic (migrations versionadas)
 - **PostgreSQL** (Neon em produção, Docker local em dev)
-- **Google Gemini** (`gemini-flash-latest`) para chat e simulados
+- **Google Gemini** (`gemini-3.5-flash`, com fallback pra `gemini-3.6-flash` se indisponível) para chat e simulados
 - **slowapi** para rate limiting
 - **PyJWT** para autenticação
 - **Docker** para containerização
@@ -166,7 +166,8 @@ Todas obrigatórias, exceto onde indicado:
 | `APP_PASSWORD` | Senha única do app | String forte |
 | `CORS_ORIGINS` | Domínios permitidos no CORS | `https://facilita-oab.vercel.app` |
 | `ENV` | Ambiente (opcional) | `production` ou vazio pra dev |
-| `GEMINI_MODEL` | Modelo do Gemini usado | Opcional, default `gemini-flash-latest` |
+| `GEMINI_MODEL` | Modelo do Gemini usado | Opcional, default `gemini-3.5-flash` |
+| `GEMINI_MODEL_FALLBACK` | Modelo usado se o principal ficar indisponível (5xx) | Opcional, default `gemini-3.6-flash` |
 | `ACCESS_TOKEN_EXPIRE_DAYS` | Validade do token JWT em dias | Opcional, default 30 |
 
 ## Prompts customizados
