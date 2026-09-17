@@ -1,18 +1,11 @@
 import {
   AcademicCapIcon,
-  BookmarkIcon,
   BookOpenIcon,
-  CalendarDaysIcon,
   ChartBarIcon,
-  ChartPieIcon,
-  ChatBubbleLeftRightIcon,
   CheckBadgeIcon,
+  CheckCircleIcon,
   ClockIcon,
-  FireIcon,
   FlagIcon,
-  HandRaisedIcon,
-  ListBulletIcon,
-  PencilSquareIcon,
   RocketLaunchIcon,
   ScaleIcon,
   SparklesIcon,
@@ -20,12 +13,10 @@ import {
 import { useEffect, useState } from "react";
 import { authFetchJson } from "../lib/api";
 import {
-  contarPorStatus,
   listar as listarCaderno,
   subscribe as subscribeCaderno,
 } from "../lib/caderno";
 import {
-  itemDescricao,
   loadPlano,
   planoDeHoje,
   planoEstaValido,
@@ -34,7 +25,6 @@ import {
 import {
   loadLastChat,
   subscribeActivity,
-  tempoRelativo,
 } from "../lib/lastActivity";
 import {
   diasAteProva,
@@ -92,32 +82,21 @@ function isHoje(iso) {
   );
 }
 
-function SectionLabel({ children, className = "" }) {
-  return (
-    <div
-      className={`text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-3 ${className}`}
-    >
-      {children}
-    </div>
-  );
-}
-
 export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
   const [settings, setSettings] = useState(loadSettings());
   const [lastChat, setLastChat] = useState(loadLastChat());
   const [lastSim, setLastSim] = useState(ultimoSimulado());
   const [cadItems, setCadItems] = useState(listarCaderno());
-  const [cadCounts, setCadCounts] = useState(contarPorStatus());
   const [plano, setPlano] = useState(loadPlano());
   const [streak, setStreak] = useState(0);
   const [resumo, setResumo] = useState(null);
+  const [porMateria, setPorMateria] = useState([]);
 
   useEffect(() => {
     const u1 = subscribeSettings(() => setSettings(loadSettings()));
     const u2 = subscribeActivity(() => setLastChat(loadLastChat()));
     const u3 = subscribeCaderno(() => {
       setCadItems(listarCaderno());
-      setCadCounts(contarPorStatus());
     });
     const u4 = subscribeCrono(() => setPlano(loadPlano()));
     const u5 = subscribeSimulados(() => setLastSim(ultimoSimulado()));
@@ -134,6 +113,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
     authFetchJson("/me/stats")
       .then((s) => {
         setStreak(s.streak || 0);
+        setPorMateria(s.porMateria || []);
         const totalQuestoes = s.trend.reduce((acc, t) => acc + t.total, 0);
         const totalAcertos = s.trend.reduce((acc, t) => acc + t.acertos, 0);
         setResumo({
@@ -157,27 +137,14 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
     isHoje(lastSim?.updatedAt) ||
     Boolean(diaHoje && diaHoje.itens.some((i) => i.concluido));
 
-  // Progresso até a prova, baseado em quando o plano foi gerado.
-  let progressoProva = null;
-  if (planoValido && plano.geradoEm && settings.dataProva) {
-    const inicio = new Date(plano.geradoEm).getTime();
-    const fim = new Date(settings.dataProva + "T00:00:00").getTime();
-    if (fim > inicio) {
-      progressoProva = Math.min(
-        100,
-        Math.max(0, Math.round(((Date.now() - inicio) / (fim - inicio)) * 100)),
-      );
-    }
-  }
-
   const frase = fraseDoDia(dias);
   const mostrarResumo = streak > 0 || (resumo && resumo.totalQuestoes > 0);
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="max-w-md mx-auto px-6 pt-6 pb-8 md:max-w-[1100px] md:mx-auto md:px-10">
-        {/* Header interno com wordmark + settings — mobile only, sidebar cobre desktop */}
-        <div className="flex items-baseline justify-between mb-8 md:hidden">
+    <div className="h-full overflow-y-auto bg-sand-50">
+      <div className="max-w-md mx-auto px-4 pt-6 pb-8 md:max-w-none md:mx-0 md:px-8 md:py-10">
+        {/* Header interno com wordmark + settings — mobile only. Fica FORA do card, como a sidebar. */}
+        <div className="flex items-baseline justify-between mb-4 md:hidden">
           <div>
             <span
               className="font-serif text-xl text-cream-50"
@@ -201,286 +168,223 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
           </button>
         </div>
 
-        {/* Saudação */}
-        <h1
-          className="font-serif text-3xl md:text-4xl text-cream-50 leading-tight tracking-tight mb-4 flex items-center gap-2 flex-wrap"
-          style={{ fontVariationSettings: '"opsz" 96' }}
-        >
-          {nome ? (
-            <>
-              <span>
-                {saudacao()}, <span className="text-brass">{nome}</span>
-              </span>
-              <HandRaisedIcon className="w-5 h-5 text-brass-dim shrink-0" />
-            </>
-          ) : (
-            "Bom estudo hoje."
-          )}
-        </h1>
+        {/* Card flutuante — envolve todo o conteúdo principal da Início */}
+        <div className="bg-ink-950 rounded-2xl shadow-sm p-6 md:p-10">
+          {/* ===== Bloco 1: Data + Saudação + contagem regressiva pra prova ===== */}
+          <div className="flex items-start justify-between gap-6 flex-wrap mb-4">
+            <div className="min-w-0">
+              <div className="text-[11px] tracking-widest uppercase text-brass font-medium mb-2">
+                {formatarDataCurta(new Date())}
+              </div>
+              <h1
+                className="font-serif text-3xl md:text-4xl text-cream-50 leading-tight tracking-tight flex items-center gap-2 flex-wrap"
+                style={{ fontVariationSettings: '"opsz" 96' }}
+              >
+                {nome ? (
+                  <span>
+                    {saudacao()}, <span className="text-brass">{nome}</span>.
+                  </span>
+                ) : (
+                  "Bom estudo hoje."
+                )}
+              </h1>
+            </div>
 
-        {/* Frase motivacional + sequência/lembrete */}
-        <p className="text-cream-400 text-sm mb-2 flex items-start gap-2">
-          <frase.Icon className="w-4 h-4 shrink-0 mt-0.5 text-brass-dim" />
-          <span>{frase.texto}</span>
-        </p>
-        {!estudouHoje && (
-          <button
-            onClick={() => onGoto("simulado-landing")}
-            className="text-sm text-cream-400 hover:text-brass transition-colors text-left flex items-start gap-2 mb-3"
-          >
-            <BookOpenIcon className="w-4 h-4 shrink-0 mt-0.5" />
-            <span>
-              Hoje você ainda não estudou.{" "}
-              <span className="text-brass-dim">
-                Que tal resolver um simulado rápido?
-              </span>
-            </span>
-          </button>
-        )}
-
-        {/* Resumo rápido: sequência, questões, aproveitamento */}
-        {mostrarResumo && (
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-cream-400 mb-8">
-            {streak > 0 && (
-              <span className="flex items-center gap-1.5">
-                <FireIcon className="w-4 h-4 text-brass-dim" /> Sequência:{" "}
-                {streak} {streak === 1 ? "dia" : "dias"}
-              </span>
-            )}
-            {resumo && resumo.totalQuestoes > 0 && (
-              <>
-                <span className="flex items-center gap-1.5">
-                  <ListBulletIcon className="w-4 h-4 text-brass-dim" /> Questões
-                  resolvidas: {resumo.totalQuestoes}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <ChartPieIcon className="w-4 h-4 text-brass-dim" />{" "}
-                  Aproveitamento: {resumo.aproveitamento}%
-                </span>
-              </>
-            )}
-          </div>
-        )}
-        {!mostrarResumo && <div className="mb-8" />}
-
-        {/* Próxima prova + Plano de hoje lado a lado no desktop */}
-        <div
-          className={`mb-8 ${diaHoje ? "md:grid md:grid-cols-2 md:gap-4 md:items-start" : ""}`}
-        >
-          <div>
             {dias !== null && dias >= 0 && (
-              <div className="bg-ink-900 border border-ink-800 rounded-2xl p-6">
-                <div className="flex items-center justify-between gap-3 mb-3">
-                  <div className="text-[11px] tracking-widest uppercase text-brass-dim font-medium flex items-center gap-1.5">
-                    <CalendarDaysIcon className="w-3.5 h-3.5" /> Próxima prova
-                  </div>
-                  <div className="text-xs text-cream-400">
-                    {formatarDataLonga(settings.dataProva)}
-                  </div>
+              <div className="text-right shrink-0">
+                <div className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-1">
+                  Próxima prova
                 </div>
-                <div className="flex items-baseline gap-2 mb-4">
+                <div className="flex items-baseline gap-1.5 justify-end">
                   <span
-                    className="font-serif text-5xl text-brass leading-none"
+                    className="font-serif text-4xl text-brass leading-none"
                     style={{ fontVariationSettings: '"opsz" 144' }}
                   >
                     {dias}
                   </span>
-                  <span className="text-sm text-cream-400">
-                    {dias === 1 ? "dia restante" : "dias restantes"}
-                  </span>
+                  <span className="text-sm text-cream-400">dias</span>
                 </div>
-                {progressoProva !== null && (
-                  <div className="mb-3">
-                    <div className="h-2.5 bg-ink-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-brass rounded-full transition-all duration-500"
-                        style={{ width: `${progressoProva}%` }}
-                      ></div>
-                    </div>
-                    <div className="text-[11px] text-cream-600 mt-1.5">
-                      {progressoProva}% do caminho percorrido
-                    </div>
-                  </div>
-                )}
-                <div className="text-xs text-brass-dim font-medium">
-                  {dias <= 10
-                    ? "Reta final — foque nas revisões!"
-                    : "Continue firme!"}
+                <div className="text-[11px] text-cream-600 mt-1">
+                  {formatarDataLonga(settings.dataProva)}
                 </div>
               </div>
             )}
             {dias === null && (
               <button
                 onClick={() => onGoto("cronograma-config")}
-                className="w-full h-full bg-ink-900 border border-ink-800 rounded-2xl p-6 text-left hover:border-brass-dim transition-colors"
+                className="text-right shrink-0 hover:opacity-70 transition-opacity"
               >
-                <div className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-3 flex items-center gap-1.5">
-                  <CalendarDaysIcon className="w-3.5 h-3.5" /> Próxima prova
+                <div className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-1">
+                  Próxima prova
                 </div>
                 <div
-                  className="font-serif text-5xl text-brass leading-none mb-4"
+                  className="font-serif text-4xl text-brass leading-none"
                   style={{ fontVariationSettings: '"opsz" 144' }}
                 >
                   —
                 </div>
-                <div className="text-xs text-brass-dim font-medium">
-                  Defina em Ajustar plano →
+                <div className="text-[11px] text-brass-dim mt-1">
+                  Definir em Ajustar plano
                 </div>
               </button>
             )}
             {dias !== null && dias < 0 && (
               <button
                 onClick={() => onGoto("cronograma-config")}
-                className="w-full h-full bg-ink-900 border border-ink-800 border-dashed rounded-2xl p-5 text-left hover:border-brass-dim transition-colors"
+                className="text-right shrink-0 hover:opacity-70 transition-opacity"
               >
                 <div className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-1">
                   Próxima prova
                 </div>
-                <div className="text-sm text-cream-400">
-                  A data configurada já passou. Atualize em Ajustar plano →
+                <div className="text-xs text-cream-400 max-w-[180px]">
+                  Data já passou. Atualize em Ajustar plano →
                 </div>
               </button>
             )}
           </div>
 
-          {/* Plano de hoje */}
+          <p className="text-cream-400 text-sm mb-8">
+            {frase.texto}
+            {diaHoje && diaHoje.itens.length > 0 && (
+              <>
+                {" "}
+                Hoje seu plano tem{" "}
+                <span className="text-cream-50 font-medium">
+                  {diaHoje.itens.length}{" "}
+                  {diaHoje.itens.length === 1 ? "bloco" : "blocos"}
+                </span>{" "}
+                — cerca de{" "}
+                <span className="text-cream-50 font-medium">
+                  {formatarDuracao(
+                    diaHoje.itens.reduce((acc, i) => acc + i.minutos, 0),
+                  )}
+                </span>{" "}
+                no total.
+              </>
+            )}
+          </p>
+          {!estudouHoje && (
+            <button
+              onClick={() => onGoto("simulado-landing")}
+              className="text-sm text-cream-400 hover:text-brass transition-colors text-left flex items-start gap-2 mb-8 -mt-6"
+            >
+              <BookOpenIcon className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>
+                Hoje você ainda não estudou.{" "}
+                <span className="text-brass-dim">
+                  Que tal resolver um simulado rápido?
+                </span>
+              </span>
+            </button>
+          )}
+
+          {/* ===== Bloco 2: Foco de hoje ===== */}
           {diaHoje &&
             (() => {
-              const pendentes = diaHoje.itens.filter((i) => !i.concluido);
               const totalItens = diaHoje.itens.length;
+              const concluidos = diaHoje.itens.filter((i) => i.concluido).length;
+              const materias = [
+                ...new Set(
+                  diaHoje.itens
+                    .filter((i) => i.tipo === "revisar" && i.materia)
+                    .map((i) => i.materia),
+                ),
+              ];
               return (
-                <div className="mt-8 md:mt-0">
-                  <SectionLabel>Plano de hoje</SectionLabel>
-                  <button
-                    onClick={() => onGoto("cronograma")}
-                    className="w-full text-left bg-ink-900 border border-brass-dim rounded-2xl p-5 hover:bg-ink-800/40 transition-colors group"
-                  >
-                    <div className="flex items-baseline justify-between gap-3 mb-3">
-                      <span className="text-[11px] tracking-widest uppercase text-brass font-medium">
-                        Estude hoje
-                      </span>
-                      <span className="text-xs text-cream-400 tabular-nums">
-                        {diaHoje.itens.filter((i) => i.concluido).length}/
-                        {totalItens}
-                      </span>
-                    </div>
-                    {pendentes.length === 0 ? (
-                      <p className="text-sm text-cream-400 italic">
-                        Tudo concluído hoje. Bom trabalho.
-                      </p>
-                    ) : (
-                      <div className="space-y-1.5">
-                        {pendentes.slice(0, 3).map((item, i) => (
-                          <div
-                            key={i}
-                            className="flex items-start gap-2 text-sm text-cream-50"
-                          >
-                            <span className="w-1 h-1 rounded-full bg-brass mt-2 shrink-0"></span>
-                            <span>{itemDescricao(item)}</span>
-                          </div>
-                        ))}
+                <div className="mb-8">
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <div>
+                      <div className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-1">
+                        Foco de hoje
                       </div>
-                    )}
-                    <div className="text-xs text-brass-dim mt-3 flex items-center gap-1.5 group-hover:text-brass transition-colors">
-                      Abrir o plano{" "}
-                      <span className="group-hover:translate-x-0.5 transition-transform">
-                        →
-                      </span>
+                      {materias.length > 0 && (
+                        <div
+                          className="font-serif text-xl text-cream-50"
+                          style={{ fontVariationSettings: '"opsz" 60' }}
+                        >
+                          {materias.join(" & ")}
+                        </div>
+                      )}
                     </div>
-                  </button>
+                    <span className="shrink-0 text-xs font-medium text-brass-dim bg-brass/10 px-2.5 py-1 rounded-full tabular-nums">
+                      {concluidos} de {totalItens} concluído
+                      {concluidos === 1 && totalItens === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  <div className="bg-ink-900 border border-ink-800 rounded-2xl p-5">
+                    <div className="divide-y divide-ink-800">
+                      {diaHoje.itens.map((item, i) => (
+                        <FocoHojeItem
+                          key={item.id ?? i}
+                          item={item}
+                          onGoto={onGoto}
+                        />
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => onGoto("cronograma")}
+                      className="text-xs text-brass-dim hover:text-brass mt-4 flex items-center gap-1.5 transition-colors"
+                    >
+                      Ver plano completo <span>→</span>
+                    </button>
+                  </div>
                 </div>
               );
             })()}
+
+          {/* ===== Bloco 3: Sequência + Aproveitamento (fundidos) ===== */}
+          {mostrarResumo && (
+            <div className="bg-ink-900 border border-ink-800 rounded-2xl px-6 py-4 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm text-cream-400 mb-8">
+              {streak > 0 && (
+                <span className="flex items-baseline gap-1.5">
+                  <span
+                    className="font-serif text-2xl text-cream-50"
+                    style={{ fontVariationSettings: '"opsz" 96' }}
+                  >
+                    {streak}
+                  </span>
+                  {streak === 1 ? "dia seguido" : "dias seguidos"}
+                </span>
+              )}
+              {streak > 0 && resumo && resumo.totalQuestoes > 0 && (
+                <span className="text-cream-600">·</span>
+              )}
+              {resumo && resumo.totalQuestoes > 0 && (
+                <span className="flex items-baseline gap-1.5">
+                  <span
+                    className="font-serif text-2xl text-cream-50"
+                    style={{ fontVariationSettings: '"opsz" 96' }}
+                  >
+                    {resumo.aproveitamento}%
+                  </span>
+                  de aproveitamento
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* ===== Bloco 4: Matérias que pedem atenção ===== */}
+          {porMateria.length > 0 && (
+            <div>
+              <div className="flex items-baseline justify-between gap-3 mb-3">
+                <span className="text-[11px] tracking-widest uppercase text-brass-dim font-medium">
+                  Matérias que pedem atenção
+                </span>
+                <button
+                  onClick={() => onGoto("estatisticas")}
+                  className="text-xs text-brass-dim hover:text-brass transition-colors"
+                >
+                  Ver todas →
+                </button>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                {porMateria.slice(0, 3).map((m) => (
+                  <MateriaAtencaoCard key={m.materia} m={m} onGoto={onGoto} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-
-        {/* Ações rápidas */}
-        <SectionLabel>Ações rápidas</SectionLabel>
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <button
-            onClick={() => onGoto("chat")}
-            className="bg-ink-900 border border-ink-800 rounded-2xl p-6 text-left hover:border-brass-dim hover:bg-ink-800/40 transition-colors"
-          >
-            <ChatBubbleLeftRightIcon className="w-7 h-7 mb-3 text-brass" />
-            <div className="text-sm text-cream-50 font-medium mb-1">
-              Chat IA
-            </div>
-            <div className="text-xs text-brass-dim">
-              {lastChat ? "Continuar" : "Iniciar"} →
-            </div>
-          </button>
-          <button
-            onClick={() => onGoto("simulado-landing")}
-            className="bg-ink-900 border border-ink-800 rounded-2xl p-6 text-left hover:border-brass-dim hover:bg-ink-800/40 transition-colors"
-          >
-            <PencilSquareIcon className="w-7 h-7 mb-3 text-brass" />
-            <div className="text-sm text-cream-50 font-medium mb-1">
-              Simulado
-            </div>
-            <div className="text-xs text-brass-dim">
-              {lastSim ? `${lastSim.acertos}/${lastSim.total}` : "Iniciar"} →
-            </div>
-          </button>
-          <button
-            onClick={() => onGoto("caderno")}
-            className="bg-ink-900 border border-ink-800 rounded-2xl p-6 text-left hover:border-brass-dim hover:bg-ink-800/40 transition-colors"
-          >
-            <BookmarkIcon className="w-7 h-7 mb-3 text-brass" />
-            <div className="text-sm text-cream-50 font-medium mb-1">
-              Caderno
-            </div>
-            <div className="text-xs text-brass-dim">
-              {cadCounts.aberto > 0 ? `${cadCounts.aberto} abertas` : "Em dia"}{" "}
-              →
-            </div>
-          </button>
-        </div>
-
-        {/* Atividade recente */}
-        {(lastChat || (!diaHoje && !lastChat)) && (
-          <SectionLabel>Atividade recente</SectionLabel>
-        )}
-        {lastChat && (
-          <button
-            onClick={() => onGoto("chat")}
-            className="w-full text-left bg-ink-900 border border-ink-800 rounded-2xl p-5 hover:border-brass-dim hover:bg-ink-800/40 transition-colors group"
-          >
-            <div className="flex items-center justify-between gap-3 mb-2">
-              <span className="text-sm text-cream-50 font-medium">
-                Última conversa
-              </span>
-              <span className="text-[11px] text-cream-600 shrink-0">
-                {tempoRelativo(lastChat.updatedAt)}
-              </span>
-            </div>
-            <div className="text-sm text-cream-400 italic line-clamp-2">
-              &ldquo;{lastChat.pergunta.slice(0, 100)}
-              {lastChat.pergunta.length > 100 ? "…" : ""}&rdquo;
-            </div>
-            <div className="text-xs text-brass-dim mt-3 flex items-center gap-1.5 group-hover:text-brass transition-colors">
-              Continuar{" "}
-              <span className="group-hover:translate-x-0.5 transition-transform">
-                →
-              </span>
-            </div>
-          </button>
-        )}
-
-        {!diaHoje && !lastChat && (
-          <button
-            onClick={() => onGoto("chat")}
-            className="w-full text-left bg-ink-900 border border-ink-800 rounded-2xl p-5 hover:border-brass-dim transition-colors"
-          >
-            <div
-              className="font-serif text-lg text-cream-50 mb-1"
-              style={{ fontVariationSettings: '"opsz" 60' }}
-            >
-              Ou apenas conversar
-            </div>
-            <div className="text-sm text-cream-400">
-              Pergunte qualquer coisa sobre a 1ª fase →
-            </div>
-          </button>
-        )}
 
         <button
           onClick={() => onGoto("estatisticas")}
@@ -490,6 +394,119 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
         </button>
       </div>
     </div>
+  );
+}
+
+// Título em negrito + subtítulo muted — só com campos reais do item
+// (tipo/matéria/minutos; simulado sempre tem 10 questões, é constante
+// da geração no backend, não é valor inventado).
+function focoHojeTextos(item) {
+  if (item.tipo === "simulado") {
+    return { titulo: "Simulado rápido", subtitulo: `10 questões · ~${item.minutos} min` };
+  }
+  if (item.tipo === "caderno") {
+    return { titulo: "Revisar caderno", subtitulo: `Caderno · ${item.minutos} min` };
+  }
+  return { titulo: item.materia, subtitulo: `Revisão · ${item.minutos} min` };
+}
+
+// Item individual do card "Foco de hoje" — ação padronizada à direita:
+// "Concluído" (texto), "Começar" (botão sólido, itens de simulado) ou
+// "Abrir" (link, itens de revisão/caderno).
+function FocoHojeItem({ item, onGoto }) {
+  const { titulo, subtitulo } = focoHojeTextos(item);
+
+  if (item.concluido) {
+    return (
+      <div className="flex items-center gap-3 py-3">
+        <CheckCircleIcon
+          className="w-6 h-6 shrink-0"
+          style={{ color: "#10b981" }}
+        />
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-medium text-cream-600 line-through truncate">
+            {titulo}
+          </div>
+          <div className="text-xs text-cream-600">{subtitulo}</div>
+        </div>
+        <span className="text-xs text-cream-600 shrink-0">Concluído</span>
+      </div>
+    );
+  }
+
+  const destino =
+    item.tipo === "simulado"
+      ? "simulado-landing"
+      : item.tipo === "caderno"
+        ? "caderno"
+        : "chat";
+
+  return (
+    <div className="flex items-center gap-3 py-3">
+      <span className="w-6 h-6 rounded-full border-2 border-ink-700 shrink-0"></span>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium text-cream-50 truncate">
+          {titulo}
+        </div>
+        <div className="text-xs text-cream-400">{subtitulo}</div>
+      </div>
+      {item.tipo === "simulado" ? (
+        <button
+          onClick={() => onGoto(destino)}
+          className="shrink-0 text-xs font-medium text-cream-50 bg-brass hover:bg-brass-hover px-3.5 py-2 rounded-lg transition-colors"
+        >
+          Começar
+        </button>
+      ) : (
+        <button
+          onClick={() => onGoto(destino)}
+          className="shrink-0 text-xs font-medium text-brass hover:text-brass-hover transition-colors"
+        >
+          Abrir
+        </button>
+      )}
+    </div>
+  );
+}
+
+// Cor por faixa de aproveitamento — mesmo critério de Estatisticas.jsx
+// (corPorPerformance), com par bg/texto pra pílula. Duplicado aqui pra
+// não acoplar os dois componentes.
+function corPorPerformance(pct) {
+  if (pct < 30) return { texto: "#ef4444", fundo: "#fee2e2" };
+  if (pct <= 70) return { texto: "#b45309", fundo: "#fef3c7" };
+  return { texto: "#059669", fundo: "#d1fae5" };
+}
+
+function MateriaAtencaoCard({ m, onGoto }) {
+  const p = m.total > 0 ? Math.round((m.acertos / m.total) * 100) : 0;
+  const { texto, fundo } = corPorPerformance(p);
+  return (
+    <button
+      onClick={() => onGoto("chat")}
+      className="text-left bg-ink-900 border border-ink-800 rounded-2xl p-4 hover:border-brass-dim transition-colors"
+    >
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <span className="text-sm text-cream-50 font-medium truncate">
+          {m.materia}
+        </span>
+        <span
+          className="text-xs font-semibold shrink-0 px-2 py-0.5 rounded-full"
+          style={{ color: texto, backgroundColor: fundo }}
+        >
+          {p}%
+        </span>
+      </div>
+      <div className="h-1.5 bg-ink-800 rounded-full overflow-hidden mb-2">
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: `${p}%`, backgroundColor: texto }}
+        ></div>
+      </div>
+      <span className="text-xs text-brass-dim">
+        {p < 60 ? "Revisar" : "Continuar"} →
+      </span>
+    </button>
   );
 }
 
@@ -520,6 +537,43 @@ function formatarDataLonga(iso) {
     "dez",
   ];
   return `${dias[d.getDay()]}, ${d.getDate()} de ${meses[d.getMonth()]} de ${d.getFullYear()}`;
+}
+
+// "QUARTA · 16 DE SETEMBRO" — label curto do dia atual, pro cabeçalho.
+function formatarDataCurta(d) {
+  const dias = [
+    "DOMINGO",
+    "SEGUNDA",
+    "TERÇA",
+    "QUARTA",
+    "QUINTA",
+    "SEXTA",
+    "SÁBADO",
+  ];
+  const meses = [
+    "JANEIRO",
+    "FEVEREIRO",
+    "MARÇO",
+    "ABRIL",
+    "MAIO",
+    "JUNHO",
+    "JULHO",
+    "AGOSTO",
+    "SETEMBRO",
+    "OUTUBRO",
+    "NOVEMBRO",
+    "DEZEMBRO",
+  ];
+  return `${dias[d.getDay()]} · ${d.getDate()} DE ${meses[d.getMonth()]}`;
+}
+
+// Soma de minutos -> "1h20" (ou "45 min" se for menos de 1h).
+function formatarDuracao(totalMinutos) {
+  const h = Math.floor(totalMinutos / 60);
+  const min = totalMinutos % 60;
+  if (h === 0) return `${min} min`;
+  if (min === 0) return `${h}h`;
+  return `${h}h${String(min).padStart(2, "0")}`;
 }
 
 function CogIcon() {

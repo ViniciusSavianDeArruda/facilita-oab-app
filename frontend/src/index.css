@@ -13,23 +13,31 @@ body,
 }
 
 body {
-  @apply bg-ink-950 text-cream-50 font-sans antialiased;
+  @apply bg-sand-50 text-cream-50 font-sans antialiased;
   font-feature-settings: 'ss01', 'cv11';
 }
 
 /* Scrollbar minimalista */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #F0DEDE;
+  @apply bg-brass;
   border-radius: 6px;
 }
 ::-webkit-scrollbar-thumb:hover {
+  @apply bg-brass-hover;
+}
+
+/* No Chat, o scrollbar fica neutro em vez de vinho — pedido explícito */
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background: #F0DEDE;
+}
+.chat-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #DCBDBD;
 }
 

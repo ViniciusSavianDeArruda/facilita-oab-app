@@ -217,7 +217,7 @@ export default function Chat({
     <div className="h-full flex flex-col">
       <div className="flex-1 min-h-0 w-full flex flex-col md:flex-row md:pl-5 md:pr-8">
         {/* Sidebar interna — desktop: coluna fixa à esquerda */}
-        <aside className="hidden md:flex md:w-[280px] md:flex-col md:border-r md:border-ink-700 shrink-0 overflow-y-auto">
+        <aside className="hidden md:flex md:w-[280px] md:flex-col md:border-r md:border-ink-700 shrink-0 overflow-y-auto chat-scrollbar">
           <div className="px-4 pt-8 pb-4 border-b border-ink-800">
             <button
               onClick={iniciarNovaConversa}
@@ -227,7 +227,7 @@ export default function Chat({
               Nova conversa
             </button>
           </div>
-          <div className="flex-1 px-4 py-4 overflow-y-auto">
+          <div className="flex-1 px-4 py-4 overflow-y-auto chat-scrollbar">
             {conversas.length === 0 ? (
               <p className="text-[11px] text-cream-600 px-3 py-2 leading-relaxed">
                 Suas conversas aparecem aqui.
@@ -283,7 +283,7 @@ export default function Chat({
                   <XMarkIcon className="w-5 h-5" />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto px-4 py-4">
+              <div className="flex-1 overflow-y-auto px-4 py-4 chat-scrollbar">
                 <button
                   onClick={iniciarNovaConversa}
                   className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-ink-800 hover:border-brass-dim text-sm text-cream-50 transition-colors mb-3"
@@ -323,7 +323,7 @@ export default function Chat({
         <div className="flex-1 min-w-0 flex flex-col min-h-0">
           <div
             ref={scrollRef}
-            className="flex-1 overflow-y-auto px-6 md:px-8 py-8"
+            className="flex-1 overflow-y-auto px-6 md:px-8 py-8 chat-scrollbar"
           >
             <div className="max-w-[680px] mx-auto">
               {isEmpty ? (

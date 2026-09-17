@@ -22,7 +22,7 @@ export default function Login({ onSuccess }) {
   }
 
   return (
-    <div className="h-full flex items-center justify-center px-6 bg-ink-950">
+    <div className="h-full flex items-center justify-center px-6 bg-sand-50">
       <div className="w-full max-w-sm">
         <div className="mb-10 text-center">
           <span

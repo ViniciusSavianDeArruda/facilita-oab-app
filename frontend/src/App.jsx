@@ -138,7 +138,7 @@ O gabarito é a **${questao.correta}**: "${correta}"` +
 
   if (authStatus === 'hydrating') {
     return (
-      <div className="h-full flex items-center justify-center bg-ink-950">
+      <div className="h-full flex items-center justify-center bg-sand-50">
         <div className="text-cream-400 text-sm">Carregando…</div>
       </div>
     )
@@ -152,7 +152,7 @@ O gabarito é a **${questao.correta}**: "${correta}"` +
   const showBottomNav = !HIDE_BOTTOM_NAV_ON.includes(view)
 
   return (
-    <div className="h-full flex flex-col md:flex-row bg-ink-950">
+    <div className="h-full flex flex-col md:flex-row bg-sand-50">
       {showImportPrompt && (
         <ImportBanner
           onImported={() => setShowImportPrompt(false)}
