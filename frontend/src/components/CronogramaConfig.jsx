@@ -1,3 +1,4 @@
+import { TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import {
   MATERIAS_CRONO,
@@ -72,8 +73,9 @@ export default function CronogramaConfig({ onBack, onPlanGerado }) {
   }
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="max-w-md mx-auto px-6 py-8 md:max-w-[760px] md:mx-auto md:px-10">
+    <div className="h-full overflow-y-auto bg-sand-50">
+      <div className="max-w-md mx-auto px-4 pt-6 pb-8 md:max-w-[1100px] md:mx-auto md:px-8 md:py-10">
+      <div className="bg-ink-950 rounded-2xl shadow-sm p-6 md:p-10">
         <button
           onClick={onBack}
           className="text-xs text-cream-400 hover:text-cream-50 transition-colors mb-8 flex items-center gap-1.5"
@@ -206,61 +208,59 @@ export default function CronogramaConfig({ onBack, onPlanGerado }) {
 
           {/* Preview do impacto */}
           <div className="bg-ink-900 border border-ink-800 rounded-2xl p-6 h-fit mb-8 md:mb-0 md:sticky md:top-8">
-            <div className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-4">
+            <div className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-3">
               Com esse ritmo
             </div>
             {dias !== null && dias > 0 ? (
-              <p className="text-sm text-cream-50 mb-3">
+              <h3
+                className="font-serif text-2xl text-cream-50 leading-tight mb-5"
+                style={{ fontVariationSettings: '"opsz" 60' }}
+              >
                 {formatarHoras(horasPorDia)}/dia por {dias}{" "}
                 {dias === 1 ? "dia" : "dias"}
-              </p>
+              </h3>
             ) : (
-              <p className="text-sm text-cream-50 mb-3">
+              <h3
+                className="font-serif text-2xl text-cream-50 leading-tight mb-5"
+                style={{ fontVariationSettings: '"opsz" 60' }}
+              >
                 {formatarHoras(horasPorDia)}/dia · sem data definida
-              </p>
+              </h3>
             )}
-            <ul className="space-y-1.5 text-sm text-cream-400">
-              <li className="flex items-start gap-2">
-                <span className="w-1 h-1 rounded-full bg-brass mt-2 shrink-0"></span>
-                <span>
-                  <span className="text-cream-50 font-medium">
-                    {Math.round(horasPorDia * 7)}h
-                  </span>{" "}
-                  por semana
-                </span>
-              </li>
+
+            <div className="flex items-baseline gap-2 mb-1">
+              <span
+                className="font-serif text-4xl text-brass leading-none"
+                style={{ fontVariationSettings: '"opsz" 144' }}
+              >
+                {Math.round(horasPorDia * 7)}h
+              </span>
+              <span className="text-sm text-cream-400">por semana</span>
+            </div>
+
+            <div className="divide-y divide-ink-800 mt-4">
               {dias !== null && dias > 0 && (
-                <li className="flex items-start gap-2">
-                  <span className="w-1 h-1 rounded-full bg-brass mt-2 shrink-0"></span>
-                  <span>
-                    <span className="text-cream-50 font-medium">
-                      {Math.round(horasPorDia * dias)}h
-                    </span>{" "}
-                    no total
-                  </span>
-                </li>
+                <p className="text-sm text-cream-400 py-3">
+                  <span className="text-cream-50 font-medium">
+                    {Math.round(horasPorDia * dias)}h
+                  </span>{" "}
+                  no total
+                </p>
               )}
               {(dias === null || dias <= 0) && (
-                <li className="flex items-start gap-2">
-                  <span className="w-1 h-1 rounded-full bg-brass mt-2 shrink-0"></span>
-                  <span>Rodízio contínuo — sem data de fim</span>
-                </li>
+                <p className="text-sm text-cream-400 py-3">
+                  Rodízio contínuo — sem data de fim
+                </p>
               )}
-              <li className="flex items-start gap-2">
-                <span className="w-1 h-1 rounded-full bg-brass mt-2 shrink-0"></span>
-                <span>
-                  {fracas.size > 0
-                    ? `${listarMaterias(Array.from(fracas))} recebe${fracas.size > 1 ? "m" : ""} o dobro de frequência`
-                    : "Todas as matérias no mesmo ritmo"}
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="w-1 h-1 rounded-full bg-brass mt-2 shrink-0"></span>
-                <span>
-                  Todas as {MATERIAS_CRONO.length} matérias da 1ª fase cobertas
-                </span>
-              </li>
-            </ul>
+              <p className="text-sm text-cream-400 py-3">
+                {fracas.size > 0
+                  ? `${listarMaterias(Array.from(fracas))} recebe${fracas.size > 1 ? "m" : ""} o dobro de frequência`
+                  : "Todas as matérias no mesmo ritmo"}
+              </p>
+              <p className="text-sm text-cream-400 py-3">
+                Todas as {MATERIAS_CRONO.length} matérias da 1ª fase cobertas
+              </p>
+            </div>
           </div>
         </div>
 
@@ -271,31 +271,36 @@ export default function CronogramaConfig({ onBack, onPlanGerado }) {
         )}
 
         <div>
-          <button
-            onClick={gerar}
-            className="w-full bg-brass hover:bg-brass-hover text-ink-950 font-medium py-3 rounded-xl transition-colors"
-          >
-            {planoExistente ? "Regenerar plano" : "Gerar plano"}
-          </button>
-
-          {planoExistente && (
+          <div className="flex gap-3">
             <button
-              onClick={() => {
-                if (
-                  confirm(
-                    "Apagar o plano atual? Você poderá gerar outro depois.",
-                  )
-                ) {
-                  limparPlano();
-                  onBack();
-                }
-              }}
-              className="w-full mt-3 text-xs text-cream-600 hover:text-alert transition-colors py-2"
+              onClick={gerar}
+              className="bg-brass hover:bg-brass-hover text-ink-950 font-medium py-3 px-8 rounded-xl transition-colors"
             >
-              Apagar plano atual
+              {planoExistente ? "Regenerar plano" : "Gerar plano"}
             </button>
-          )}
+
+            {planoExistente && (
+              <button
+                onClick={() => {
+                  if (
+                    confirm(
+                      "Apagar o plano atual? Você poderá gerar outro depois.",
+                    )
+                  ) {
+                    limparPlano();
+                    onBack();
+                  }
+                }}
+                aria-label="Apagar plano atual"
+                title="Apagar plano atual"
+                className="shrink-0 w-[52px] flex items-center justify-center rounded-xl border border-ink-800 text-cream-400 hover:border-alert hover:text-alert transition-colors"
+              >
+                <TrashIcon className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         </div>
+      </div>
       </div>
     </div>
   );
