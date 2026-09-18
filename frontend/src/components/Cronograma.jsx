@@ -1,3 +1,7 @@
+import {
+  AdjustmentsHorizontalIcon,
+  ClockIcon,
+} from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import {
   itemDescricao,
@@ -20,6 +24,28 @@ function finalDaSemana(dataStr) {
   return d.toISOString().slice(0, 10);
 }
 
+// "2026-09-18" -> "18/09".
+function formatarDDMM(dataStr) {
+  const d = new Date(dataStr + "T00:00:00");
+  return `${d.getDate().toString().padStart(2, "0")}/${(d.getMonth() + 1).toString().padStart(2, "0")}`;
+}
+
+// Soma de minutos -> "1h20" (ou "45 min" se for menos de 1h).
+function formatarDuracao(totalMinutos) {
+  const h = Math.floor(totalMinutos / 60);
+  const min = totalMinutos % 60;
+  if (h === 0) return `${min} min`;
+  if (min === 0) return `${h}h`;
+  return `${h}h${String(min).padStart(2, "0")}`;
+}
+
+// Cor do bullet por tipo de item.
+const CORES_TIPO = {
+  revisar: "#8B1E3F",
+  simulado: "#C23B2E",
+  caderno: "#A8536A",
+};
+
 export default function Cronograma({ onOpenConfig, onGoto }) {
   const [plano, setPlano] = useState(loadPlano());
 
@@ -40,7 +66,7 @@ export default function Cronograma({ onOpenConfig, onGoto }) {
   if (!plano || !planoValido) {
     return (
       <div className="h-full overflow-y-auto bg-sand-50">
-        <div className="max-w-md mx-auto px-4 pt-6 pb-8 md:max-w-none md:mx-0 md:px-8 md:py-10">
+        <div className="max-w-md mx-auto px-4 pt-6 pb-8 md:max-w-7xl md:mx-auto md:p-8 min-[1520px]:ml-16">
           <div className="bg-ink-950 rounded-2xl shadow-sm p-6 md:p-10">
             <h2
               className="font-serif text-3xl text-cream-50 leading-tight tracking-tight mb-3"
@@ -101,10 +127,10 @@ export default function Cronograma({ onOpenConfig, onGoto }) {
 
   return (
     <div className="h-full overflow-y-auto bg-sand-50">
-      <div className="max-w-md mx-auto px-4 pt-6 pb-8 md:max-w-none md:mx-0 md:px-8 md:py-10">
+      <div className="max-w-md mx-auto px-4 pt-6 pb-8 md:max-w-7xl md:mx-auto md:p-8 min-[1520px]:ml-16">
         <div className="bg-ink-950 rounded-2xl shadow-sm p-6 md:p-10">
           {/* Header do plano */}
-          <div className="flex items-start justify-between gap-4 mb-6">
+          <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
             <div>
               <p className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-1">
                 Plano
@@ -116,27 +142,42 @@ export default function Cronograma({ onOpenConfig, onGoto }) {
                 Próximos dias
               </h2>
             </div>
-            <button
-              onClick={onOpenConfig}
-              className="text-xs text-cream-400 hover:text-cream-50 bg-ink-950 border border-ink-800 hover:border-brass-dim px-3 py-1.5 rounded-full transition-colors flex items-center gap-1.5 shrink-0 mt-2"
-            >
-              Ajustar plano
-            </button>
+            <div className="flex items-center gap-2 shrink-0 mt-2 ml-auto">
+              {diasMostrados < totalDiasFuturos && (
+                <button
+                  onClick={() => onGoto("cronograma-completo")}
+                  className="text-xs text-cream-400 hover:text-cream-50 bg-ink-950 border border-ink-800 hover:border-brass-dim px-3 py-1.5 rounded-full transition-colors"
+                >
+                  Ver cronograma completo →
+                </button>
+              )}
+              <button
+                onClick={onOpenConfig}
+                className="text-xs text-cream-400 hover:text-cream-50 bg-ink-950 border border-ink-800 hover:border-brass-dim px-3 py-1.5 rounded-full transition-colors flex items-center gap-1.5"
+              >
+                <AdjustmentsHorizontalIcon className="w-3.5 h-3.5" />
+                Ajustar plano
+              </button>
+            </div>
           </div>
 
           {/* Progresso da semana */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3 text-xs text-cream-400 mb-2">
-              <span>
-                {concluidosSemana} de {itensSemana} dessa semana
+          <div className="mb-6">
+            <div className="flex items-center justify-between gap-3 text-xs text-cream-400 mb-2">
+              <span className="flex items-center gap-1.5">
+                <ClockIcon className="w-3.5 h-3.5 text-brass-dim shrink-0" />
+                {concluidosSemana} de {itensSemana} blocos concluídos nesta
+                semana
               </span>
-              <div className="flex-1 h-2 bg-ink-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-brass transition-all duration-500"
-                  style={{ width: `${progressoSemana}%` }}
-                ></div>
-              </div>
-              <span className="tabular-nums">{progressoSemana}%</span>
+              <span className="tabular-nums font-medium text-cream-50 shrink-0">
+                {progressoSemana}%
+              </span>
+            </div>
+            <div className="h-2 bg-ink-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-brass transition-all duration-500"
+                style={{ width: `${progressoSemana}%` }}
+              ></div>
             </div>
           </div>
 
@@ -146,9 +187,15 @@ export default function Cronograma({ onOpenConfig, onGoto }) {
           {/* Resto desta semana */}
           {restoDaSemana.length > 0 && (
             <>
-              <p className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mt-8 mb-3">
-                Esta semana
-              </p>
+              <div className="flex items-baseline justify-between gap-3 mt-8 mb-3">
+                <p className="text-[11px] tracking-widest uppercase text-brass-dim font-medium">
+                  Esta semana
+                </p>
+                <span className="text-[11px] text-cream-600">
+                  {formatarDDMM(restoDaSemana[0].data)} —{" "}
+                  {formatarDDMM(restoDaSemana[restoDaSemana.length - 1].data)}
+                </span>
+              </div>
               <div className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
                 {restoDaSemana.map((dia) => (
                   <DiaCard
@@ -165,9 +212,15 @@ export default function Cronograma({ onOpenConfig, onGoto }) {
           {/* Semana seguinte */}
           {proximaSemana.length > 0 && (
             <>
-              <p className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mt-8 mb-3">
-                Próxima semana
-              </p>
+              <div className="flex items-baseline justify-between gap-3 mt-8 mb-3">
+                <p className="text-[11px] tracking-widest uppercase text-brass-dim font-medium">
+                  Próxima semana
+                </p>
+                <span className="text-[11px] text-cream-600">
+                  {formatarDDMM(proximaSemana[0].data)} —{" "}
+                  {formatarDDMM(proximaSemana[proximaSemana.length - 1].data)}
+                </span>
+              </div>
               <div className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
                 {proximaSemana.map((dia) => (
                   <DiaCard
@@ -181,15 +234,6 @@ export default function Cronograma({ onOpenConfig, onGoto }) {
               </div>
             </>
           )}
-
-          {diasMostrados < totalDiasFuturos && (
-            <button
-              onClick={() => onGoto("cronograma-completo")}
-              className="w-full mt-6 text-xs text-cream-400 hover:text-brass border border-ink-800 hover:border-brass-dim rounded-xl py-2.5 transition-colors"
-            >
-              Ver cronograma completo →
-            </button>
-          )}
         </div>
       </div>
     </div>
@@ -198,18 +242,19 @@ export default function Cronograma({ onOpenConfig, onGoto }) {
 
 function DiaCard({ dia, isHoje, muted, onGoto }) {
   const nomeDia = nomeDiaSemana(dia.data);
-  const dataObj = new Date(dia.data + "T00:00:00");
-  const dataFormatada = `${dataObj.getDate().toString().padStart(2, "0")}/${(dataObj.getMonth() + 1).toString().padStart(2, "0")}`;
+  const dataFormatada = formatarDDMM(dia.data);
   const totalItens = dia.itens.length;
   const concluidos = dia.itens.filter((i) => i.concluido).length;
   const grupos = agruparItens(dia.itens);
+  const totalMinutos = dia.itens.reduce((acc, i) => acc + i.minutos, 0);
 
-  const cls = isHoje ? "border-brass bg-ink-900" : "border-ink-800 bg-ink-900";
-  const opacityCls = dia.concluido ? "opacity-60" : muted ? "opacity-70" : "";
+  const borderCls = isHoje ? "border-brass" : "border-ink-800";
+  const bgCls = muted ? "bg-ink-950" : "bg-ink-900";
+  const opacityCls = dia.concluido ? "opacity-60" : "";
 
   return (
-    <div className={`rounded-2xl border ${cls} ${opacityCls}`}>
-      <div className="flex items-center justify-between gap-3 px-5 py-4">
+    <div className={`rounded-2xl border ${borderCls} ${bgCls} ${opacityCls}`}>
+      <div className="flex items-center justify-between gap-3 px-5 py-3">
         <div className="flex items-baseline gap-3">
           <span
             className={`font-serif text-lg ${isHoje ? "text-brass" : "text-cream-50"}`}
@@ -224,7 +269,7 @@ function DiaCard({ dia, isHoje, muted, onGoto }) {
         </span>
       </div>
 
-      <div className="border-t border-ink-800 px-5 py-4 space-y-2">
+      <div className="border-t border-ink-800 px-5 py-3 space-y-2">
         {grupos.length === 0 ? (
           <p className="text-sm text-cream-600 italic">A definir</p>
         ) : isHoje ? (
@@ -240,15 +285,28 @@ function DiaCard({ dia, isHoje, muted, onGoto }) {
           grupos.map((grupo, idx) => <ItemRowPreview key={idx} grupo={grupo} />)
         )}
       </div>
+
+      {!isHoje && (
+        <div className="border-t border-ink-800 px-5 py-2.5 text-[11px] text-cream-600">
+          Total estimado: {formatarDuracao(totalMinutos)}
+        </div>
+      )}
     </div>
   );
+}
+
+// Pra onde o botão de ação de cada item deve levar.
+export function destinoPorTipo(tipo) {
+  if (tipo === "simulado") return "simulado-landing";
+  if (tipo === "caderno") return "caderno";
+  return "chat"; // revisar -> Chat pra tirar dúvidas da matéria
 }
 
 // Agrupa itens idênticos (mesmo tipo/matéria/duração) pra exibição
 // compacta — ex.: "2× Revisar caderno · 15 min cada". Guarda os índices
 // originais (idxs) pra permitir marcar/desmarcar o grupo inteiro de uma
 // vez em ItemRowGroup, e se todos os itens do grupo já estão concluídos.
-function agruparItens(itens) {
+export function agruparItens(itens) {
   const grupos = [];
   itens.forEach((item, idx) => {
     const chave = `${item.tipo}|${item.materia || ""}|${item.minutos}`;
@@ -275,25 +333,13 @@ function agruparItens(itens) {
 function ItemRowPreview({ grupo }) {
   const { item, count, todasConcluidas } = grupo;
   const desc = itemDescricao(item) + (count > 1 ? " cada" : "");
+  const cor = CORES_TIPO[item.tipo] || CORES_TIPO.revisar;
   return (
     <div className="flex items-center gap-3">
       <span
-        className={`shrink-0 w-5 h-5 rounded-md border flex items-center justify-center ${
-          todasConcluidas ? "bg-brass border-brass" : "bg-transparent border-ink-700"
-        }`}
-      >
-        {todasConcluidas && (
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path
-              d="M2.5 6.5L4.5 8.5L9.5 3.5"
-              stroke="#FFFCF6"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        )}
-      </span>
+        className="shrink-0 w-2.5 h-2.5 rounded-full"
+        style={{ backgroundColor: cor }}
+      ></span>
       <span
         className={`flex-1 text-sm ${todasConcluidas ? "text-cream-600 line-through" : "text-cream-400"}`}
       >
@@ -303,6 +349,35 @@ function ItemRowPreview({ grupo }) {
         {desc}
       </span>
     </div>
+  );
+}
+
+// Checkbox interativo redondo (marcado = preenchido com check) — usado
+// no card "Hoje" do Cronograma.jsx e reaproveitado no painel de detalhe
+// do dia em CronogramaCalendario.jsx, pra não duplicar o visual/estado.
+export function ItemCheckbox({ marcado, onToggle }) {
+  return (
+    <button
+      onClick={onToggle}
+      className={`shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+        marcado
+          ? "bg-brass border-brass"
+          : "bg-transparent border-ink-700 hover:border-brass-dim"
+      }`}
+      aria-label={marcado ? "Desmarcar" : "Marcar concluído"}
+    >
+      {marcado && (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path
+            d="M2.5 6.5L4.5 8.5L9.5 3.5"
+            stroke="#FFFCF6"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )}
+    </button>
   );
 }
 
@@ -319,34 +394,12 @@ function ItemRowGroup({ grupo, dataDia, onGoto }) {
   }
 
   function irPra() {
-    if (item.tipo === "simulado") onGoto("simulado-landing");
-    else if (item.tipo === "caderno") onGoto("caderno");
-    else if (item.tipo === "revisar") onGoto("chat"); // Chat pra tirar dúvidas da matéria
+    onGoto(destinoPorTipo(item.tipo));
   }
 
   return (
     <div className="flex items-center gap-3 group">
-      <button
-        onClick={toggle}
-        className={`shrink-0 w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
-          todasConcluidas
-            ? "bg-brass border-brass"
-            : "bg-transparent border-ink-700 hover:border-brass-dim"
-        }`}
-        aria-label={todasConcluidas ? "Desmarcar" : "Marcar concluído"}
-      >
-        {todasConcluidas && (
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path
-              d="M2.5 6.5L4.5 8.5L9.5 3.5"
-              stroke="#FFFCF6"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        )}
-      </button>
+      <ItemCheckbox marcado={todasConcluidas} onToggle={toggle} />
       <span
         className={`flex-1 text-sm ${todasConcluidas ? "text-cream-600 line-through" : "text-cream-50"}`}
       >

@@ -4,8 +4,12 @@ import {
   ChartBarIcon,
   CheckBadgeIcon,
   CheckCircleIcon,
+  ChevronRightIcon,
   ClockIcon,
+  ExclamationCircleIcon,
+  FireIcon,
   FlagIcon,
+  PlayIcon,
   RocketLaunchIcon,
   ScaleIcon,
   SparklesIcon,
@@ -142,7 +146,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
 
   return (
     <div className="h-full overflow-y-auto bg-sand-50">
-      <div className="max-w-md mx-auto px-4 pt-6 pb-8 md:max-w-none md:mx-0 md:px-8 md:py-10">
+      <div className="max-w-md mx-auto px-4 pt-6 pb-8 md:max-w-7xl md:mx-auto md:p-8 min-[1520px]:ml-16">
         {/* Header interno com wordmark + settings — mobile only. Fica FORA do card, como a sidebar. */}
         <div className="flex items-baseline justify-between mb-4 md:hidden">
           <div>
@@ -169,9 +173,9 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
         </div>
 
         {/* Card flutuante — envolve todo o conteúdo principal da Início */}
-        <div className="bg-ink-950 rounded-2xl shadow-sm p-6 md:p-10">
+        <div className="bg-ink-950 border border-ink-800 rounded-3xl shadow-[0_10px_35px_rgba(42,36,34,0.04)] p-6 md:p-10">
           {/* ===== Bloco 1: Data + Saudação + contagem regressiva pra prova ===== */}
-          <div className="flex items-start justify-between gap-6 flex-wrap mb-4">
+          <div className="flex items-start justify-between gap-6 flex-wrap mb-8">
             <div className="min-w-0">
               <div className="text-[11px] tracking-widest uppercase text-brass font-medium mb-2">
                 {formatarDataCurta(new Date())}
@@ -182,16 +186,51 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
               >
                 {nome ? (
                   <span>
-                    {saudacao()}, <span className="text-brass">{nome}</span>.
+                    {saudacao()}, <span className="text-brass italic">{nome}</span>.
                   </span>
                 ) : (
                   "Bom estudo hoje."
                 )}
               </h1>
+
+              <p className="text-cream-400 text-sm mt-3">
+                {frase.texto}
+                {diaHoje && diaHoje.itens.length > 0 && (
+                  <>
+                    {" "}
+                    Hoje seu plano tem{" "}
+                    <span className="text-cream-50 font-medium">
+                      {diaHoje.itens.length}{" "}
+                      {diaHoje.itens.length === 1 ? "bloco" : "blocos"}
+                    </span>{" "}
+                    — cerca de{" "}
+                    <span className="text-cream-50 font-medium">
+                      {formatarDuracao(
+                        diaHoje.itens.reduce((acc, i) => acc + i.minutos, 0),
+                      )}
+                    </span>{" "}
+                    no total.
+                  </>
+                )}
+              </p>
+              {!estudouHoje && (
+                <button
+                  onClick={() => onGoto("simulado-landing")}
+                  className="text-sm text-cream-400 hover:text-brass transition-colors text-left flex items-start gap-2 mt-2"
+                >
+                  <BookOpenIcon className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>
+                    Hoje você ainda não estudou.{" "}
+                    <span className="text-brass-dim">
+                      Que tal resolver um simulado rápido?
+                    </span>
+                  </span>
+                </button>
+              )}
             </div>
 
             {dias !== null && dias >= 0 && (
-              <div className="text-right shrink-0">
+              <div className="text-right shrink-0 border border-brass rounded-2xl px-4 py-3">
                 <div className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-1">
                   Próxima prova
                 </div>
@@ -207,12 +246,18 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                 <div className="text-[11px] text-cream-600 mt-1">
                   {formatarDataLonga(settings.dataProva)}
                 </div>
+                <button
+                  onClick={() => onGoto("cronograma-config")}
+                  className="text-[11px] text-brass-dim hover:text-brass transition-colors mt-1"
+                >
+                  Ajustar plano →
+                </button>
               </div>
             )}
             {dias === null && (
               <button
                 onClick={() => onGoto("cronograma-config")}
-                className="text-right shrink-0 hover:opacity-70 transition-opacity"
+                className="text-right shrink-0 border border-brass rounded-2xl px-4 py-3 hover:opacity-70 transition-opacity"
               >
                 <div className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-1">
                   Próxima prova
@@ -231,7 +276,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
             {dias !== null && dias < 0 && (
               <button
                 onClick={() => onGoto("cronograma-config")}
-                className="text-right shrink-0 hover:opacity-70 transition-opacity"
+                className="text-right shrink-0 border border-brass rounded-2xl px-4 py-3 hover:opacity-70 transition-opacity"
               >
                 <div className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-1">
                   Próxima prova
@@ -242,41 +287,6 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
               </button>
             )}
           </div>
-
-          <p className="text-cream-400 text-sm mb-8">
-            {frase.texto}
-            {diaHoje && diaHoje.itens.length > 0 && (
-              <>
-                {" "}
-                Hoje seu plano tem{" "}
-                <span className="text-cream-50 font-medium">
-                  {diaHoje.itens.length}{" "}
-                  {diaHoje.itens.length === 1 ? "bloco" : "blocos"}
-                </span>{" "}
-                — cerca de{" "}
-                <span className="text-cream-50 font-medium">
-                  {formatarDuracao(
-                    diaHoje.itens.reduce((acc, i) => acc + i.minutos, 0),
-                  )}
-                </span>{" "}
-                no total.
-              </>
-            )}
-          </p>
-          {!estudouHoje && (
-            <button
-              onClick={() => onGoto("simulado-landing")}
-              className="text-sm text-cream-400 hover:text-brass transition-colors text-left flex items-start gap-2 mb-8 -mt-6"
-            >
-              <BookOpenIcon className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>
-                Hoje você ainda não estudou.{" "}
-                <span className="text-brass-dim">
-                  Que tal resolver um simulado rápido?
-                </span>
-              </span>
-            </button>
-          )}
 
           {/* ===== Bloco 2: Foco de hoje ===== */}
           {diaHoje &&
@@ -334,7 +344,15 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
 
           {/* ===== Bloco 3: Sequência + Aproveitamento (fundidos) ===== */}
           {mostrarResumo && (
-            <div className="bg-ink-900 border border-ink-800 rounded-2xl px-6 py-4 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm text-cream-400 mb-8">
+            <div className="bg-ink-900 border border-ink-800 rounded-2xl px-6 py-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-cream-400 mb-8">
+              {streak > 0 && (
+                <span
+                  className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: "#F7E4EA" }}
+                >
+                  <FireIcon className="w-4 h-4 text-brass" />
+                </span>
+              )}
               {streak > 0 && (
                 <span className="flex items-baseline gap-1.5">
                   <span
@@ -367,7 +385,8 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
           {porMateria.length > 0 && (
             <div>
               <div className="flex items-baseline justify-between gap-3 mb-3">
-                <span className="text-[11px] tracking-widest uppercase text-brass-dim font-medium">
+                <span className="flex items-center gap-1.5 text-[11px] tracking-widest uppercase text-brass-dim font-medium">
+                  <ExclamationCircleIcon className="w-3.5 h-3.5 shrink-0" />
                   Matérias que pedem atenção
                 </span>
                 <button
@@ -418,7 +437,7 @@ function FocoHojeItem({ item, onGoto }) {
 
   if (item.concluido) {
     return (
-      <div className="flex items-center gap-3 py-3">
+      <div className="flex items-center gap-3 py-2.5">
         <CheckCircleIcon
           className="w-6 h-6 shrink-0"
           style={{ color: "#10b981" }}
@@ -442,7 +461,7 @@ function FocoHojeItem({ item, onGoto }) {
         : "chat";
 
   return (
-    <div className="flex items-center gap-3 py-3">
+    <div className="flex items-center gap-3 py-2.5">
       <span className="w-6 h-6 rounded-full border-2 border-ink-700 shrink-0"></span>
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium text-cream-50 truncate">
@@ -453,16 +472,16 @@ function FocoHojeItem({ item, onGoto }) {
       {item.tipo === "simulado" ? (
         <button
           onClick={() => onGoto(destino)}
-          className="shrink-0 text-xs font-medium text-cream-50 bg-brass hover:bg-brass-hover px-3.5 py-2 rounded-lg transition-colors"
+          className="shrink-0 flex items-center gap-1 text-xs font-medium text-cream-50 bg-brass hover:bg-brass-hover px-3.5 py-2 rounded-lg transition-colors"
         >
-          Começar
+          Começar <PlayIcon className="w-3 h-3" />
         </button>
       ) : (
         <button
           onClick={() => onGoto(destino)}
-          className="shrink-0 text-xs font-medium text-brass hover:text-brass-hover transition-colors"
+          className="shrink-0 flex items-center gap-0.5 text-xs font-medium text-brass hover:text-brass-hover transition-colors"
         >
-          Abrir
+          Abrir <ChevronRightIcon className="w-3.5 h-3.5" />
         </button>
       )}
     </div>
@@ -484,7 +503,7 @@ function MateriaAtencaoCard({ m, onGoto }) {
   return (
     <button
       onClick={() => onGoto("chat")}
-      className="text-left bg-ink-900 border border-ink-800 rounded-2xl p-4 hover:border-brass-dim transition-colors"
+      className="text-left bg-ink-900 border border-ink-800 rounded-2xl px-4 py-3 hover:border-brass-dim transition-colors"
     >
       <div className="flex items-center justify-between gap-2 mb-3">
         <span className="text-sm text-cream-50 font-medium truncate">
