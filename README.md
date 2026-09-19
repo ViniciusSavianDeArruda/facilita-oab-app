@@ -104,11 +104,39 @@ backend/app/
 
 ### Decisões técnicas
 
-- **Router por domínio, sem camada de service adicional**: adequado ao contexto single-user. Camada de service faria sentido em app multi-user ou multi-consumidor (HTTP + CLI + jobs), o que não é o caso.
-- **JWT com HS256 explícito**: simples pra single-user, sem cadastro/multi-tenant.
-- **Rate limit por IP**: `key_func=get_remote_address`, compartilhado entre routers via `rate_limit.py`.
-- **Streaming SSE com `SessionLocal()` explícito**: `Depends(get_session)` não tem vida garantida após `StreamingResponse` retornar, então o generator abre sessão própria pra persistência pós-streaming.
-- **`parsers.py` centralizado**: `try/except ValueError` retornando 422 estruturado em vez de 500 cru. Aplicado em 6 pontos que faziam parse de datas do usuário.
+- **PostgreSQL (Neon) em vez de SQLite**: Render Free usa
+  containers efêmeros — o disco local é recriado a cada
+  deploy/restart, o que apagaria um banco SQLite. Neon oferece
+  Postgres gerenciado no free tier sem esse risco, mantendo
+  persistência real com custo zero.
+- **SQLAlchemy como ORM**: traduz operações Python pra SQL sem
+  expor queries cruas no código, reduzindo superfície de SQL
+  Injection e tornando o acesso a dados mais legível
+  (`db.query(Caderno).filter_by(status="aberto")` em vez de SQL
+  string concatenado).
+- **Alembic pra migrations**: versiona a estrutura do banco como
+  código. Toda alteração de schema vira um arquivo de migration
+  rastreável no Git, aplicado automaticamente no startup — sem
+  edição manual de tabelas em produção.
+- **Router por domínio, sem camada de service adicional**:
+  adequado ao contexto single-user. Camada de service faria
+  sentido em app multi-user ou multi-consumidor (HTTP + CLI +
+  jobs), o que não é o caso.
+- **JWT com HS256 explícito**: simples pra single-user, sem
+  cadastro/multi-tenant.
+- **Rate limit por IP**: `key_func=get_remote_address`,
+  compartilhado entre routers via `rate_limit.py`.
+- **Streaming SSE com `SessionLocal()` explícito**:
+  `Depends(get_session)` não tem vida garantida após
+  `StreamingResponse` retornar, então o generator abre sessão
+  própria pra persistência pós-streaming.
+- **`parsers.py` centralizado**: `try/except ValueError`
+  retornando 422 estruturado em vez de 500 cru. Aplicado em 6
+  pontos que faziam parse de datas do usuário.
+- **Python no backend**: escolhido pela integração natural com
+  a SDK do Google Gemini e pelo ecossistema maduro de IA — o
+  restante da stack (FastAPI, SQLAlchemy) segue essa escolha
+  inicial.
 
 ## Segurança
 
@@ -213,7 +241,7 @@ Comportamento das IAs vem dos `.md` em `backend/app/prompts/`. Iterar qualidade 
 - Migração SQLite → PostgreSQL preservando dados
 - Refactor de `main.py`: 1104 → 112 linhas
 - 7 routers extraídos por domínio + 4 módulos cross-cutting
-- Auditoria de segurança com 27+ checks 
+- Auditoria de segurança com 27+ checks
 - 3 fixes de segurança aplicados pré-deploy (PyJWT, Starlette, 422 em vez de 500)
 - Deploy CI/CD em Render + Vercel + Neon com auto-deploy via git push
 - Monitoring com anti cold-start
