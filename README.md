@@ -56,6 +56,9 @@ Depois de tirar as screenshots, descomente esse bloco:
 - Google Gemini (`gemini-3.5-flash`, com fallback pra `gemini-3.6-flash` se indisponível)
 - Structured output pra geração de simulados
 
+**CI/CD**
+- GitHub Actions (valida build de backend e frontend a cada push)
+
 **Monitoring**
 - UptimeRobot (anti cold-start no Render Free)
 
@@ -191,12 +194,13 @@ Abre em `http://localhost:5173`. O Vite proxya `/api/*` pro backend automaticame
 
 ## Deploy em produção
 
-Fluxo CI/CD ativo via git push:
+CI/CD: GitHub Actions valida build (backend Python + frontend React) a cada push; Vercel e Render fazem deploy automático em seguida; UptimeRobot mantém o backend ativo (anti cold-start).
 
 1. `git push origin main`
-2. Render detecta push → rebuilda backend → deploy (~3 min)
-3. Vercel detecta push → rebuilda frontend → deploy (~2 min)
-4. UptimeRobot pinga `/health` a cada 5 min pra evitar cold start
+2. GitHub Actions roda `py_compile` do backend e `pnpm build` do frontend (~1 min)
+3. Render detecta push → rebuilda backend → deploy (~3 min)
+4. Vercel detecta push → rebuilda frontend → deploy (~2 min)
+5. UptimeRobot pinga `/health` a cada 5 min pra evitar cold start
 
 ### Serviços
 
@@ -243,7 +247,7 @@ Comportamento das IAs vem dos `.md` em `backend/app/prompts/`. Iterar qualidade 
 - 7 routers extraídos por domínio + 4 módulos cross-cutting
 - Auditoria de segurança com 27+ checks
 - 3 fixes de segurança aplicados pré-deploy (PyJWT, Starlette, 422 em vez de 500)
-- Deploy CI/CD em Render + Vercel + Neon com auto-deploy via git push
+- CI (GitHub Actions) validando build a cada push + deploy automático em Render + Vercel + Neon
 - Monitoring com anti cold-start
 
 ## Status do projeto

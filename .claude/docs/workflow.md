@@ -2,8 +2,8 @@
 
 ## Branches
 
-- main: produção, deploy automático (Render + Vercel) a cada push. Só recebe merge de branch já testada e aprovada.
-- wip/*: trabalho em progresso, sem deploy automático (Render/Vercel só observam main). Usar pra qualquer mudança visual ou arriscada antes de decidir levar pra produção.
+- main: produção. A cada push, GitHub Actions roda CI (valida build de backend e frontend); Render e Vercel disparam deploy automático a partir do mesmo push. Só recebe merge de branch já testada e aprovada.
+- wip/*: trabalho em progresso — o CI também roda (branches wip/** estão no gatilho do workflow), mas sem deploy (Render/Vercel só observam main). Usar pra qualquer mudança visual ou arriscada antes de decidir levar pra produção.
 
 ## Processo pra mudanças não-triviais
 
