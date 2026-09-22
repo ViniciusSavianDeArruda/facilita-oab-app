@@ -1,6 +1,7 @@
 import {
   Bars3Icon,
   EllipsisHorizontalIcon,
+  ExclamationTriangleIcon,
   PencilIcon,
   PlusIcon,
   TrashIcon,
@@ -23,14 +24,106 @@ import {
 } from "../lib/conversas";
 import { mensagemErroAmigavel } from "../lib/erros";
 import { saveLastChat } from "../lib/lastActivity";
+import { diasAteProva, loadSettings, subscribeSettings } from "../lib/settings";
 import ChatComposer from "./ChatComposer";
 
 const SUGGESTIONS = [
-  "qual o prazo do mandado de segurança?",
-  "diferença entre prescrição e decadência",
-  "cai muito CPC na prova?",
-  "resume os pontos-chave de ética profissional",
+  {
+    categoria: "Direito Constitucional",
+    pergunta: "Qual o prazo do mandado de segurança?",
+    descricao: "Lei 12.016/09 e termo inicial da contagem",
+  },
+  {
+    categoria: "Direito Civil",
+    pergunta: "Diferença entre prescrição e decadência",
+    descricao: "Critério de Agnelo Amorim e prazos legais",
+  },
+  {
+    categoria: "Processo Civil",
+    pergunta: "Cai muito CPC na prova da OAB?",
+    descricao: "Estatísticas de recursos, tutelas e execução",
+  },
+  {
+    categoria: "Ética Profissional",
+    pergunta: "Resuma os pontos-chave de ética profissional",
+    descricao: "Incompatibilidades, imunidade e infrações",
+  },
 ];
+
+// Agrupa por período — mesmos limites de diffDias que formatarDataRelativa
+// (0 = hoje, 1 = ontem, 2-6 = esta semana, 7+ = anteriores).
+function agruparPorPeriodo(conversas) {
+  const grupos = [
+    { label: "Hoje", itens: [] },
+    { label: "Ontem", itens: [] },
+    { label: "Esta semana", itens: [] },
+    { label: "Anteriores", itens: [] },
+  ];
+
+  const hoje = new Date();
+  const hojeZero = new Date(
+    hoje.getFullYear(),
+    hoje.getMonth(),
+    hoje.getDate(),
+  ).getTime();
+
+  for (const c of conversas) {
+    const d = new Date(c.atualizadaEm);
+    const dZero = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const diffDias = Math.round((hojeZero - dZero) / 86400000);
+
+    if (diffDias === 0) grupos[0].itens.push(c);
+    else if (diffDias === 1) grupos[1].itens.push(c);
+    else if (diffDias > 1 && diffDias < 7) grupos[2].itens.push(c);
+    else grupos[3].itens.push(c);
+  }
+
+  return grupos.filter((g) => g.itens.length > 0);
+}
+
+function ListaConversas({
+  conversas,
+  conversaAtivaId,
+  maxChars,
+  onSelecionar,
+  onRenomear,
+  onDeletar,
+}) {
+  if (conversas.length === 0) {
+    return (
+      <p className="text-[11px] text-cream-600 px-3 py-2 leading-relaxed">
+        Suas conversas aparecem aqui.
+      </p>
+    );
+  }
+
+  const grupos = agruparPorPeriodo(conversas);
+
+  return (
+    <div className="space-y-4">
+      {grupos.map((grupo) => (
+        <div key={grupo.label}>
+          <p className="text-[10px] tracking-widest uppercase text-cream-600 font-medium px-3 mb-1">
+            {grupo.label}
+          </p>
+          <div className="space-y-1">
+            {grupo.itens.map((c) => (
+              <ItemConversa
+                key={c.id}
+                conversa={c}
+                ativa={c.id === conversaAtivaId}
+                maxChars={maxChars}
+                onClick={() => onSelecionar(c.id)}
+                onRenomear={(titulo) => onRenomear(c.id, titulo)}
+                onDeletar={() => onDeletar(c.id)}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function Chat({
   materia,
@@ -44,14 +137,24 @@ export default function Chat({
   const [conversas, setConversas] = useState(listarConversas());
   const [conversaAtivaId, setConversaAtivaId] = useState(null);
   const [mostrarDrawer, setMostrarDrawer] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(true);
+  const [settings, setSettings] = useState(loadSettings());
   const abortRef = useRef(null);
   const scrollRef = useRef(null);
   const enviouInicialRef = useRef(false);
+  const composerRef = useRef(null);
+  const ultimoEnvioRef = useRef(null);
+
+  const dias = diasAteProva(settings.dataProva);
 
   useEffect(() => {
     const unsub = subscribeConversas(() => setConversas(listarConversas()));
     hydrateConversas();
     return unsub;
+  }, []);
+
+  useEffect(() => {
+    return subscribeSettings(() => setSettings(loadSettings()));
   }, []);
 
   // Restaura a conversa ativa salva, a menos que tenha vindo via deep-link.
@@ -152,13 +255,14 @@ export default function Chat({
     }
   }
 
-  async function send(text, tituloConversa) {
+  async function send(text, tituloConversa, baseMessages = messages) {
     const content = text.trim();
     if (!content || isStreaming) return;
 
+    ultimoEnvioRef.current = { text: content, tituloConversa };
     setError(null);
 
-    const newMessages = [...messages, { role: "user", content }];
+    const newMessages = [...baseMessages, { role: "user", content }];
     setMessages([...newMessages, { role: "assistant", content: "" }]);
     setIsStreaming(true);
 
@@ -211,13 +315,72 @@ export default function Chat({
     abortRef.current?.abort();
   }
 
+  function retry() {
+    const ultimo = ultimoEnvioRef.current;
+    if (!ultimo || isStreaming) return;
+    // A mensagem do usuário que falhou já ficou em `messages` (só o
+    // placeholder vazio do assistant foi removido no catch) — passa a
+    // lista sem ela como base, já que send() vai reempilhar o mesmo texto.
+    // (Não dá pra confiar num setMessages antes: send() leria o `messages`
+    // desta mesma render, ainda com o item velho, e duplicaria a bolha.)
+    send(ultimo.text, ultimo.tituloConversa, messages.slice(0, -1));
+  }
+
   const isEmpty = messages.length === 0;
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex-1 min-h-0 w-full flex flex-col md:flex-row md:pl-5 md:pr-8">
-        {/* Sidebar interna — desktop: coluna fixa à esquerda */}
-        <aside className="hidden md:flex md:w-[280px] md:flex-col md:border-r md:border-ink-700 shrink-0 overflow-y-auto chat-scrollbar">
+      {/* Header — título+subtítulo (ou matéria da sessão atual, se houver) +
+          contagem regressiva pra prova, mesmo dado usado no Início
+          (settings.dataProva via diasAteProva). ~68-72px de altura. */}
+      <div className="flex items-center justify-between gap-3 px-6 md:px-8 py-4 border-b border-ink-800 shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <button
+            onClick={() => setHistoryOpen((v) => !v)}
+            className="hidden md:flex text-cream-400 hover:text-cream-50 transition-colors p-1 shrink-0"
+            aria-label={historyOpen ? "Recolher histórico" : "Expandir histórico"}
+            title={historyOpen ? "Recolher histórico" : "Expandir histórico"}
+          >
+            <Bars3Icon className="w-4 h-4" />
+          </button>
+          <div className="min-w-0">
+            {materia ? (
+              <span className="font-serif text-lg text-cream-50 truncate">
+                {materia}
+              </span>
+            ) : (
+              <>
+                <h1 className="font-serif text-lg text-cream-50 leading-tight truncate">
+                  Mentor Jurídico Inteligente
+                </h1>
+                <p className="text-xs text-cream-400 mt-0.5 truncate">
+                  Tire dúvidas e revise conteúdos para a 1ª fase da OAB.
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+        {dias !== null && dias >= 0 && (
+          <div className="shrink-0 flex items-center gap-1.5 border border-brass rounded-full px-3 py-1">
+            <span className="font-serif text-brass text-sm leading-none">
+              {dias}
+            </span>
+            <span className="text-[11px] text-cream-400 leading-none">
+              dias até a 1ª Fase OAB
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex-1 min-h-0 w-full flex flex-col md:flex-row">
+        {/* Sidebar interna — desktop: coluna fixa à esquerda, recolhível via historyOpen */}
+        <aside
+          className={`hidden md:flex md:flex-col shrink-0 conversas-scrollbar transition-[width] duration-200 ${
+            historyOpen
+              ? "md:w-[270px] md:border-r md:border-ink-700 overflow-y-auto"
+              : "md:w-0 md:border-r-0 overflow-hidden"
+          }`}
+        >
           <div className="px-4 pt-8 pb-4 border-b border-ink-800">
             <button
               onClick={iniciarNovaConversa}
@@ -227,25 +390,14 @@ export default function Chat({
               Nova conversa
             </button>
           </div>
-          <div className="flex-1 px-4 py-4 overflow-y-auto chat-scrollbar">
-            {conversas.length === 0 ? (
-              <p className="text-[11px] text-cream-600 px-3 py-2 leading-relaxed">
-                Suas conversas aparecem aqui.
-              </p>
-            ) : (
-              <div className="space-y-1">
-                {conversas.map((c) => (
-                  <ItemConversa
-                    key={c.id}
-                    conversa={c}
-                    ativa={c.id === conversaAtivaId}
-                    onClick={() => selecionarConversa(c.id)}
-                    onRenomear={(titulo) => renomearConversaItem(c.id, titulo)}
-                    onDeletar={() => deletarConversaItem(c.id)}
-                  />
-                ))}
-              </div>
-            )}
+          <div className="flex-1 px-4 py-4 overflow-y-auto conversas-scrollbar">
+            <ListaConversas
+              conversas={conversas}
+              conversaAtivaId={conversaAtivaId}
+              onSelecionar={selecionarConversa}
+              onRenomear={renomearConversaItem}
+              onDeletar={deletarConversaItem}
+            />
           </div>
         </aside>
 
@@ -283,7 +435,7 @@ export default function Chat({
                   <XMarkIcon className="w-5 h-5" />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto px-4 py-4 chat-scrollbar">
+              <div className="flex-1 overflow-y-auto px-4 py-4 conversas-scrollbar">
                 <button
                   onClick={iniciarNovaConversa}
                   className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-ink-800 hover:border-brass-dim text-sm text-cream-50 transition-colors mb-3"
@@ -291,43 +443,30 @@ export default function Chat({
                   <PlusIcon className="w-4 h-4 text-brass-dim" />
                   Nova conversa
                 </button>
-                {conversas.length === 0 ? (
-                  <p className="text-[11px] text-cream-600 px-3 py-2 leading-relaxed">
-                    Suas conversas aparecem aqui.
-                  </p>
-                ) : (
-                  <div className="space-y-1">
-                    {conversas.map((c) => (
-                      <ItemConversa
-                        key={c.id}
-                        conversa={c}
-                        ativa={c.id === conversaAtivaId}
-                        maxChars={40}
-                        onClick={() => selecionarConversa(c.id)}
-                        onRenomear={(titulo) =>
-                          renomearConversaItem(c.id, titulo)
-                        }
-                        onDeletar={() => deletarConversaItem(c.id)}
-                      />
-                    ))}
-                  </div>
-                )}
+                <ListaConversas
+                  conversas={conversas}
+                  conversaAtivaId={conversaAtivaId}
+                  maxChars={40}
+                  onSelecionar={selecionarConversa}
+                  onRenomear={renomearConversaItem}
+                  onDeletar={deletarConversaItem}
+                />
               </div>
             </div>
           </div>
         )}
 
         {/* Área principal: mensagens + input — largura própria contida
-            (max-w-[680px]) mesmo com a coluna ocupando o resto da tela,
+            (max-w-[800px]) mesmo com a coluna ocupando o resto da tela,
             senão bubbles ficam esticadas demais em telas largas. */}
         <div className="flex-1 min-w-0 flex flex-col min-h-0">
           <div
             ref={scrollRef}
             className="flex-1 overflow-y-auto px-6 md:px-8 py-8 chat-scrollbar"
           >
-            <div className="max-w-[680px] mx-auto">
+            <div className="max-w-[800px] mx-auto">
               {isEmpty ? (
-                <EmptyState onPick={send} />
+                <EmptyState onPick={(texto) => composerRef.current?.fillInput(texto)} />
               ) : (
                 <div className="space-y-6">
                   {messages.map((msg, i) => (
@@ -349,8 +488,17 @@ export default function Chat({
                     />
                   ))}
                   {error && (
-                    <div className="text-sm text-alert border border-alert/30 bg-alert/5 rounded-lg px-4 py-3">
-                      {error}
+                    <div className="flex items-start gap-3 rounded-xl px-4 py-3.5 bg-[#FDF1ED] border border-[#E3D8D4]">
+                      <ExclamationTriangleIcon className="w-4 h-4 text-alert shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-cream-50">{error}</p>
+                        <button
+                          onClick={retry}
+                          className="text-xs text-brass hover:text-brass-hover font-medium mt-1.5 transition-colors"
+                        >
+                          Tentar novamente
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -359,6 +507,7 @@ export default function Chat({
           </div>
 
           <ChatComposer
+            ref={composerRef}
             onSend={send}
             onCancel={cancel}
             disabled={isStreaming}
@@ -507,7 +656,13 @@ function ItemConversa({
   );
 }
 
-function Message({ role, content, streaming, pergunta, materia }) {
+function Message({
+  role,
+  content,
+  streaming,
+  pergunta,
+  materia,
+}) {
   const [saved, setSaved] = useState(false);
 
   if (role === "user") {
@@ -561,6 +716,9 @@ function Message({ role, content, streaming, pergunta, materia }) {
 function EmptyState({ onPick }) {
   return (
     <div className="pt-16 pb-8">
+      <p className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-3">
+        Preparação focada & jurisprudência
+      </p>
       <p
         className="font-serif text-3xl md:text-4xl text-cream-50 leading-tight tracking-tight"
         style={{ fontVariationSettings: '"opsz" 96' }}
@@ -568,21 +726,30 @@ function EmptyState({ onPick }) {
         Bom estudo hoje.
       </p>
       <p className="text-cream-400 mt-3 leading-relaxed max-w-md">
-        Pergunte qualquer coisa sobre a 1ª fase. O mentor cita artigo, resume o
-        essencial e alerta sobre o que a FGV cobra.
+        Pergunte qualquer coisa sobre as matérias da 1ª fase. O Mentor cita os
+        artigos correspondentes, resume o essencial e alerta sobre as
+        pegadinhas que a FGV costuma cobrar.
       </p>
       <div className="mt-10">
         <p className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-3">
-          Sugestões
+          Sugestões rápidas para começar
         </p>
-        <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {SUGGESTIONS.map((s, i) => (
             <button
               key={i}
-              onClick={() => onPick(s)}
-              className="text-left px-4 py-3 rounded-xl bg-ink-900 border border-ink-800 hover:border-brass-dim hover:bg-ink-800/60 transition-colors text-cream-50 text-sm leading-snug"
+              onClick={() => onPick(s.pergunta)}
+              className="text-left px-4 py-3.5 rounded-xl bg-ink-900 border border-ink-800 hover:border-brass-dim hover:bg-ink-800/60 transition-colors"
             >
-              {s}
+              <div className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-1.5">
+                {s.categoria}
+              </div>
+              <div className="text-cream-50 text-sm font-medium leading-snug">
+                {s.pergunta}
+              </div>
+              <div className="text-cream-400 text-xs mt-1 leading-snug">
+                {s.descricao}
+              </div>
             </button>
           ))}
         </div>

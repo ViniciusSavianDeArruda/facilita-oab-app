@@ -1,14 +1,25 @@
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 
-export default function ChatComposer({
-  onSend,
-  onCancel,
-  disabled,
-  streaming,
-  placeholder = "Sua dúvida jurídica...",
-}) {
+const ChatComposer = forwardRef(function ChatComposer(
+  {
+    onSend,
+    onCancel,
+    disabled,
+    streaming,
+    placeholder = "Sua dúvida jurídica...",
+  },
+  ref,
+) {
   const [input, setInput] = useState("");
   const textareaRef = useRef(null);
+
+  useImperativeHandle(ref, () => ({
+    // Preenche o campo sem enviar — usado pelas sugestões da tela vazia.
+    fillInput(text) {
+      setInput(text);
+      textareaRef.current?.focus();
+    },
+  }));
 
   useEffect(() => {
     const ta = textareaRef.current;
@@ -33,7 +44,7 @@ export default function ChatComposer({
 
   return (
     <div className="border-t border-ink-800 bg-ink-950/80 backdrop-blur px-6 md:px-8 py-4">
-      <div className="max-w-[680px] mx-auto">
+      <div className="max-w-[800px] mx-auto">
         <div className="flex items-end gap-3 bg-ink-900 border border-ink-800 rounded-2xl px-4 py-3 focus-within:border-brass-dim transition-colors">
           <textarea
             ref={textareaRef}
@@ -73,7 +84,9 @@ export default function ChatComposer({
       </div>
     </div>
   );
-}
+});
+
+export default ChatComposer;
 
 function ArrowIcon() {
   return (

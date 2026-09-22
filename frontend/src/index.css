@@ -33,12 +33,19 @@ body {
   @apply bg-brass-hover;
 }
 
-/* No Chat, o scrollbar fica neutro em vez de vinho — pedido explícito */
-.chat-scrollbar::-webkit-scrollbar-thumb {
-  background: #F0DEDE;
+/* Scrollbar do Chat (área de mensagens e lista de conversas) — vinho, fino */
+.chat-scrollbar,
+.conversas-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #8B1E3F transparent;
 }
-.chat-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #DCBDBD;
+.chat-scrollbar::-webkit-scrollbar-thumb,
+.conversas-scrollbar::-webkit-scrollbar-thumb {
+  background: #8B1E3F;
+}
+.chat-scrollbar::-webkit-scrollbar-thumb:hover,
+.conversas-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #6F1731;
 }
 
 /* Estilos para markdown do mentor */
