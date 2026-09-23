@@ -4,7 +4,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import {
-  itemDescricao,
   loadPlano,
   marcarItemConcluido,
   nomeDiaSemana,
@@ -39,12 +38,27 @@ function formatarDuracao(totalMinutos) {
   return `${h}h${String(min).padStart(2, "0")}`;
 }
 
-// Cor do bullet por tipo de item.
-const CORES_TIPO = {
-  revisar: "#8B1E3F",
-  simulado: "#C23B2E",
-  caderno: "#A8536A",
-};
+function tituloAtividade(item) {
+  if (item.tipo === "simulado") return "Simulado rápido";
+  if (item.tipo === "caderno") return "Revisar caderno";
+  return item.materia || "Revisar matéria";
+}
+
+function metaAtividade(item) {
+  const tipo =
+    item.tipo === "simulado"
+      ? "Simulado"
+      : item.tipo === "caderno"
+        ? "Caderno"
+        : "Revisão";
+  return `${tipo} · ${item.minutos} min`;
+}
+
+function acaoAtividade(tipo) {
+  if (tipo === "simulado") return "Começar";
+  if (tipo === "caderno") return "Abrir";
+  return "Estudar";
+}
 
 export default function Cronograma({ onOpenConfig, onGoto }) {
   const [plano, setPlano] = useState(loadPlano());
@@ -66,29 +80,27 @@ export default function Cronograma({ onOpenConfig, onGoto }) {
   if (!plano || !planoValido) {
     return (
       <div className="h-full overflow-y-auto bg-sand-50">
-        <div className="max-w-md mx-auto px-4 pt-6 pb-8 md:max-w-7xl md:mx-auto md:p-8 min-[1520px]:ml-16">
-          <div className="bg-ink-950 rounded-2xl shadow-sm p-6 md:p-10">
-            <h2
-              className="font-serif text-3xl text-cream-50 leading-tight tracking-tight mb-3"
-              style={{ fontVariationSettings: '"opsz" 96' }}
-            >
-              {plano && !planoValido
-                ? "Seu plano ficou desatualizado."
-                : "Seu plano está vazio."}
-            </h2>
-            <p className="text-cream-400 text-sm mb-8 leading-relaxed">
-              {plano && !planoValido
-                ? "A data da prova mudou desde que ele foi gerado. Você pode regenerar mantendo suas configurações."
-                : "Gera um plano automático baseado nas suas horas por dia e matérias mais fracas. A data da prova é opcional — sem ela, vira um rodízio contínuo pelas matérias."}
-            </p>
+        <div className="max-w-md mx-auto px-4 pt-6 pb-8 md:max-w-7xl md:px-8 md:py-8">
+          <h1
+            className="font-serif text-3xl text-cream-50 leading-tight tracking-tight mb-3"
+            style={{ fontVariationSettings: '"opsz" 96' }}
+          >
+            {plano && !planoValido
+              ? "Seu plano ficou desatualizado."
+              : "Seu plano está vazio."}
+          </h1>
+          <p className="max-w-2xl text-cream-400 text-sm mb-8 leading-relaxed">
+            {plano && !planoValido
+              ? "A data da prova mudou desde que ele foi gerado. Você pode regenerar mantendo suas configurações."
+              : "Gera um plano automático baseado nas suas horas por dia e matérias mais fracas. A data da prova é opcional — sem ela, vira um rodízio contínuo pelas matérias."}
+          </p>
 
-            <button
-              onClick={onOpenConfig}
-              className="w-full bg-brass hover:bg-brass-hover text-ink-950 font-medium py-3 rounded-xl transition-colors"
-            >
-              {plano && !planoValido ? "Regenerar plano" : "Gerar meu plano"}
-            </button>
-          </div>
+          <button
+            onClick={onOpenConfig}
+            className="w-full max-w-sm min-h-12 bg-brass hover:bg-brass-hover text-ink-950 font-medium py-3 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
+          >
+            {plano && !planoValido ? "Regenerar plano" : "Gerar meu plano"}
+          </button>
         </div>
       </div>
     );
@@ -127,70 +139,78 @@ export default function Cronograma({ onOpenConfig, onGoto }) {
 
   return (
     <div className="h-full overflow-y-auto bg-sand-50">
-      <div className="max-w-md mx-auto px-4 pt-6 pb-8 md:max-w-7xl md:mx-auto md:p-8 min-[1520px]:ml-16">
-        <div className="bg-ink-950 rounded-2xl shadow-sm p-6 md:p-10">
+      <div className="max-w-md mx-auto px-4 pt-6 pb-8 md:max-w-7xl md:px-8 md:py-8">
+        <div className="bg-surface-raised border border-ink-800 rounded-3xl shadow-[0_10px_35px_rgba(42,36,34,0.04)] p-5 sm:p-6 md:p-8">
           {/* Header do plano */}
-          <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+        <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-1">
                 Plano
               </p>
-              <h2
+              <h1
                 className="font-serif text-3xl text-cream-50 leading-tight tracking-tight"
                 style={{ fontVariationSettings: '"opsz" 96' }}
               >
                 Próximos dias
-              </h2>
+              </h1>
             </div>
-            <div className="flex items-center gap-2 shrink-0 mt-2 ml-auto">
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
               {diasMostrados < totalDiasFuturos && (
                 <button
                   onClick={() => onGoto("cronograma-completo")}
-                  className="text-xs text-cream-400 hover:text-cream-50 bg-ink-950 border border-ink-800 hover:border-brass-dim px-3 py-1.5 rounded-full transition-colors"
+                  className="min-h-10 text-xs text-cream-400 hover:text-cream-50 bg-ink-950 border border-ink-800 hover:border-brass-dim px-3.5 py-2 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
                 >
                   Ver cronograma completo →
                 </button>
               )}
               <button
-                onClick={onOpenConfig}
-                className="text-xs text-cream-400 hover:text-cream-50 bg-ink-950 border border-ink-800 hover:border-brass-dim px-3 py-1.5 rounded-full transition-colors flex items-center gap-1.5"
+                  onClick={onOpenConfig}
+                className="min-h-10 text-xs text-cream-400 hover:text-cream-50 bg-ink-950 border border-ink-800 hover:border-brass-dim px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
               >
                 <AdjustmentsHorizontalIcon className="w-3.5 h-3.5" />
                 Ajustar plano
               </button>
             </div>
-          </div>
+        </div>
 
-          {/* Progresso da semana */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between gap-3 text-xs text-cream-400 mb-2">
+        {/* Progresso da semana */}
+        <section className="mb-8 max-w-2xl" aria-labelledby="progresso-sete-dias">
+            <div className="flex items-start justify-between gap-3 text-xs text-cream-400 mb-2">
               <span className="flex items-center gap-1.5">
                 <ClockIcon className="w-3.5 h-3.5 text-brass-dim shrink-0" />
-                {concluidosSemana} de {itensSemana} blocos concluídos nesta
-                semana
+                <span id="progresso-sete-dias">
+                  Próximos 7 dias: {concluidosSemana} de {itensSemana} blocos concluídos
+                </span>
               </span>
               <span className="tabular-nums font-medium text-cream-50 shrink-0">
                 {progressoSemana}%
               </span>
             </div>
-            <div className="h-2 bg-ink-800 rounded-full overflow-hidden">
+            <div
+              className="h-2 bg-ink-800 rounded-full overflow-hidden"
+              role="progressbar"
+              aria-labelledby="progresso-sete-dias"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={progressoSemana}
+            >
               <div
                 className="h-full bg-brass transition-all duration-500"
                 style={{ width: `${progressoSemana}%` }}
               ></div>
             </div>
-          </div>
+        </section>
 
-          {/* Hoje (destacado) */}
-          {hoje && <DiaCard dia={hoje} isHoje={true} onGoto={onGoto} />}
+        {/* Hoje (destacado) */}
+        {hoje && <DiaCard dia={hoje} isHoje={true} onGoto={onGoto} />}
 
           {/* Resto desta semana */}
           {restoDaSemana.length > 0 && (
-            <>
+            <section aria-labelledby="esta-semana">
               <div className="flex items-baseline justify-between gap-3 mt-8 mb-3">
-                <p className="text-[11px] tracking-widest uppercase text-brass-dim font-medium">
+                <h2 id="esta-semana" className="text-[11px] tracking-widest uppercase text-brass-dim font-medium">
                   Esta semana
-                </p>
+                </h2>
                 <span className="text-[11px] text-cream-600">
                   {formatarDDMM(restoDaSemana[0].data)} —{" "}
                   {formatarDDMM(restoDaSemana[restoDaSemana.length - 1].data)}
@@ -206,33 +226,27 @@ export default function Cronograma({ onOpenConfig, onGoto }) {
                   />
                 ))}
               </div>
-            </>
-          )}
+          </section>
+        )}
 
-          {/* Semana seguinte */}
-          {proximaSemana.length > 0 && (
-            <>
+        {/* Semana seguinte */}
+        {proximaSemana.length > 0 && (
+          <section aria-labelledby="proxima-semana">
               <div className="flex items-baseline justify-between gap-3 mt-8 mb-3">
-                <p className="text-[11px] tracking-widest uppercase text-brass-dim font-medium">
+                <h2 id="proxima-semana" className="text-[11px] tracking-widest uppercase text-brass-dim font-medium">
                   Próxima semana
-                </p>
+                </h2>
                 <span className="text-[11px] text-cream-600">
                   {formatarDDMM(proximaSemana[0].data)} —{" "}
                   {formatarDDMM(proximaSemana[proximaSemana.length - 1].data)}
                 </span>
               </div>
-              <div className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
+              <div className="bg-ink-900 border border-ink-800 rounded-2xl divide-y divide-ink-800">
                 {proximaSemana.map((dia) => (
-                  <DiaCard
-                    key={dia.data}
-                    dia={dia}
-                    isHoje={false}
-                    muted={true}
-                    onGoto={onGoto}
-                  />
+                  <DiaPlanejamentoResumo key={dia.data} dia={dia} />
                 ))}
               </div>
-            </>
+            </section>
           )}
         </div>
       </div>
@@ -240,7 +254,7 @@ export default function Cronograma({ onOpenConfig, onGoto }) {
   );
 }
 
-function DiaCard({ dia, isHoje, muted, onGoto }) {
+function DiaCard({ dia, isHoje, onGoto }) {
   const nomeDia = nomeDiaSemana(dia.data);
   const dataFormatada = formatarDDMM(dia.data);
   const totalItens = dia.itens.length;
@@ -249,27 +263,30 @@ function DiaCard({ dia, isHoje, muted, onGoto }) {
   const totalMinutos = dia.itens.reduce((acc, i) => acc + i.minutos, 0);
 
   const borderCls = isHoje ? "border-brass" : "border-ink-800";
-  const bgCls = muted ? "bg-ink-950" : "bg-ink-900";
+  const bgCls = isHoje ? "bg-brass/[0.03]" : "bg-ink-900";
   const opacityCls = dia.concluido ? "opacity-60" : "";
 
   return (
     <div className={`rounded-2xl border ${borderCls} ${bgCls} ${opacityCls}`}>
-      <div className="flex items-center justify-between gap-3 px-5 py-3">
-        <div className="flex items-baseline gap-3">
-          <span
-            className={`font-serif text-lg ${isHoje ? "text-brass" : "text-cream-50"}`}
+      <div className={`flex items-center justify-between gap-3 px-4 py-3 sm:px-5 ${isHoje ? "sm:py-4" : ""}`}>
+        <div className="min-w-0 flex items-baseline gap-2.5">
+          <h2
+            className={`font-serif ${isHoje ? "text-2xl text-brass" : "text-lg text-cream-50"}`}
             style={{ fontVariationSettings: '"opsz" 60' }}
           >
             {nomeDia}
-          </span>
-          <span className="text-xs text-cream-400">{dataFormatada}</span>
+          </h2>
+          <span className="text-xs text-cream-400 shrink-0">{dataFormatada}</span>
         </div>
-        <span className="text-xs text-cream-400 tabular-nums">
+        <span
+          className={`shrink-0 text-xs font-medium tabular-nums ${isHoje ? "rounded-full bg-brass/10 px-2.5 py-1 text-brass-dim" : "text-cream-400"}`}
+          aria-label={`${concluidos} de ${totalItens} blocos concluídos`}
+        >
           {concluidos}/{totalItens}
         </span>
       </div>
 
-      <div className="border-t border-ink-800 px-5 py-3 space-y-2">
+      <div className={`border-t border-ink-800 px-4 py-3 sm:px-5 ${isHoje ? "space-y-1.5 sm:py-4" : "space-y-2"}`}>
         {grupos.length === 0 ? (
           <p className="text-sm text-cream-600 italic">A definir</p>
         ) : isHoje ? (
@@ -287,10 +304,62 @@ function DiaCard({ dia, isHoje, muted, onGoto }) {
       </div>
 
       {!isHoje && (
-        <div className="border-t border-ink-800 px-5 py-2.5 text-[11px] text-cream-600">
+        <div className="border-t border-ink-800 px-4 py-2.5 text-[11px] text-cream-600 sm:px-5">
           Total estimado: {formatarDuracao(totalMinutos)}
         </div>
       )}
+    </div>
+  );
+}
+
+function DiaPlanejamentoResumo({ dia }) {
+  const nomeDia = nomeDiaSemana(dia.data);
+  const dataFormatada = formatarDDMM(dia.data);
+  const totalItens = dia.itens.length;
+  const concluidos = dia.itens.filter((i) => i.concluido).length;
+  const grupos = agruparItens(dia.itens);
+  const totalMinutos = dia.itens.reduce((acc, i) => acc + i.minutos, 0);
+
+  return (
+    <div className={`px-4 py-3.5 sm:px-5 ${dia.concluido ? "opacity-60" : ""}`}>
+      <div className="flex items-baseline justify-between gap-3">
+        <div className="min-w-0 flex items-baseline gap-2.5">
+          <h3
+            className="font-serif text-lg text-cream-50 leading-tight"
+            style={{ fontVariationSettings: '"opsz" 60' }}
+          >
+            {nomeDia}
+          </h3>
+          <span className="shrink-0 text-xs text-cream-400">{dataFormatada}</span>
+        </div>
+        <span
+          className="shrink-0 text-xs text-cream-400 tabular-nums"
+          aria-label={`${concluidos} de ${totalItens} blocos concluídos`}
+        >
+          {concluidos}/{totalItens}
+        </span>
+      </div>
+
+      {grupos.length > 0 ? (
+        <div className="mt-2 space-y-1.5">
+          {grupos.map((grupo) => (
+            <div key={grupo.chave}>
+              <p className={`text-xs font-medium ${grupo.todasConcluidas ? "line-through text-cream-600" : "text-cream-50"}`}>
+                {grupo.count > 1 ? `${grupo.count}× ` : ""}{tituloAtividade(grupo.item)}
+              </p>
+              <p className="mt-0.5 text-[11px] text-cream-600">
+                {metaAtividade(grupo.item)}{grupo.count > 1 ? " cada" : ""}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-1.5 text-xs text-cream-600 italic">A definir</p>
+      )}
+
+      <p className="mt-1.5 text-[11px] text-cream-600">
+        Total estimado: {formatarDuracao(totalMinutos)}
+      </p>
     </div>
   );
 }
@@ -332,22 +401,19 @@ export function agruparItens(itens) {
 // mesmo estilo do checkbox de Hoje, sem a interação de marcar/desmarcar.
 function ItemRowPreview({ grupo }) {
   const { item, count, todasConcluidas } = grupo;
-  const desc = itemDescricao(item) + (count > 1 ? " cada" : "");
-  const cor = CORES_TIPO[item.tipo] || CORES_TIPO.revisar;
   return (
-    <div className="flex items-center gap-3">
-      <span
-        className="shrink-0 w-2.5 h-2.5 rounded-full"
-        style={{ backgroundColor: cor }}
-      ></span>
-      <span
-        className={`flex-1 text-sm ${todasConcluidas ? "text-cream-600 line-through" : "text-cream-400"}`}
-      >
+    <div className="py-0.5">
+      <div className="min-w-0">
+        <p className={`text-sm font-medium ${todasConcluidas ? "text-cream-600 line-through" : "text-cream-50"}`}>
         {count > 1 && (
-          <span className="text-cream-50 font-medium">{count}× </span>
+          <span className={todasConcluidas ? "" : "text-brass-dim"}>{count}× </span>
         )}
-        {desc}
-      </span>
+          {tituloAtividade(item)}
+        </p>
+        <p className="text-xs text-cream-400 mt-0.5">
+          {metaAtividade(item)}{count > 1 ? " cada" : ""}
+        </p>
+      </div>
     </div>
   );
 }
@@ -359,10 +425,10 @@ export function ItemCheckbox({ marcado, onToggle }) {
   return (
     <button
       onClick={onToggle}
-      className={`shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+      className={`shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-ink-900 ${
         marcado
           ? "bg-brass border-brass"
-          : "bg-transparent border-ink-700 hover:border-brass-dim"
+          : "bg-transparent border-ink-700"
       }`}
       aria-label={marcado ? "Desmarcar" : "Marcar concluído"}
     >
@@ -386,7 +452,6 @@ export function ItemCheckbox({ marcado, onToggle }) {
 // caderno"), marcando/desmarcando todos de uma vez.
 function ItemRowGroup({ grupo, dataDia, onGoto }) {
   const { item, count, idxs, todasConcluidas } = grupo;
-  const desc = itemDescricao(item) + (count > 1 ? " cada" : "");
 
   function toggle() {
     const novoValor = !todasConcluidas;
@@ -398,25 +463,24 @@ function ItemRowGroup({ grupo, dataDia, onGoto }) {
   }
 
   return (
-    <div className="flex items-center gap-3 group">
+    <div className="flex items-start gap-3 py-1.5 sm:items-center">
       <ItemCheckbox marcado={todasConcluidas} onToggle={toggle} />
-      <span
-        className={`flex-1 text-sm ${todasConcluidas ? "text-cream-600 line-through" : "text-cream-50"}`}
-      >
-        {count > 1 && (
-          <span className={todasConcluidas ? "" : "text-cream-50 font-medium"}>
-            {count}×{" "}
-          </span>
-        )}
-        {desc}
-      </span>
+      <div className="flex-1 min-w-0">
+        <p className={`text-[15px] font-semibold ${todasConcluidas ? "text-cream-600 line-through" : "text-cream-50"}`}>
+          {count > 1 && <span className={todasConcluidas ? "" : "text-brass-dim"}>{count}× </span>}
+          {tituloAtividade(item)}
+        </p>
+        <p className="text-xs text-cream-400 mt-0.5">
+          {metaAtividade(item)}{count > 1 ? " cada" : ""}
+        </p>
+      </div>
       {!todasConcluidas && (
         <button
           onClick={irPra}
-          className="text-xs text-brass-dim hover:text-brass opacity-0 group-hover:opacity-100 transition-all"
-          title="Ir agora"
+          className="shrink-0 min-h-10 px-3 text-xs font-medium text-brass-dim rounded-lg transition-all sm:opacity-70 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-ink-900"
+          title={acaoAtividade(item.tipo)}
         >
-          →
+          {acaoAtividade(item.tipo)} <span aria-hidden>→</span>
         </button>
       )}
     </div>
