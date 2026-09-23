@@ -146,7 +146,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
 
   return (
     <div className="h-full overflow-y-auto bg-sand-50">
-      <div className="max-w-md mx-auto px-4 pt-6 pb-8 md:max-w-7xl md:mx-auto md:p-8 min-[1520px]:ml-16">
+      <div className="max-w-md mx-auto px-4 pt-6 pb-8 md:max-w-7xl md:px-8 md:py-8">
         {/* Header interno com wordmark + settings — mobile only. Fica FORA do card, como a sidebar. */}
         <div className="flex items-baseline justify-between mb-4 md:hidden">
           <div>
@@ -165,7 +165,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
           </div>
           <button
             onClick={onOpenSettings}
-            className="text-cream-400 hover:text-cream-50 transition-colors p-1"
+            className="w-10 h-10 -mr-2 flex items-center justify-center rounded-lg text-cream-400 hover:text-cream-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
             aria-label="Ajustes"
           >
             <CogIcon />
@@ -173,10 +173,10 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
         </div>
 
         {/* Card flutuante — envolve todo o conteúdo principal da Início */}
-        <div className="bg-ink-950 border border-ink-800 rounded-3xl shadow-[0_10px_35px_rgba(42,36,34,0.04)] p-6 md:p-10">
+        <div className="bg-ink-950 border border-ink-800 rounded-3xl shadow-[0_10px_35px_rgba(42,36,34,0.04)] p-5 sm:p-6 md:p-8">
           {/* ===== Bloco 1: Data + Saudação + contagem regressiva pra prova ===== */}
-          <div className="flex items-start justify-between gap-6 flex-wrap mb-8">
-            <div className="min-w-0">
+          <div className="flex flex-col gap-6 mb-8 md:flex-row md:items-start md:justify-between md:gap-10">
+            <div className="min-w-0 md:max-w-2xl">
               <div className="text-[11px] tracking-widest uppercase text-brass font-medium mb-2">
                 {formatarDataCurta(new Date())}
               </div>
@@ -193,7 +193,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                 )}
               </h1>
 
-              <p className="text-cream-400 text-sm mt-3">
+              <p className="text-cream-400 text-sm leading-relaxed mt-3">
                 {frase.texto}
                 {diaHoje && diaHoje.itens.length > 0 && (
                   <>
@@ -216,7 +216,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
               {!estudouHoje && (
                 <button
                   onClick={() => onGoto("simulado-landing")}
-                  className="text-sm text-cream-400 hover:text-brass transition-colors text-left flex items-start gap-2 mt-2"
+                  className="min-h-11 text-sm text-cream-400 hover:text-brass transition-colors text-left flex items-center gap-2 mt-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
                 >
                   <BookOpenIcon className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>
@@ -230,7 +230,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
             </div>
 
             {dias !== null && dias >= 0 && (
-              <div className="text-right shrink-0 border border-brass rounded-2xl px-4 py-3">
+              <div className="w-full sm:w-auto sm:min-w-[220px] text-right shrink-0 border border-brass rounded-2xl px-4 py-3">
                 <div className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-1">
                   Próxima prova
                 </div>
@@ -248,7 +248,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                 </div>
                 <button
                   onClick={() => onGoto("cronograma-config")}
-                  className="text-[11px] text-brass-dim hover:text-brass transition-colors mt-1"
+                  className="min-h-8 text-[11px] text-brass-dim hover:text-brass transition-colors mt-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
                 >
                   Ajustar plano →
                 </button>
@@ -257,7 +257,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
             {dias === null && (
               <button
                 onClick={() => onGoto("cronograma-config")}
-                className="text-right shrink-0 border border-brass rounded-2xl px-4 py-3 hover:opacity-70 transition-opacity"
+                className="w-full sm:w-auto sm:min-w-[220px] text-right shrink-0 border border-brass rounded-2xl px-4 py-3 hover:opacity-70 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
               >
                 <div className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-1">
                   Próxima prova
@@ -276,7 +276,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
             {dias !== null && dias < 0 && (
               <button
                 onClick={() => onGoto("cronograma-config")}
-                className="text-right shrink-0 border border-brass rounded-2xl px-4 py-3 hover:opacity-70 transition-opacity"
+                className="w-full sm:w-auto sm:min-w-[220px] text-right shrink-0 border border-brass rounded-2xl px-4 py-3 hover:opacity-70 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
               >
                 <div className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-1">
                   Próxima prova
@@ -288,7 +288,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
             )}
           </div>
 
-          {/* ===== Bloco 2: Foco de hoje ===== */}
+          {/*Bloco 2: Foco de hoje*/}
           {diaHoje &&
             (() => {
               const totalItens = diaHoje.itens.length;
@@ -301,27 +301,28 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                 ),
               ];
               return (
-                <div className="mb-8">
-                  <div className="flex items-start justify-between gap-3 mb-4">
+                <section className="mb-8" aria-labelledby="foco-de-hoje">
+                  <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <div className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-1">
+                      <h2
+                        id="foco-de-hoje"
+                        className="font-serif text-2xl text-cream-50 leading-tight"
+                        style={{ fontVariationSettings: '"opsz" 60' }}
+                      >
                         Foco de hoje
-                      </div>
+                      </h2>
                       {materias.length > 0 && (
-                        <div
-                          className="font-serif text-xl text-cream-50"
-                          style={{ fontVariationSettings: '"opsz" 60' }}
-                        >
+                        <p className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mt-1">
                           {materias.join(" & ")}
-                        </div>
+                        </p>
                       )}
                     </div>
-                    <span className="shrink-0 text-xs font-medium text-brass-dim bg-brass/10 px-2.5 py-1 rounded-full tabular-nums">
+                    <span className="self-start shrink-0 text-xs font-medium text-brass-dim bg-brass/10 px-3 py-1.5 rounded-full tabular-nums" aria-label={`${concluidos} de ${totalItens} blocos concluídos`}>
                       {concluidos} de {totalItens} concluído
                       {concluidos === 1 && totalItens === 1 ? "" : "s"}
                     </span>
                   </div>
-                  <div className="bg-ink-900 border border-ink-800 rounded-2xl p-5">
+                  <div className="bg-ink-900 border border-ink-800 rounded-2xl p-4 sm:p-5">
                     <div className="divide-y divide-ink-800">
                       {diaHoje.itens.map((item, i) => (
                         <FocoHojeItem
@@ -333,81 +334,91 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                     </div>
                     <button
                       onClick={() => onGoto("cronograma")}
-                      className="text-xs text-brass-dim hover:text-brass mt-4 flex items-center gap-1.5 transition-colors"
+                      className="min-h-10 text-xs text-brass-dim hover:text-brass mt-3 flex items-center gap-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-ink-900"
                     >
                       Ver plano completo <span>→</span>
                     </button>
                   </div>
-                </div>
+                </section>
               );
             })()}
 
-          {/* ===== Bloco 3: Sequência + Aproveitamento (fundidos) ===== */}
+          {/*Bloco 3: Sequência + Aproveitamento*/}
           {mostrarResumo && (
-            <div className="bg-ink-900 border border-ink-800 rounded-2xl px-6 py-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-cream-400 mb-8">
+            <section className="grid grid-cols-1 gap-3 mb-8 sm:grid-cols-2" aria-label="Progresso de estudo">
               {streak > 0 && (
-                <span
-                  className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: "#F7E4EA" }}
-                >
-                  <FireIcon className="w-4 h-4 text-brass" />
-                </span>
-              )}
-              {streak > 0 && (
-                <span className="flex items-baseline gap-1.5">
-                  <span
-                    className="font-serif text-2xl text-cream-50"
-                    style={{ fontVariationSettings: '"opsz" 96' }}
-                  >
-                    {streak}
-                  </span>
-                  {streak === 1 ? "dia seguido" : "dias seguidos"}
-                </span>
-              )}
-              {streak > 0 && resumo && resumo.totalQuestoes > 0 && (
-                <span className="text-cream-600">·</span>
+                <div className="bg-ink-900 border border-ink-800 rounded-2xl px-4 py-3.5">
+                  <div className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-2">
+                    Sequência de estudo
+                  </div>
+                  <div className="flex items-center gap-3 text-cream-400">
+                    <span
+                      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: "#F7E4EA" }}
+                      aria-hidden="true"
+                    >
+                      <FireIcon className="w-4 h-4 text-brass" />
+                    </span>
+                    <div className="flex items-baseline gap-1.5">
+                      <span
+                        className="font-serif text-2xl text-cream-50 leading-none"
+                        style={{ fontVariationSettings: '"opsz" 96' }}
+                      >
+                        {streak}
+                      </span>
+                      <span className="text-sm">
+                        {streak === 1 ? "dia seguido" : "dias seguidos"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               )}
               {resumo && resumo.totalQuestoes > 0 && (
-                <span className="flex items-baseline gap-1.5">
-                  <span
-                    className="font-serif text-2xl text-cream-50"
-                    style={{ fontVariationSettings: '"opsz" 96' }}
-                  >
-                    {resumo.aproveitamento}%
-                  </span>
-                  de aproveitamento
-                </span>
+                <div className="bg-ink-900 border border-ink-800 rounded-2xl px-4 py-3.5">
+                  <div className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-2">
+                    Aproveitamento
+                  </div>
+                  <div className="flex items-baseline gap-1.5 text-cream-400">
+                    <span
+                      className="font-serif text-2xl text-cream-50 leading-none"
+                      style={{ fontVariationSettings: '"opsz" 96' }}
+                    >
+                      {resumo.aproveitamento}%
+                    </span>
+                    <span className="text-sm">de aproveitamento</span>
+                  </div>
+                </div>
               )}
-            </div>
+            </section>
           )}
 
-          {/* ===== Bloco 4: Matérias que pedem atenção ===== */}
+          {/*Bloco 4: Matérias que pedem atenção*/}
           {porMateria.length > 0 && (
-            <div>
+            <section aria-labelledby="materias-atencao">
               <div className="flex items-baseline justify-between gap-3 mb-3">
-                <span className="flex items-center gap-1.5 text-[11px] tracking-widest uppercase text-brass-dim font-medium">
+                <h2 id="materias-atencao" className="flex items-center gap-1.5 text-[11px] tracking-widest uppercase text-brass-dim font-medium">
                   <ExclamationCircleIcon className="w-3.5 h-3.5 shrink-0" />
                   Matérias que pedem atenção
-                </span>
+                </h2>
                 <button
                   onClick={() => onGoto("estatisticas")}
-                  className="text-xs text-brass-dim hover:text-brass transition-colors"
+                  className="min-h-10 text-xs text-brass-dim hover:text-brass transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
                 >
                   Ver todas →
                 </button>
               </div>
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {porMateria.slice(0, 3).map((m) => (
                   <MateriaAtencaoCard key={m.materia} m={m} onGoto={onGoto} />
                 ))}
               </div>
-            </div>
+            </section>
           )}
         </div>
 
         <button
           onClick={() => onGoto("estatisticas")}
-          className="w-full text-left text-xs text-cream-400 hover:text-brass mt-4 py-2 flex items-center gap-1.5 transition-colors md:hidden"
+          className="w-full min-h-11 text-left text-xs text-cream-400 hover:text-brass mt-4 py-2 flex items-center gap-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 md:hidden"
         >
           Ver estatísticas de progresso <span>→</span>
         </button>
@@ -437,13 +448,13 @@ function FocoHojeItem({ item, onGoto }) {
 
   if (item.concluido) {
     return (
-      <div className="flex items-center gap-3 py-2.5">
+      <div className="flex items-start gap-3 py-2.5 sm:items-center">
         <CheckCircleIcon
           className="w-6 h-6 shrink-0"
           style={{ color: "#10b981" }}
         />
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium text-cream-600 line-through truncate">
+          <div className="text-[15px] font-semibold text-cream-600 line-through truncate">
             {titulo}
           </div>
           <div className="text-xs text-cream-600">{subtitulo}</div>
@@ -461,10 +472,10 @@ function FocoHojeItem({ item, onGoto }) {
         : "chat";
 
   return (
-    <div className="flex items-center gap-3 py-2.5">
+    <div className="flex items-start gap-3 py-2.5 sm:items-center">
       <span className="w-6 h-6 rounded-full border-2 border-ink-700 shrink-0"></span>
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-cream-50 truncate">
+        <div className="text-[15px] font-semibold text-cream-50 truncate">
           {titulo}
         </div>
         <div className="text-xs text-cream-400">{subtitulo}</div>
@@ -472,14 +483,14 @@ function FocoHojeItem({ item, onGoto }) {
       {item.tipo === "simulado" ? (
         <button
           onClick={() => onGoto(destino)}
-          className="shrink-0 flex items-center gap-1 text-xs font-medium text-cream-50 bg-brass hover:bg-brass-hover px-3.5 py-2 rounded-lg transition-colors"
+          className="shrink-0 min-h-10 flex items-center gap-1 text-xs font-medium text-cream-50 bg-brass hover:bg-brass-hover px-3.5 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-ink-900"
         >
           Começar <PlayIcon className="w-3 h-3" />
         </button>
       ) : (
         <button
           onClick={() => onGoto(destino)}
-          className="shrink-0 flex items-center gap-0.5 text-xs font-medium text-brass hover:text-brass-hover transition-colors"
+          className="shrink-0 min-h-10 flex items-center gap-0.5 text-xs font-medium text-brass hover:text-brass-hover rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-ink-900"
         >
           Abrir <ChevronRightIcon className="w-3.5 h-3.5" />
         </button>
@@ -503,9 +514,10 @@ function MateriaAtencaoCard({ m, onGoto }) {
   return (
     <button
       onClick={() => onGoto("chat")}
-      className="text-left bg-ink-900 border border-ink-800 rounded-2xl px-4 py-3 hover:border-brass-dim transition-colors"
+      className="min-h-[132px] text-left bg-ink-900 border border-ink-800 rounded-2xl p-4 hover:border-brass-dim transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950"
+      aria-label={`Revisar ${m.materia} com o mentor. Aproveitamento: ${p}%.`}
     >
-      <div className="flex items-center justify-between gap-2 mb-3">
+      <div className="flex items-center justify-between gap-2 mb-2">
         <span className="text-sm text-cream-50 font-medium truncate">
           {m.materia}
         </span>
@@ -516,14 +528,21 @@ function MateriaAtencaoCard({ m, onGoto }) {
           {p}%
         </span>
       </div>
-      <div className="h-1.5 bg-ink-800 rounded-full overflow-hidden mb-2">
+      <div
+        className="h-1.5 bg-ink-800 rounded-full overflow-hidden mb-2"
+        role="progressbar"
+        aria-label={`Aproveitamento em ${m.materia}`}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={p}
+      >
         <div
           className="h-full rounded-full transition-all"
           style={{ width: `${p}%`, backgroundColor: texto }}
         ></div>
       </div>
-      <span className="text-xs text-brass-dim">
-        {p < 60 ? "Revisar" : "Continuar"} →
+      <span className="text-xs font-medium text-brass-dim">
+        Revisar com mentor →
       </span>
     </button>
   );
