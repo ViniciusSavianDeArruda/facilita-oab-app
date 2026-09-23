@@ -53,13 +53,13 @@ const ChatComposer = forwardRef(function ChatComposer(
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             rows={1}
-            className="flex-1 bg-transparent resize-none outline-none placeholder:text-cream-600 text-cream-50 leading-relaxed py-1"
+            className="flex-1 min-w-0 bg-transparent resize-none outline-none placeholder:text-cream-600 text-cream-50 leading-relaxed py-1"
             disabled={disabled}
           />
           {streaming ? (
             <button
               onClick={onCancel}
-              className="shrink-0 h-9 w-9 rounded-full bg-ink-800 hover:bg-ink-700 text-cream-400 flex items-center justify-center transition-colors"
+              className="shrink-0 min-h-10 min-w-10 rounded-full bg-ink-800 hover:bg-ink-700 text-cream-400 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950"
               aria-label="Parar"
               title="Parar"
             >
@@ -69,7 +69,7 @@ const ChatComposer = forwardRef(function ChatComposer(
             <button
               onClick={handleSend}
               disabled={!input.trim()}
-              className="shrink-0 h-9 w-9 rounded-full bg-brass hover:bg-brass-hover disabled:bg-ink-800 disabled:text-cream-600 text-ink-950 flex items-center justify-center transition-colors"
+              className="shrink-0 min-h-10 min-w-10 rounded-full bg-brass hover:bg-brass-hover disabled:bg-ink-800 disabled:text-cream-600 disabled:cursor-not-allowed text-ink-950 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950"
               aria-label="Enviar"
               title="Enviar (Enter)"
             >
@@ -77,7 +77,7 @@ const ChatComposer = forwardRef(function ChatComposer(
             </button>
           )}
         </div>
-        <p className="text-xs text-cream-600 mt-2 px-1">
+        <p className="text-[11px] leading-relaxed text-cream-600 mt-2 px-1">
           Enter envia · Shift+Enter quebra linha · o mentor pode errar em
           jurisprudência específica, sempre confira números de súmula.
         </p>
