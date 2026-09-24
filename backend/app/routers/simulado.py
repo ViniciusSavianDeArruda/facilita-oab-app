@@ -1,5 +1,8 @@
+import asyncio
 import uuid
+import logging
 from datetime import date
+from time import perf_counter
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from google.genai import types
@@ -7,13 +10,24 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..activity import get_client_today, register_activity
-from ..ai import generate_with_fallback, load_prompt, resumo_erro_ia
+from ..ai import GenerationTimeoutError, InvalidGenerationResponseError, generate_with_fallback, load_prompt, resumo_erro_simulado, status_erro_simulado
+from ..config import settings
 from ..db import get_session, ItemCaderno, ResultadoSimulado
 from ..materias import canonicalizar_materia
 from ..rate_limit import limiter
 from ..schemas import CreateSimulationResult, Question, QuestionList, Simulation, SimuladoRequest
 from ..security import require_authentication
 from ..serializers import serialize_result
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+# O handler local é intencional: não propagar evita duplicação quando o
+# Alembic configura o handler do root durante o startup.
+logger.propagate = False
+if not logger.handlers:
+	_handler = logging.StreamHandler()
+	_handler.setFormatter(logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s"))
+	logger.addHandler(_handler)
 
 # Fluxo de simulados: prompt, geracao, serializacao e persistencia.
 SYSTEM_PROMPT_SIM = load_prompt("simulado.md")
@@ -34,28 +48,89 @@ def _build_user_prompt(amount: int, subject: str | None) -> str:
 
 
 # Pede ao modelo as questoes e valida o retorno com o schema esperado.
-async def generate_questions(amount: int, subject: str | None = None) -> list[Question]:
+async def generate_questions(
+	amount: int,
+	subject: str | None = None,
+	request_id: str | None = None,
+) -> list[Question]:
 	user_prompt = _build_user_prompt(amount, subject)
 
-	response = await generate_with_fallback(
-		contents=user_prompt,
-		config=types.GenerateContentConfig(
-			system_instruction=SYSTEM_PROMPT_SIM,
-			response_mime_type="application/json",
-			response_schema=QuestionList,
-			temperature=0.75,
-			max_output_tokens=16384,
-		),
+	try:
+		response = await generate_with_fallback(
+			request_id=request_id,
+			attempt_timeout_seconds=settings.SIMULADO_PRIMARY_TIMEOUT_SECONDS,
+			total_timeout_seconds=settings.SIMULADO_GENERATION_TIMEOUT_SECONDS,
+			fallback_on_timeout=True,
+			contents=user_prompt,
+			config=types.GenerateContentConfig(
+				system_instruction=SYSTEM_PROMPT_SIM,
+				response_mime_type="application/json",
+				response_schema=QuestionList,
+				temperature=0.75,
+				max_output_tokens=16384,
+			),
+		)
+		validated_response: QuestionList = response.parsed
+		if not isinstance(validated_response, QuestionList):
+			raise InvalidGenerationResponseError(
+				"A resposta estruturada não contém uma lista de questões válida."
+			)
+		questions = validated_response.questions
+		returned_count = len(questions)
+		if returned_count != amount:
+			logger.warning(
+				"simulado_question_count_mismatch request_id=%s requested_questions=%s returned_questions=%s",
+				request_id,
+				amount,
+				returned_count,
+			)
+			raise InvalidGenerationResponseError(
+				"A resposta estruturada contém uma quantidade de questões diferente da solicitada."
+			)
+	except GenerationTimeoutError as error:
+		logger.warning(
+			"simulado_question_parse_or_generation_failed request_id=%s exception_type=%s",
+			request_id,
+			type(error).__name__,
+		)
+		raise
+	except (AttributeError, TypeError, ValueError) as error:
+		logger.warning(
+			"simulado_question_parse_or_generation_failed request_id=%s exception_type=%s",
+			request_id,
+			type(error).__name__,
+		)
+		raise InvalidGenerationResponseError(
+			"A resposta do modelo não pôde ser validada."
+		) from error
+	except Exception as error:
+		logger.warning(
+			"simulado_question_parse_or_generation_failed request_id=%s exception_type=%s",
+			request_id,
+			type(error).__name__,
+		)
+		raise
+
+	logger.info(
+		"simulado_questions_ready request_id=%s requested_questions=%s returned_questions=%s",
+		request_id,
+		amount,
+		returned_count,
 	)
-
-	validated_response: QuestionList = response.parsed
-
-	return validated_response.questions
+	return questions
 
 
 # Cria o objeto de simulacao que o frontend consome antes da resolucao.
-async def create_simulation(mode: str, subject: str | None = None) -> Simulation:
-	questions = await generate_questions(amount=10, subject=subject)
+async def create_simulation(
+	mode: str,
+	subject: str | None = None,
+	request_id: str | None = None,
+) -> Simulation:
+	questions = await generate_questions(
+		amount=10,
+		subject=subject,
+		request_id=request_id,
+	)
 
 	# Simulado focado: usa o nome curto pedido em vez do que o Gemini
 	# escreveu por conta própria em cada questao (ele nao e consistente —
@@ -194,10 +269,45 @@ simulado_router = APIRouter(tags=["Simulados"], dependencies=[Depends(require_au
 )
 @limiter.limit("30/hour")
 async def route_create_simulation(body: SimuladoRequest, request: Request):
+	request_id = uuid.uuid4().hex
+	started_at = perf_counter()
+	requested_questions = 10
+	logger.info(
+		"simulado_generation_started request_id=%s requested_questions=%s",
+		request_id,
+		requested_questions,
+	)
 	try:
-		return await create_simulation(body.modo, body.materia)
+		try:
+			async with asyncio.timeout(settings.SIMULADO_GENERATION_TIMEOUT_SECONDS):
+				simulation = await create_simulation(
+					body.modo,
+					body.materia,
+					request_id=request_id,
+				)
+		except GenerationTimeoutError:
+			raise
+		except TimeoutError as error:
+			raise GenerationTimeoutError(
+				"A operação do simulado excedeu o prazo total disponível."
+			) from error
+		logger.info(
+			"simulado_generation_succeeded request_id=%s duration_ms=%.1f requested_questions=%s returned_questions=%s",
+			request_id,
+			(perf_counter() - started_at) * 1000,
+			requested_questions,
+			len(simulation.questoes),
+		)
+		return simulation
 	except Exception as error:
-		raise HTTPException(502, detail=resumo_erro_ia(error))
+		logger.warning(
+			"simulado_generation_failed request_id=%s duration_ms=%.1f requested_questions=%s exception_type=%s",
+			request_id,
+			(perf_counter() - started_at) * 1000,
+			requested_questions,
+			type(error).__name__,
+		)
+		raise HTTPException(status_erro_simulado(error), detail=resumo_erro_simulado(error))
 
 
 __all__ = ["simulados_router", "simulado_router"]
