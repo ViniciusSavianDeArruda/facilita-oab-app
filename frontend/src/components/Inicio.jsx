@@ -14,6 +14,7 @@ import {
   ScaleIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
+import Brand from "./Brand";
 import { useEffect, useState } from "react";
 import { authFetchJson } from "../lib/api";
 import {
@@ -149,20 +150,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
       <div className="max-w-md mx-auto px-4 pt-6 pb-8 md:max-w-7xl md:px-8 md:py-8">
         {/* Header interno com wordmark + settings — mobile only. Fica FORA do card, como a sidebar. */}
         <div className="flex items-baseline justify-between mb-4 md:hidden">
-          <div>
-            <span
-              className="font-serif text-xl text-cream-50"
-              style={{ fontVariationSettings: '"opsz" 144' }}
-            >
-              Facilita
-            </span>
-            <span
-              className="font-serif text-xl text-brass ml-1.5"
-              style={{ fontVariationSettings: '"opsz" 144' }}
-            >
-              OAB
-            </span>
-          </div>
+          <Brand size="mobile" />
           <button
             onClick={onOpenSettings}
             className="w-10 h-10 -mr-2 flex items-center justify-center rounded-lg text-cream-400 hover:text-cream-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"

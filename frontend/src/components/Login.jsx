@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Brand from "./Brand";
 import { login } from "../lib/authClient";
 
 export default function Login({ onSuccess }) {
@@ -25,18 +26,7 @@ export default function Login({ onSuccess }) {
     <div className="h-full flex items-center justify-center px-6 bg-sand-50">
       <div className="w-full max-w-sm">
         <div className="mb-10 text-center">
-          <span
-            className="font-serif text-2xl text-cream-50"
-            style={{ fontVariationSettings: '"opsz" 144' }}
-          >
-            Facilita
-          </span>
-          <span
-            className="font-serif text-2xl text-brass ml-1.5"
-            style={{ fontVariationSettings: '"opsz" 144' }}
-          >
-            OAB
-          </span>
+          <Brand size="login" />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
