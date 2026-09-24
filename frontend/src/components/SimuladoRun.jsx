@@ -19,15 +19,25 @@ export default function SimuladoRun({ simulado, onFinish, onExit }) {
     } catch {}
     return 0;
   });
-  const startedAt = useRef(() => {
+  const startedAtRef = useRef(null);
+  if (startedAtRef.current === null) {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-      if (saved && saved.id === simulado.id) return saved.startedAt;
+      if (
+        saved &&
+        saved.id === simulado.id &&
+        Number.isFinite(saved.startedAt)
+      ) {
+        startedAtRef.current = saved.startedAt;
+      }
     } catch {}
-    return Date.now();
-  }).current();
+    if (startedAtRef.current === null) startedAtRef.current = Date.now();
+  }
+  const startedAt = startedAtRef.current;
 
-  const [elapsedSec, setElapsedSec] = useState(0);
+  const [elapsedSec, setElapsedSec] = useState(() =>
+    Math.floor((Date.now() - startedAt) / 1000),
+  );
 
   // Timer
   useEffect(() => {
@@ -80,7 +90,7 @@ export default function SimuladoRun({ simulado, onFinish, onExit }) {
     if (
       respondidas === 0 ||
       confirm(
-        "Sair do simulado? Seu progresso fica salvo aqui neste navegador.",
+        "Sair do simulado? Esta tentativa será abandonada.",
       )
     ) {
       onExit();
