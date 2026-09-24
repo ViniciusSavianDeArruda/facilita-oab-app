@@ -16,7 +16,10 @@ config = context.config
 
 # Configure Python logging.
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # O FastAPI já importou os routers antes do lifespan. Preservar esses
+    # loggers evita que a configuração do Alembic silencie a instrumentação
+    # da aplicação durante as migrações de inicialização.
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 # Load the database URL from the application settings (.env).
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
