@@ -54,6 +54,12 @@ transformar esses valores em tokens, confirmar repetição e necessidade real.
   de `text-[10px]` e `text-[9px]` ficam reservados a contextos densos.
 - Títulos de destaque podem usar variação óptica da Fraunces (`opsz`).
 
+## Marca
+
+- O componente reutilizável frontend/src/components/Brand.jsx reúne o símbolo de balança, a família Fraunces e o wordmark Facilita OAB.
+- Facilita utiliza a cor escura de texto; OAB utiliza o vinho da identidade. As variantes de tamanho atendem Sidebar, Início em mobile e Login sem duplicar a marca.
+- O favicon está em frontend/public/favicon.svg e usa somente a balança em vinho, em proporção quadrada, para manter legibilidade em tamanhos reduzidos.
+
 ## Layout, superfícies e containers
 
 - Desktop usa sidebar à esquerda (`w-60`, aproximadamente 240px), com wordmark

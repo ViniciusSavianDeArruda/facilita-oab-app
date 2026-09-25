@@ -60,7 +60,8 @@ frontend/
 │   │   ├── SimuladoLanding.jsx     Escolha modo (rápido/focado)
 │   │   ├── SimuladoRun.jsx         Execução das 10 questões
 │   │   ├── SimuladoResults.jsx     Resultado + erros salvos no caderno
-│   │   ├── Caderno.jsx             Grid de cards + filtros
+│   │   ├── Caderno.jsx             Lista de registros + painel de leitura
+│   │   ├── Brand.jsx               Marca reutilizável do aplicativo
 │   │   ├── Cronograma.jsx          Plano de estudos ativo
 │   │   ├── CronogramaConfig.jsx    Configuração do cronograma
 │   │   ├── CronogramaCalendario.jsx Calendário mensal
@@ -93,7 +94,8 @@ frontend/
 ## Design
 
 - **Mobile-first**: layout otimizado pra celular, adaptado pra desktop
-- **Sidebar fixa** em desktop (280px) / **bottom nav** em mobile
+- **Sidebar fixa** em desktop (w-60, aproximadamente 240px) / **bottom nav** em mobile
+- **Caderno**: lista e painel de leitura no desktop; lista e leitura em etapas no mobile
 - **Tema claro**: paleta pêssego/vinho
 - **Interações**: salvamento automático no blur, renomeação inline (Enter salva, Esc cancela)
 
@@ -147,4 +149,4 @@ Push em `main` triggera rebuild automático.
 
 ## Status
 
-Em produção e manutenção contínua. Sem novas features planejadas — arquitetura e escopo atuais atendem ao caso de uso.
+Escopo funcional relativamente estável, com manutenção, correções e refinamentos de UX em andamento.
