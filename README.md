@@ -62,6 +62,13 @@ Depois de tirar as screenshots, descomente esse bloco:
 **Monitoring**
 - UptimeRobot (anti cold-start no Render Free)
 
+## Documentação de trabalho
+
+- [Modelos e contratos de integração](.claude/docs/data-models.md)
+- [Design System](.claude/docs/design-system.md)
+- [Fluxo de desenvolvimento](.claude/docs/workflow.md)
+- [Dívida técnica conhecida](.claude/docs/debito-tecnico.md)
+
 
 ## Features
 
@@ -254,7 +261,7 @@ Comportamento das IAs vem dos `.md` em `backend/app/prompts/`. Iterar qualidade 
 
 Em produção e manutenção contínua.
 
-Sem novas features planejadas no momento — a arquitetura e o escopo atuais atendem integralmente ao caso de uso, e adicionar complexidade sem necessidade concreta iria contra os princípios que guiaram as decisões técnicas do projeto.
+O escopo funcional está relativamente estável. A manutenção continua com atualizações de dependências, correções reativas, melhorias de confiabilidade e refinamentos pontuais de UX, sem adicionar complexidade sem necessidade concreta.
 
 Manutenção ativa contempla:
 

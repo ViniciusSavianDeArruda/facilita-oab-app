@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Brand from "./Brand";
 import { loadSettings, subscribeSettings } from "../lib/settings";
 
 export default function Sidebar({
@@ -32,22 +33,9 @@ export default function Sidebar({
   ];
 
   return (
-    <aside className="hidden md:flex w-60 flex-col gap-5 border-r border-ink-800 p-4 flex-shrink-0 bg-ink-950">
+    <aside className="hidden md:flex w-60 flex-col gap-5 border-r border-ink-800 p-4 flex-shrink-0 bg-sand-50">
       <div className="flex items-center justify-between px-2 pb-3 border-b border-ink-800">
-        <div>
-          <span
-            className="font-serif text-lg font-medium tracking-tight text-cream-50"
-            style={{ fontVariationSettings: '"opsz" 144' }}
-          >
-            Facilita
-          </span>
-          <span
-            className="font-serif text-lg font-medium text-brass ml-1"
-            style={{ fontVariationSettings: '"opsz" 144' }}
-          >
-            OAB
-          </span>
-        </div>
+        <Brand size="sidebar" />
         <button
           onClick={onOpenSettings}
           className="text-cream-400 hover:text-cream-50 transition-colors p-1"
@@ -67,8 +55,8 @@ export default function Sidebar({
               onClick={() => onGoto(item.key)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${
                 isActive
-                  ? "text-brass bg-brass/[0.08]"
-                  : "text-cream-400 hover:text-cream-50 hover:bg-ink-900"
+                  ? "text-brass bg-[#F7E4EA]"
+                  : "text-cream-400 hover:text-cream-50 hover:bg-[#F3ECE4]"
               }`}
             >
               <Icon />

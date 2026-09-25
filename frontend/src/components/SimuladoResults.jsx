@@ -219,7 +219,7 @@ export default function SimuladoResults({
             onClick={onExit}
             className="px-6 py-3 rounded-xl border border-ink-800 text-cream-400 hover:text-cream-50 hover:border-brass-dim transition-colors"
           >
-            Voltar ao chat
+            Voltar ao início
           </button>
         </div>
       </div>

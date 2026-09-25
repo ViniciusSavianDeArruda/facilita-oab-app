@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     GEMINI_MODEL: str = "gemini-3.5-flash"
     GEMINI_MODEL_FALLBACK: str = "gemini-3.6-flash"
 
+    # O simulado é uma resposta estruturada maior que o chat. O prazo total
+    # evita somar dois timeouts longos quando o fallback é necessário.
+    SIMULADO_GENERATION_TIMEOUT_SECONDS: float = 90.0
+    SIMULADO_PRIMARY_TIMEOUT_SECONDS: float = 60.0
+
     CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
 
     APP_PASSWORD: str

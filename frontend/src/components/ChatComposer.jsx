@@ -1,14 +1,25 @@
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 
-export default function ChatComposer({
-  onSend,
-  onCancel,
-  disabled,
-  streaming,
-  placeholder = "Sua dúvida jurídica...",
-}) {
+const ChatComposer = forwardRef(function ChatComposer(
+  {
+    onSend,
+    onCancel,
+    disabled,
+    streaming,
+    placeholder = "Sua dúvida jurídica...",
+  },
+  ref,
+) {
   const [input, setInput] = useState("");
   const textareaRef = useRef(null);
+
+  useImperativeHandle(ref, () => ({
+    // Preenche o campo sem enviar — usado pelas sugestões da tela vazia.
+    fillInput(text) {
+      setInput(text);
+      textareaRef.current?.focus();
+    },
+  }));
 
   useEffect(() => {
     const ta = textareaRef.current;
@@ -33,7 +44,7 @@ export default function ChatComposer({
 
   return (
     <div className="border-t border-ink-800 bg-ink-950/80 backdrop-blur px-6 md:px-8 py-4">
-      <div className="max-w-[680px] mx-auto">
+      <div className="max-w-[800px] mx-auto">
         <div className="flex items-end gap-3 bg-ink-900 border border-ink-800 rounded-2xl px-4 py-3 focus-within:border-brass-dim transition-colors">
           <textarea
             ref={textareaRef}
@@ -42,13 +53,13 @@ export default function ChatComposer({
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             rows={1}
-            className="flex-1 bg-transparent resize-none outline-none placeholder:text-cream-600 text-cream-50 leading-relaxed py-1"
+            className="flex-1 min-w-0 bg-transparent resize-none outline-none placeholder:text-cream-600 text-cream-50 leading-relaxed py-1"
             disabled={disabled}
           />
           {streaming ? (
             <button
               onClick={onCancel}
-              className="shrink-0 h-9 w-9 rounded-full bg-ink-800 hover:bg-ink-700 text-cream-400 flex items-center justify-center transition-colors"
+              className="shrink-0 min-h-10 min-w-10 rounded-full bg-ink-800 hover:bg-ink-700 text-cream-400 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950"
               aria-label="Parar"
               title="Parar"
             >
@@ -58,7 +69,7 @@ export default function ChatComposer({
             <button
               onClick={handleSend}
               disabled={!input.trim()}
-              className="shrink-0 h-9 w-9 rounded-full bg-brass hover:bg-brass-hover disabled:bg-ink-800 disabled:text-cream-600 text-ink-950 flex items-center justify-center transition-colors"
+              className="shrink-0 min-h-10 min-w-10 rounded-full bg-brass hover:bg-brass-hover disabled:bg-ink-800 disabled:text-cream-600 disabled:cursor-not-allowed text-ink-950 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950"
               aria-label="Enviar"
               title="Enviar (Enter)"
             >
@@ -66,14 +77,16 @@ export default function ChatComposer({
             </button>
           )}
         </div>
-        <p className="text-xs text-cream-600 mt-2 px-1">
+        <p className="text-[11px] leading-relaxed text-cream-600 mt-2 px-1">
           Enter envia · Shift+Enter quebra linha · o mentor pode errar em
           jurisprudência específica, sempre confira números de súmula.
         </p>
       </div>
     </div>
   );
-}
+});
+
+export default ChatComposer;
 
 function ArrowIcon() {
   return (

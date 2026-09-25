@@ -1,22 +1,38 @@
-# Facilita OAB — Contexto do projeto
+# Facilita OAB
 
-Companion de estudos pra 1ª fase do Exame da OAB, com mentor jurídico via IA, simulados inéditos, caderno de erros e cronograma adaptável. App single-user, feito pra uso pessoal real (não multi-tenant, não SaaS).
+Companion de estudos para a primeira fase do Exame da OAB. É um aplicativo
+single-user, com autenticação privada, usado em contexto real de estudo.
 
-## Documentação detalhada
+## Stack
 
-- Sistema de design: .claude/docs/design-system.md
-- Modelos de dados: .claude/docs/data-models.md
-- Fluxo de trabalho esperado: .claude/docs/workflow.md
-- Débito técnico conhecido: .claude/docs/debito-tecnico.md
+- Frontend: React 18, Vite e Tailwind CSS.
+- Backend: FastAPI, SQLAlchemy 2, Alembic e PostgreSQL.
+- IA: Google Gemini para Mentor Jurídico e geração de simulados.
 
-## Stack rápida
+## Referências oficiais
 
-- Backend: FastAPI + SQLAlchemy 2 + Alembic + PostgreSQL (Neon em prod, Docker local em dev). Deploy: Render.
-- Frontend: React 18 + Vite + Tailwind CSS. Deploy: Vercel.
-- IA: Google Gemini — gemini-3.5-flash principal, gemini-3.6-flash como fallback em erro 5xx (ver ai.py, funções generate_with_fallback e stream_with_fallback).
+- Visão geral, setup e deploy: README.md
+- Fluxo de desenvolvimento: .claude/docs/workflow.md
+- Contratos e modelos relevantes ao frontend: .claude/docs/data-models.md
+- Design System: .claude/docs/design-system.md
+- Limitações e riscos conhecidos: .claude/docs/debito-tecnico.md
+- Pendências acionáveis: TODO.md
 
-## Princípios do projeto
+## Princípios de trabalho
 
-- Single-user, sem camada de service: lógica direto nos routers por decisão consciente (YAGNI). Não sugere refatorar pra arquitetura multi-tenant sem pedido explícito.
-- Nunca inventa dado ou funcionalidade: se algo pedido depende de campo/endpoint que não existe no backend, avisa em vez de simular.
-- Custo zero de operação: toda a stack roda em free tier (Render, Vercel, Neon, Gemini). Ao sugerir serviços novos, prioriza opções gratuitas.
+- Investigue o código, contratos e riscos antes de editar.
+- Preserve funcionalidades de produção, contratos existentes e lógica de negócio.
+- Faça alterações incrementais e não invente endpoints, dados ou funcionalidades.
+- Alterações visuais não devem modificar API, persistência ou regras de negócio sem solicitação explícita.
+- Preserve a branch atual e todas as alterações locais. Não descarte trabalho existente, troque de branch, faça merge, commit ou push sem solicitação explícita.
+- Não altere banco de dados, autenticação ou infraestrutura sem necessidade comprovada e escopo autorizado.
+
+## Validação e entrega
+
+- Valide proporcionalmente ao tipo e ao risco da alteração.
+- Para frontend, execute npm --prefix frontend run build.
+- Para alterações somente em Markdown, confira referências e caminhos; não é necessário executar build.
+- Revise as alterações com git diff --check.
+- Relate o que foi verificado, o que não foi possível verificar e riscos remanescentes.
+
+O workflow contém o processo detalhado e prevalece para decisões operacionais.

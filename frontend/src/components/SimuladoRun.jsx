@@ -4,6 +4,7 @@ import QuestionCard from "./QuestionCard";
 const STORAGE_KEY = "oab-simulado-current";
 
 export default function SimuladoRun({ simulado, onFinish, onExit }) {
+	const contentRef = useRef(null);
   // Restaura estado do localStorage se for o mesmo simulado
   const [answers, setAnswers] = useState(() => {
     try {
@@ -19,15 +20,25 @@ export default function SimuladoRun({ simulado, onFinish, onExit }) {
     } catch {}
     return 0;
   });
-  const startedAt = useRef(() => {
+  const startedAtRef = useRef(null);
+  if (startedAtRef.current === null) {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-      if (saved && saved.id === simulado.id) return saved.startedAt;
+      if (
+        saved &&
+        saved.id === simulado.id &&
+        Number.isFinite(saved.startedAt)
+      ) {
+        startedAtRef.current = saved.startedAt;
+      }
     } catch {}
-    return Date.now();
-  }).current();
+    if (startedAtRef.current === null) startedAtRef.current = Date.now();
+  }
+  const startedAt = startedAtRef.current;
 
-  const [elapsedSec, setElapsedSec] = useState(0);
+  const [elapsedSec, setElapsedSec] = useState(() =>
+    Math.floor((Date.now() - startedAt) / 1000),
+  );
 
   // Timer
   useEffect(() => {
@@ -36,6 +47,10 @@ export default function SimuladoRun({ simulado, onFinish, onExit }) {
     }, 1000);
     return () => clearInterval(iv);
   }, [startedAt]);
+
+  useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, [currentIdx]);
 
   // Persistir estado
   useEffect(() => {
@@ -80,7 +95,7 @@ export default function SimuladoRun({ simulado, onFinish, onExit }) {
     if (
       respondidas === 0 ||
       confirm(
-        "Sair do simulado? Seu progresso fica salvo aqui neste navegador.",
+        "Sair do simulado? Esta tentativa será abandonada.",
       )
     ) {
       onExit();
@@ -91,43 +106,52 @@ export default function SimuladoRun({ simulado, onFinish, onExit }) {
   const ss = String(elapsedSec % 60).padStart(2, "0");
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Barra superior fixa */}
-      <div className="border-b border-ink-800 px-6 py-3">
-        <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
+    <div className="h-full min-h-0 flex flex-col bg-surface-page">
+      <header className="shrink-0 border-b border-border-default bg-surface-raised">
+        <div className="max-w-3xl mx-auto px-4 py-3 sm:px-6 sm:py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
           <button
+			type="button"
             onClick={sairComConfirmacao}
-            className="text-xs text-cream-400 hover:text-cream-50 transition-colors flex items-center gap-1.5"
+            className="min-h-11 inline-flex items-center gap-2 px-2 -ml-2 rounded-lg text-sm text-text-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-raised"
           >
-            <span aria-hidden>←</span> sair
+			<span aria-hidden="true" className="text-base leading-none">←</span>
+			Sair
           </button>
 
-          <div className="flex-1 flex justify-center gap-1.5">
+          <div className="order-3 w-full grid grid-cols-10 gap-1.5 sm:order-none sm:w-auto sm:flex-1 sm:max-w-md" aria-label="Navegação entre questões">
             {simulado.questoes.map((_, i) => (
               <button
                 key={i}
+				type="button"
                 onClick={() => setCurrentIdx(i)}
-                className={`w-2 h-2 rounded-full transition-colors ${
+                aria-current={i === currentIdx ? "step" : undefined}
+                aria-label={`Questão ${i + 1}${i === currentIdx ? ", atual" : ""}${answers[i] !== undefined ? ", respondida" : ", pendente"}`}
+                className={`min-h-9 rounded-lg border text-xs font-medium tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-raised ${
                   i === currentIdx
-                    ? "bg-brass ring-2 ring-brass/30"
+                    ? "border-action-primary bg-action-primary text-ink-950"
                     : answers[i] !== undefined
-                      ? "bg-brass-dim"
-                      : "bg-ink-800 hover:bg-ink-700"
+                      ? "border-brass-dim bg-brass/10 text-action-primary"
+                      : "border-border-default bg-surface-subtle text-text-muted hover:border-brass-dim hover:text-text-primary"
                 }`}
-                aria-label={`Questão ${i + 1}`}
-              />
+              >
+                {answers[i] !== undefined && i !== currentIdx ? "✓" : i + 1}
+              </button>
             ))}
           </div>
 
-          <div className="text-xs text-cream-400 font-mono tabular-nums w-12 text-right">
+          <div className="min-h-11 inline-flex items-center rounded-lg bg-surface-subtle border border-border-default px-3 font-mono text-sm tabular-nums text-text-secondary" aria-label={`Tempo decorrido: ${mm} minutos e ${ss} segundos`}>
             {mm}:{ss}
           </div>
         </div>
-      </div>
+          <p className="mt-2 text-[11px] text-text-muted sm:hidden">
+            ✓ indica questão respondida; o destaque indica a questão atual.
+          </p>
+        </div>
+      </header>
 
-      {/* Área da questão */}
-      <div className="flex-1 overflow-y-auto px-6 py-10">
-        <div className="max-w-2xl mx-auto">
+      <main ref={contentRef} className="flex-1 min-h-0 overflow-y-auto px-4 py-8 sm:px-6 sm:py-10 md:py-12">
+        <div className="max-w-3xl mx-auto">
           <QuestionCard
             questao={questao}
             mode="answering"
@@ -137,28 +161,29 @@ export default function SimuladoRun({ simulado, onFinish, onExit }) {
             total={total}
           />
         </div>
-      </div>
+      </main>
 
-      {/* Barra inferior */}
-      <div className="border-t border-ink-800 bg-ink-950/80 backdrop-blur px-6 py-4">
-        <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
+      <footer className="shrink-0 border-t border-border-default bg-surface-raised/95 backdrop-blur px-4 py-3 sm:px-6 sm:py-4">
+        <div className="max-w-3xl mx-auto grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-4">
           <button
+			type="button"
             onClick={anterior}
             disabled={currentIdx === 0}
-            className="px-4 py-2 rounded-lg text-sm text-cream-400 hover:text-cream-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="min-h-11 justify-self-start inline-flex items-center rounded-xl px-3 sm:px-4 text-sm text-text-secondary hover:text-text-primary hover:bg-surface-subtle disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-raised"
           >
             Anterior
           </button>
 
-          <div className="text-xs text-cream-400">
-            {respondidas} / {total} respondidas
-          </div>
+          <p className="text-center text-xs text-text-muted whitespace-nowrap" aria-live="polite">
+            {respondidas} de {total}
+          </p>
 
           {isLast ? (
             <button
+				type="button"
               onClick={finalizar}
               disabled={respondidas < total}
-              className="px-5 py-2 rounded-lg text-sm bg-brass hover:bg-brass-hover disabled:bg-ink-800 disabled:text-cream-600 text-ink-950 font-medium transition-colors"
+              className="min-h-11 justify-self-end inline-flex items-center rounded-xl bg-action-primary hover:bg-action-hover disabled:bg-ink-800 disabled:text-text-muted disabled:cursor-not-allowed px-3 sm:px-5 text-sm font-medium text-ink-950 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-raised"
               title={
                 respondidas < total ? "Responda todas antes de finalizar" : ""
               }
@@ -167,14 +192,15 @@ export default function SimuladoRun({ simulado, onFinish, onExit }) {
             </button>
           ) : (
             <button
+				type="button"
               onClick={proxima}
-              className="px-5 py-2 rounded-lg text-sm bg-brass hover:bg-brass-hover text-ink-950 font-medium transition-colors"
+              className="min-h-11 justify-self-end inline-flex items-center rounded-xl bg-action-primary hover:bg-action-hover px-3 sm:px-5 text-sm font-medium text-ink-950 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-raised"
             >
               Próxima
             </button>
           )}
         </div>
-      </div>
+      </footer>
     </div>
   );
 }
