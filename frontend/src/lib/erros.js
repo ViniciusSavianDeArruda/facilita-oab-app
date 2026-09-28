@@ -4,14 +4,18 @@
  */
 export function mensagemErroAmigavel(erro) {
   const msg = erro?.message || "";
-  if (/503|UNAVAILABLE|overloaded/i.test(msg)) {
-    return "O mentor está sobrecarregado agora. Tenta de novo em alguns segundos.";
-  }
+
   if (/429|RESOURCE_EXHAUSTED|rate.?limit|quota/i.test(msg)) {
-    return "Muitas mensagens em pouco tempo. Espera um instante e tenta de novo.";
+    return "O limite de geração foi atingido no momento. Tente novamente mais tarde.";
   }
-  if (/timeout|timed out/i.test(msg)) {
-    return "A resposta demorou demais. Tenta de novo.";
+
+  if (/503|UNAVAILABLE|overloaded/i.test(msg)) {
+    return "O serviço de geração está temporariamente indisponível. Tente novamente em alguns minutos.";
   }
-  return "Algo deu errado. Tenta de novo.";
+
+  if (/504|timeout|timed out/i.test(msg)) {
+    return "A geração demorou mais que o esperado. Tente novamente.";
+  }
+
+  return "Não foi possível concluir a solicitação. Tente novamente.";
 }
