@@ -308,6 +308,21 @@ export function proximos7Dias(plano, qtd = 7) {
   return plano.dias.filter((d) => d.data >= hoje).slice(0, qtd);
 }
 
+/** % de itens concluídos no plano inteiro (todos os dias, não só hoje). */
+export function percentualConcluido(plano) {
+  if (!plano || !plano.dias || plano.dias.length === 0) return null;
+  let total = 0;
+  let feitos = 0;
+  for (const dia of plano.dias) {
+    for (const item of dia.itens) {
+      total++;
+      if (item.concluido) feitos++;
+    }
+  }
+  if (total === 0) return null;
+  return Math.round((feitos / total) * 100);
+}
+
 /**
  * Marca item como concluído. Se todos os itens do dia estiverem concluídos,
  * marca o dia como concluído também.
