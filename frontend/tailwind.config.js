@@ -30,6 +30,9 @@ export default {
         brass: {
           DEFAULT: '#7A1B38',
           hover: '#64142E',
+          // Hover de link de ação — um passo mais escuro que o hover do
+          // botão primário, conforme a referência.
+          'link-hover': '#540F24',
           soft: '#FDF2F4',
           dim: '#A8536A',
         },
@@ -57,16 +60,22 @@ export default {
           subtle: '#FDFCFB',
           // Hovers por papel — cada um tem valor próprio (subcard, nav e
           // botão secundário não compartilham tom).
-          'subcard-hover': '#F7F3EC',
-          'nav-hover': '#F1EFEC',
-          'nav-hover-border': '#E6E1DB',
-          'button-hover': '#FAF5F6',
+          'subcard-hover': '#FFFFFF',
+          'nav-hover': '#F2ECE2',
+          'nav-hover-border': '#EAE4DC',
+          'button-hover': '#FBF9F6',
+          // Borda de hover exclusiva dos botões outlined — separada de
+          // `border-hover`, que os subcards do Dashboard também usam.
+          'border-button-hover': '#E6DED3',
           'border-hover': '#DFD7CB',
+          // Trilha de progresso (barra de matéria e anel) — distinta da
+          // borda de card, conforme a referência.
+          track: '#EFEAE2',
           // Rosado sólido da pill de data/turno no cabeçalho — calibrado
           // para ser mais perceptível que a composição translúcida do brass.
-          pill: '#F8EDEF',
-          'pill-border': '#F2D7DD',
-          'border-button': '#E8DDCD',
+          pill: '#FCF6F7',
+          'pill-border': '#F0D9DE',
+          'border-button': '#E2DBD0',
           // Nomenclatura da referência Stitch (valores próprios, conferidos
           // no HTML fornecido) — complementa os aliases acima sem removê-los.
           cream: '#FAF8F5',
@@ -98,7 +107,14 @@ export default {
 
         },
       },
+      transitionTimingFunction: {
+        editorial: 'cubic-bezier(0.16, 1, 0.3, 1)',
+      },
       boxShadow: {
+        'subcard-hover': '0 4px 14px rgba(122, 27, 56, 0.04)',
+        'btn-primary': '0 1px 3px rgba(122, 27, 56, 0.15)',
+        'btn-primary-hover': '0 2px 6px rgba(122, 27, 56, 0.25)',
+        'nav-active': '0 2px 6px rgba(122, 27, 56, 0.20)',
         'card-subtle': '0 2px 10px -2px rgba(115, 107, 99, 0.05), 0 1px 3px 0 rgba(115, 107, 99, 0.04)',
         'card-hover': '0 12px 24px -6px rgba(133, 25, 54, 0.08), 0 4px 8px -2px rgba(115, 107, 99, 0.05)',
         pill: '0 2px 8px -2px rgba(133, 25, 54, 0.25)',

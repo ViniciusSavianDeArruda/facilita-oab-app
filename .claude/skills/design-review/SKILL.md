@@ -39,7 +39,7 @@ ações acidentais.
 
 Toda revisão deve responder a estas perguntas:
 
-1. A tela parece parte do mesmo Facilita OAB do Dashboard?
+1. A tela parece parte do mesmo Facilita OAB do Dashboard e do Chat?
 2. O fundo geral continua quente (`#FAF8F5`), em vez de branco puro?
 3. Há uso excessivo de branco, a ponto de o branco dominar a tela?
 4. Algum cinza está visualmente frio/azulado? (problema recorrente no projeto)
@@ -56,7 +56,28 @@ Toda revisão deve responder a estas perguntas:
 13. A densidade está adequada — a interface respira?
 14. O mobile preserva hierarquia e funcionalidade?
 
-## 5. Diagnostique e proponha
+## 5. Checklist de regressões conhecidas
+
+Estas são falhas que já aconteceram no projeto. Verificar explicitamente:
+
+1. Algum botão outlined ainda usa hover rosa (`#FAF0F2`, `brass-soft`) em vez
+   de `surface-button-hover`?
+2. Algum botão usa `surface-border-hover` (borda de **subcard**) em vez de
+   `surface-border-button-hover`?
+3. Alguma lista virou caixa dentro de caixa, quando um divisor horizontal
+   resolveria?
+4. Algum card mestre ou card de métrica ganhou sombra desnecessária?
+5. Algum link textual ganhou background, borda ou padding de pílula no hover?
+6. Alguma borda caiu no `#e5e7eb` do Preflight por faltar classe de cor?
+7. Algum foco ficou azul — `:focus` ou `:active` sem `outline-none`, ou `ring`
+   sem cor explícita?
+8. Algum elemento criou hex novo em vez de usar (ou propor) um token?
+9. Alguma tela adotou visual SaaS genérico — gradiente, glass, card colorido,
+   excesso de ícones?
+10. Alguma funcionalidade ou dado fictício foi criado para imitar uma
+    referência externa?
+
+## 6. Diagnostique e proponha
 
 Separe problemas funcionais, visuais e de acessibilidade de oportunidades
 opcionais de refinamento. Diferencie fatos, hipóteses e preferências estéticas,

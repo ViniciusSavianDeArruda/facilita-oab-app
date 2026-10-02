@@ -1,43 +1,382 @@
 import { useEffect, useState } from "react";
 import { authFetchJson } from "../lib/api";
 
-const W = 640, HD = 150, HM = 240, PL = 30, PR = 16, PT = 18, PB = 32, TICKS = [0, 2, 4, 6, 8, 10];
-function cx(...v) { return v.filter(Boolean).join(" "); }
-function nota(x) { return x.total > 0 ? Math.round(x.acertos / x.total * 10) : 0; }
+const W = 640,
+  HD = 150,
+  HM = 240,
+  PL = 30,
+  PR = 16,
+  PT = 18,
+  PB = 32,
+  TICKS = [0, 2, 4, 6, 8, 10];
+function cx(...v) {
+  return v.filter(Boolean).join(" ");
+}
+function nota(x) {
+  return x.total > 0 ? Math.round((x.acertos / x.total) * 10) : 0;
+}
 function useMobile() {
   const [mobile, setMobile] = useState(() => window.innerWidth < 768);
-  useEffect(() => { const m = window.matchMedia("(max-width: 767px)"); const f = (e) => setMobile(e.matches); m.addEventListener("change", f); return () => m.removeEventListener("change", f); }, []);
+  useEffect(() => {
+    const m = window.matchMedia("(max-width: 767px)");
+    const f = (e) => setMobile(e.matches);
+    m.addEventListener("change", f);
+    return () => m.removeEventListener("change", f);
+  }, []);
   return mobile;
 }
 
 export default function Estatisticas({ onGoto }) {
-  const [stats, setStats] = useState(null), [error, setError] = useState(null), [chart, setChart] = useState("barras");
-  useEffect(() => { authFetchJson("/me/stats").then(setStats).catch((e) => setError(e.message || "Não foi possível carregar as estatísticas.")); }, []);
-  if (error) return <State title="Não foi possível carregar as estatísticas." detail={error} alert />;
+  const [stats, setStats] = useState(null),
+    [error, setError] = useState(null),
+    [chart, setChart] = useState("barras");
+  useEffect(() => {
+    authFetchJson("/me/stats")
+      .then(setStats)
+      .catch((e) =>
+        setError(e.message || "Não foi possível carregar as estatísticas."),
+      );
+  }, []);
+  if (error)
+    return (
+      <State
+        title="Não foi possível carregar as estatísticas."
+        detail={error}
+        alert
+      />
+    );
   if (!stats) return <State title="Carregando estatísticas…" />;
   const noSimulados = stats.totalSimulados === 0;
-  return <div className="h-full overflow-y-auto bg-surface-page"><main className="mx-auto w-full max-w-5xl px-4 py-5 sm:px-6 md:px-8 md:py-6">
-    <header className="border-b border-border-subtle pb-4"><p className="mb-1 text-[11px] font-medium uppercase tracking-widest text-brass-dim">Estatísticas</p><h1 className="font-serif text-3xl leading-tight tracking-tight text-text-primary sm:text-4xl">Seu progresso</h1>
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2"><Metric label="Sequência de estudo" value={stats.streak} suffix={stats.streak === 1 ? "dia" : "dias"} /><Metric label="Simulados feitos" value={stats.totalSimulados} /></div>
-    </header>
-    {noSimulados ? <section className="border-b border-border-subtle py-5 sm:py-6"><h2 className="font-serif text-2xl text-text-primary">Ainda sem simulados.</h2><p className="mt-3 max-w-xl text-sm leading-relaxed text-text-secondary">Faça seu primeiro simulado para acompanhar sua nota ao longo do tempo e seu acerto por matéria.</p></section> : <>
-      <section className="border-b border-border-subtle py-5 sm:py-6"><div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><p className="text-[11px] font-medium uppercase tracking-widest text-brass-dim">Evolução</p><h2 className="mt-1 font-serif text-2xl text-text-primary">Nota por simulado</h2></div><div className="flex rounded-xl border border-border-default p-1"><Switch selected={chart === "barras"} onClick={() => setChart("barras")}>Barras</Switch><Switch selected={chart === "linha"} onClick={() => setChart("linha")}>Linha</Switch></div></div><Chart trend={stats.trend} type={chart} /></section>
-      <section className="border-b border-border-subtle py-5 sm:py-6"><p className="text-[11px] font-medium uppercase tracking-widest text-brass-dim">Desempenho</p><h2 className="mt-1 font-serif text-2xl text-text-primary">Acerto por matéria</h2>{stats.porMateria.length ? <div className="mt-5 space-y-4">{stats.porMateria.map((m) => <Materia key={m.materia} item={m} />)}</div> : <p className="mt-4 text-sm text-text-secondary">Ainda não há questões por matéria.</p>}</section>
-    </>}
-    <NotebookSection status={stats.cadernoStatus} onGoto={onGoto} />
-  </main></div>;
+  return (
+    <div className="h-full overflow-y-auto bg-surface-page">
+      <main className="mx-auto w-full max-w-5xl px-4 py-5 sm:px-6 md:px-8 md:py-6">
+        <header className="border-b border-border-subtle pb-4">
+          <p className="mb-1 text-[11px] font-medium uppercase tracking-widest text-brass-dim">
+            Estatísticas
+          </p>
+          <h1 className="font-serif text-3xl leading-tight tracking-tight text-text-primary sm:text-4xl">
+            Seu progresso
+          </h1>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Metric
+              label="Sequência de estudo"
+              value={stats.streak}
+              suffix={stats.streak === 1 ? "dia" : "dias"}
+            />
+            <Metric label="Simulados feitos" value={stats.totalSimulados} />
+          </div>
+        </header>
+        {noSimulados ? (
+          <section className="border-b border-border-subtle py-5 sm:py-6">
+            <h2 className="font-serif text-2xl text-text-primary">
+              Ainda sem simulados.
+            </h2>
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-text-secondary">
+              Faça seu primeiro simulado para acompanhar sua nota ao longo do
+              tempo e seu acerto por matéria.
+            </p>
+          </section>
+        ) : (
+          <>
+            <section className="border-b border-border-subtle py-5 sm:py-6">
+              <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-widest text-brass-dim">
+                    Evolução
+                  </p>
+                  <h2 className="mt-1 font-serif text-2xl text-text-primary">
+                    Nota por simulado
+                  </h2>
+                </div>
+                <div className="flex rounded-xl border border-border-default p-1">
+                  <Switch
+                    selected={chart === "barras"}
+                    onClick={() => setChart("barras")}
+                  >
+                    Barras
+                  </Switch>
+                  <Switch
+                    selected={chart === "linha"}
+                    onClick={() => setChart("linha")}
+                  >
+                    Linha
+                  </Switch>
+                </div>
+              </div>
+              <Chart trend={stats.trend} type={chart} />
+            </section>
+            <section className="border-b border-border-subtle py-5 sm:py-6">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-brass-dim">
+                Desempenho
+              </p>
+              <h2 className="mt-1 font-serif text-2xl text-text-primary">
+                Acerto por matéria
+              </h2>
+              {stats.porMateria.length ? (
+                <div className="mt-5 space-y-4">
+                  {stats.porMateria.map((m) => (
+                    <Materia key={m.materia} item={m} />
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-4 text-sm text-text-secondary">
+                  Ainda não há questões por matéria.
+                </p>
+              )}
+            </section>
+          </>
+        )}
+        <NotebookSection status={stats.cadernoStatus} onGoto={onGoto} />
+      </main>
+    </div>
+  );
 }
-function State({ title, detail, alert }) { return <div className="h-full overflow-y-auto bg-surface-page"><div className="mx-auto max-w-xl px-5 pb-10 pt-20 text-center sm:px-6 sm:pt-24" role={alert ? "alert" : undefined}><h1 className="font-serif text-3xl text-text-primary">{title}</h1>{detail && <p className="mt-3 text-sm leading-relaxed text-text-secondary">{detail}</p>}</div></div>; }
-function Metric({ label, value, suffix }) { return <div className="rounded-2xl border border-border-default bg-surface-raised px-4 py-3.5"><p className="text-[11px] font-medium uppercase tracking-widest text-brass-dim">{label}</p><div className="mt-1.5 flex items-baseline gap-2"><strong className="font-serif text-3xl font-normal leading-none text-brass">{value}</strong>{suffix && <span className="text-sm text-text-secondary">{suffix}</span>}</div></div>; }
-function Switch({ selected, onClick, children }) { return <button type="button" aria-pressed={selected} onClick={onClick} className={cx("min-h-9 rounded-lg px-3 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass", selected ? "bg-brass text-ink-950" : "text-text-secondary hover:text-text-primary")}>{children}</button>; }
+function State({ title, detail, alert }) {
+  return (
+    <div className="h-full overflow-y-auto bg-surface-page">
+      <div
+        className="mx-auto max-w-xl px-5 pb-10 pt-20 text-center sm:px-6 sm:pt-24"
+        role={alert ? "alert" : undefined}
+      >
+        <h1 className="font-serif text-3xl text-text-primary">{title}</h1>
+        {detail && (
+          <p className="mt-3 text-sm leading-relaxed text-text-secondary">
+            {detail}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+function Metric({ label, value, suffix }) {
+  return (
+    <div className="rounded-2xl border border-border-default bg-surface-raised px-4 py-3.5">
+      <p className="text-[11px] font-medium uppercase tracking-widest text-brass-dim">
+        {label}
+      </p>
+      <div className="mt-1.5 flex items-baseline gap-2">
+        <strong className="font-serif text-3xl font-normal leading-none text-brass">
+          {value}
+        </strong>
+        {suffix && (
+          <span className="text-sm text-text-secondary">{suffix}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+function Switch({ selected, onClick, children }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onClick}
+      className={cx(
+        "min-h-9 rounded-lg px-3 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass",
+        selected
+          ? "bg-brass text-ink-950"
+          : "text-text-secondary hover:text-text-primary",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
 function Chart({ trend, type }) {
-  const [active, setActive] = useState(null), mobile = useMobile(), h = mobile ? HM : HD, n = trend.length, usable = W - PL - PR;
-  const y = (v) => PT + (1 - v / 10) * (h - PT - PB), x = (i) => n === 1 ? PL + usable / 2 : PL + i * usable / (n - 1), every = Math.max(1, Math.ceil(n / 6));
-  const p = trend.map((item, i) => ({ v: nota(item), x: x(i), date: new Date(item.createdAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }), full: new Date(item.createdAt).toLocaleDateString("pt-BR") })).map((item) => ({ ...item, y: y(item.v) }));
-  const path = p.map((q, i) => (i ? "L " : "M ") + q.x.toFixed(1) + " " + q.y.toFixed(1)).join(" "), current = active === null ? null : p[active];
-  return <div className="rounded-2xl border border-border-default bg-surface-raised p-3 sm:p-4"><svg viewBox={"0 0 " + W + " " + h} className="block h-auto w-full" role="img" aria-label="Notas cronológicas dos simulados, em escala de zero a dez">{TICKS.map((v) => <g key={v}><line x1={PL} x2={W - PR} y1={y(v)} y2={y(v)} stroke="#EBE3DA" /><text x={PL - 7} y={y(v) + 3} textAnchor="end" fontSize="9" fill="#8A7E78">{v}</text></g>)}{type === "linha" ? <path d={path} fill="none" stroke="#8B1E3F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /> : p.map((q, i) => <rect key={i} x={q.x - Math.min(11, usable / Math.max(n * 2, 1))} y={q.y} width={Math.min(22, usable / Math.max(n * 1.5, 1))} height={h - PB - q.y} rx="3" fill="#8B1E3F" />)}{p.map((q, i) => <g key={i}><circle cx={q.x} cy={q.y} r={type === "linha" ? 4 : 2} fill="#8B1E3F" stroke="#fff" /><circle cx={q.x} cy={q.y} r="12" fill="transparent" onMouseEnter={() => setActive(i)} onMouseLeave={() => setActive(null)} onClick={() => setActive(i)} /></g>)}{p.map((q, i) => (i % every === 0 || i === n - 1) && <text key={"d" + i} x={q.x} y={h - 10} textAnchor="middle" fontSize="9" fill="#8A7E78">{q.date}</text>)}</svg><div className="mt-3 min-h-5 text-center text-xs text-text-secondary" aria-live="polite">{current ? current.full + " · Nota " + current.v : "Selecione um ponto para ver a nota."}</div><div className="sr-only">{p.map((q, i) => <button key={i} type="button" onFocus={() => setActive(i)} onClick={() => setActive(i)}>Simulado de {q.full}, nota {q.v}</button>)}</div></div>;
+  const [active, setActive] = useState(null),
+    mobile = useMobile(),
+    h = mobile ? HM : HD,
+    n = trend.length,
+    usable = W - PL - PR;
+  const y = (v) => PT + (1 - v / 10) * (h - PT - PB),
+    x = (i) => (n === 1 ? PL + usable / 2 : PL + (i * usable) / (n - 1)),
+    every = Math.max(1, Math.ceil(n / 6));
+  const p = trend
+    .map((item, i) => ({
+      v: nota(item),
+      x: x(i),
+      date: new Date(item.createdAt).toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+      }),
+      full: new Date(item.createdAt).toLocaleDateString("pt-BR"),
+    }))
+    .map((item) => ({ ...item, y: y(item.v) }));
+  const path = p
+      .map((q, i) => (i ? "L " : "M ") + q.x.toFixed(1) + " " + q.y.toFixed(1))
+      .join(" "),
+    current = active === null ? null : p[active];
+  return (
+    <div className="rounded-2xl border border-border-default bg-surface-raised p-3 sm:p-4">
+      <svg
+        viewBox={"0 0 " + W + " " + h}
+        className="block h-auto w-full"
+        role="img"
+        aria-label="Notas cronológicas dos simulados, em escala de zero a dez"
+      >
+        {TICKS.map((v) => (
+          <g key={v}>
+            <line x1={PL} x2={W - PR} y1={y(v)} y2={y(v)} stroke="#EAE4DC" />
+            <text
+              x={PL - 7}
+              y={y(v) + 3}
+              textAnchor="end"
+              fontSize="9"
+              fill="#9E978E"
+            >
+              {v}
+            </text>
+          </g>
+        ))}
+        {type === "linha" ? (
+          <path
+            d={path}
+            fill="none"
+            stroke="#7A1B38"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        ) : (
+          p.map((q, i) => (
+            <rect
+              key={i}
+              x={q.x - Math.min(11, usable / Math.max(n * 2, 1))}
+              y={q.y}
+              width={Math.min(22, usable / Math.max(n * 1.5, 1))}
+              height={h - PB - q.y}
+              rx="3"
+              fill="#7A1B38"
+            />
+          ))
+        )}
+        {p.map((q, i) => (
+          <g key={i}>
+            <circle
+              cx={q.x}
+              cy={q.y}
+              r={type === "linha" ? 4 : 2}
+              fill="#7A1B38"
+              stroke="#fff"
+            />
+            <circle
+              cx={q.x}
+              cy={q.y}
+              r="12"
+              fill="transparent"
+              onMouseEnter={() => setActive(i)}
+              onMouseLeave={() => setActive(null)}
+              onClick={() => setActive(i)}
+            />
+          </g>
+        ))}
+        {p.map(
+          (q, i) =>
+            (i % every === 0 || i === n - 1) && (
+              <text
+                key={"d" + i}
+                x={q.x}
+                y={h - 10}
+                textAnchor="middle"
+                fontSize="9"
+                fill="#9E978E"
+              >
+                {q.date}
+              </text>
+            ),
+        )}
+      </svg>
+      <div
+        className="mt-3 min-h-5 text-center text-xs text-text-secondary"
+        aria-live="polite"
+      >
+        {current
+          ? current.full + " · Nota " + current.v
+          : "Selecione um ponto para ver a nota."}
+      </div>
+      <div className="sr-only">
+        {p.map((q, i) => (
+          <button
+            key={i}
+            type="button"
+            onFocus={() => setActive(i)}
+            onClick={() => setActive(i)}
+          >
+            Simulado de {q.full}, nota {q.v}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
-function cor(p) { return p < 30 ? "#ef4444" : p <= 70 ? "#f59e0b" : "#10b981"; }
-function Materia({ item }) { const p = item.total ? Math.round(item.acertos / item.total * 100) : 0; return <div><div className="mb-1.5 flex items-baseline gap-3"><span className="min-w-0 flex-1 truncate text-sm text-text-primary">{item.materia}</span><span className="shrink-0 text-xs tabular-nums text-text-secondary">{item.acertos}/{item.total} · {p}%</span></div><div className="h-2 overflow-hidden rounded-full bg-ink-800" role="progressbar" aria-label={"Aproveitamento em " + item.materia} aria-valuemin="0" aria-valuemax="100" aria-valuenow={p}><div className="h-full rounded-full" style={{ width: p + "%", backgroundColor: cor(p) }} /></div></div>; }
-function NotebookSection({ status, onGoto }) { return <section className="py-5 sm:py-6"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-[11px] font-medium uppercase tracking-widest text-brass-dim">Revisão</p><h2 className="mt-1 font-serif text-2xl text-text-primary">Caderno de Erros</h2></div><button type="button" onClick={() => onGoto?.("caderno")} className="min-h-10 rounded-xl border border-border-default bg-surface-raised px-3 py-2 text-sm text-brass transition-colors hover:border-brass-dim hover:bg-surface-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass">Ver Caderno completo →</button></div><div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3"><N label="Aberto" value={status.aberto} tone="text-brass" /><N label="Revisando" value={status.revisando} tone="text-text-primary" /><N label="Dominado" value={status.dominado} tone="text-text-muted" /></div></section>; }
-function N({ label, value, tone }) { return <div className="rounded-2xl border border-border-default bg-surface-raised p-4"><p className="text-xs text-text-secondary">{label}</p><p className={cx("mt-2 font-serif text-3xl", tone)}>{value}</p></div>; }
+function cor(p) {
+  return p < 30 ? "#ef4444" : p <= 70 ? "#f59e0b" : "#10b981";
+}
+function Materia({ item }) {
+  const p = item.total ? Math.round((item.acertos / item.total) * 100) : 0;
+  return (
+    <div>
+      <div className="mb-1.5 flex items-baseline gap-3">
+        <span className="min-w-0 flex-1 truncate text-sm text-text-primary">
+          {item.materia}
+        </span>
+        <span className="shrink-0 text-xs tabular-nums text-text-secondary">
+          {item.acertos}/{item.total} · {p}%
+        </span>
+      </div>
+      <div
+        className="h-2 overflow-hidden rounded-full bg-ink-800"
+        role="progressbar"
+        aria-label={"Aproveitamento em " + item.materia}
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow={p}
+      >
+        <div
+          className="h-full rounded-full"
+          style={{ width: p + "%", backgroundColor: cor(p) }}
+        />
+      </div>
+    </div>
+  );
+}
+function NotebookSection({ status, onGoto }) {
+  return (
+    <section className="py-5 sm:py-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-medium uppercase tracking-widest text-brass-dim">
+            Revisão
+          </p>
+          <h2 className="mt-1 font-serif text-2xl text-text-primary">
+            Caderno de Erros
+          </h2>
+        </div>
+        <button
+          type="button"
+          onClick={() => onGoto?.("caderno")}
+          className="min-h-10 rounded-xl border border-border-default bg-surface-raised px-3 py-2 text-sm text-brass transition-colors hover:border-brass-dim hover:bg-surface-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass"
+        >
+          Ver Caderno completo →
+        </button>
+      </div>
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <N label="Aberto" value={status.aberto} tone="text-brass" />
+        <N
+          label="Revisando"
+          value={status.revisando}
+          tone="text-text-primary"
+        />
+        <N label="Dominado" value={status.dominado} tone="text-text-muted" />
+      </div>
+    </section>
+  );
+}
+function N({ label, value, tone }) {
+  return (
+    <div className="rounded-2xl border border-border-default bg-surface-raised p-4">
+      <p className="text-xs text-text-secondary">{label}</p>
+      <p className={cx("mt-2 font-serif text-3xl", tone)}>{value}</p>
+    </div>
+  );
+}

@@ -43,9 +43,9 @@ const ChatComposer = forwardRef(function ChatComposer(
   }
 
   return (
-    <div className="border-t border-ink-800 bg-ink-950/80 backdrop-blur px-6 md:px-8 py-4">
-      <div className="max-w-[800px] mx-auto">
-        <div className="flex items-end gap-3 bg-ink-900 border border-ink-800 rounded-2xl px-4 py-3 focus-within:border-brass-dim transition-colors">
+    <div className="px-6 md:px-8 pt-2 pb-4">
+      <div className="max-w-[860px] mx-auto">
+        <div className="flex items-end gap-3 bg-ink-950 border border-surface-border-button rounded-2xl px-4 py-3 shadow-[0_4px_16px_rgba(26,24,22,0.04)] transition-colors duration-200 ease-in-out focus-within:border-brass">
           <textarea
             ref={textareaRef}
             value={input}
@@ -53,7 +53,7 @@ const ChatComposer = forwardRef(function ChatComposer(
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             rows={1}
-            className="flex-1 min-w-0 bg-transparent resize-none outline-none placeholder:text-cream-600 text-cream-50 leading-relaxed py-1"
+            className="flex-1 min-w-0 bg-transparent resize-none border-0 outline-none focus:outline-none focus:ring-0 placeholder:text-cream-600 text-cream-50 leading-relaxed py-1"
             disabled={disabled}
           />
           {streaming ? (
@@ -77,7 +77,7 @@ const ChatComposer = forwardRef(function ChatComposer(
             </button>
           )}
         </div>
-        <p className="text-[11px] leading-relaxed text-cream-600 mt-2 px-1">
+        <p className="text-[10px] leading-relaxed text-cream-600 mt-2 px-1 text-center">
           Enter envia · Shift+Enter quebra linha · o mentor pode errar em
           jurisprudência específica, sempre confira números de súmula.
         </p>

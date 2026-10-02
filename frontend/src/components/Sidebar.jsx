@@ -49,8 +49,8 @@ export default function Sidebar({
               onClick={() => onGoto(item.key)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border border-transparent text-sm font-medium transition-colors duration-200 ease-in-out text-left ${
                 isActive
-                  ? "bg-brass text-white"
-                  : "text-cream-1500 hover:bg-[#F1EFEC] hover:border-[#E6E1DB] hover:text-cream-50"
+                  ? "bg-brass text-white shadow-nav-active"
+                  : "text-cream-400 hover:bg-surface-nav-hover hover:border-surface-nav-hover-border hover:text-cream-50"
               }`}
             >
               <Icon />

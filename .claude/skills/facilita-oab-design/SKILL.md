@@ -16,9 +16,12 @@ Leia `.claude/docs/design-system.md` antes de alterar uma interface e consulte
 de tokens para esta skill. Se documentação e implementação divergirem,
 identifique a diferença antes de modificar qualquer uma delas.
 
-**O Dashboard (`Inicio.jsx`) e a Sidebar (`Sidebar.jsx`) são a referência
-visual principal.** Compare qualquer tela nova com eles antes de inventar um
-padrão.
+**Dashboard (`Inicio.jsx` + `Sidebar.jsx`) e Chat (`Chat.jsx` +
+`ChatComposer.jsx`) são a referência visual oficial.** Compare qualquer tela
+nova com eles antes de inventar um padrão.
+
+Alterações em `tailwind.config.js` não recarregam de forma confiável no Vite:
+ao mudar um token, avise que o dev server precisa ser reiniciado.
 
 ## Identidade
 
@@ -29,6 +32,25 @@ vem de tipografia, espaçamento, agrupamento e bordas quentes — não de sombra
 Use a marca reutilizável onde o wordmark for necessário. Não crie uma
 identidade nova com azul primário genérico, gradientes chamativos, efeito de
 vidro, sombras pesadas, emojis decorativos ou cards e badges sem propósito.
+
+## Classifique o elemento antes de estilizar
+
+Cada papel tem tokens próprios. Antes de escrever classe, decida o que o
+elemento é:
+
+| Papel | Superfície | Borda | Hover |
+| --- | --- | --- | --- |
+| Card mestre | `ink-950` | `ink-800` | nenhum |
+| Subcard interativo | `ink-900` | `surface-border-subtle` | `surface-subcard-hover` + `surface-border-hover` |
+| Linha editorial (lista) | transparente | `border-b border-border-subtle` | fundo sutil |
+| Botão primário | `brass` | — | `brass-hover` |
+| Botão outlined | `ink-950` | `surface-border-button` | `surface-button-hover` + `surface-border-button-hover` |
+| Link textual | — | — | `brass-link-hover` + underline |
+| Pill / status | `surface-pill` ou `brass-soft` | `surface-pill-border` | nenhum |
+
+**Pares que nunca se misturam:** `surface-border-hover` é de subcard;
+`surface-border-button-hover` é de botão. Reutilizar um no lugar do outro
+faz um ajuste futuro arrastar o componente errado — já aconteceu.
 
 ## Ordem de trabalho com tokens
 

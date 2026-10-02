@@ -3,267 +3,224 @@
 Referência visual única do projeto. Descreve os padrões realmente
 implementados no frontend; não pressupõe biblioteca de componentes.
 
-**O Dashboard (`frontend/src/components/Inicio.jsx`) e a Sidebar
-(`frontend/src/components/Sidebar.jsx`) são a referência visual principal do
-produto.** Telas novas e refinamentos devem ser comparados a eles.
+**Dashboard (`Inicio.jsx` + `Sidebar.jsx`) e Chat (`Chat.jsx` +
+`ChatComposer.jsx`) são a referência visual oficial.** Telas novas devem
+reutilizar esses padrões antes de inventar outros.
 
-## Direção visual
+A fonte final dos valores é `frontend/tailwind.config.js`. Se esta página
+divergir dele, o config vence — e esta página deve ser corrigida.
 
-A personalidade é **editorial jurídica**: vem de tipografia, do vinho
-institucional, dos fundos creme, do espaçamento e de linhas e bordas quentes.
-Não se compensa falta de personalidade com gradientes, sombras grandes, cards
-coloridos, excesso de ícones ou animação chamativa.
+## 1. Identidade
 
-Ao mesmo tempo, a interface é **uma aplicação, não um site**: sidebar
-persistente no desktop, navegação funcional, conteúdo em áreas, cards para
-agrupamento real, ações próximas do conteúdo relacionado e estados reais do
-produto. Telas não são redesenhadas como páginas institucionais ou landing
-pages.
+**Editorial jurídico + aplicação moderna.** Quente, refinada, profissional.
+A personalidade vem de tipografia, superfície, bordas e espaçamento — nunca
+de efeito.
 
-O resultado deve parecer uma plataforma de estudos jurídica premium,
-contemporânea e funcional — e não: dashboard SaaS genérico, interface toda
-branca/cinza, interface escura, UI com gradientes, excesso de sombras,
-template de IA, painel corporativo azul ou ornamentação jurídica antiga.
+Não deve parecer: SaaS genérico, landing page, interface toda branca/cinza,
+interface escura, UI com gradientes, template de IA, painel corporativo azul
+ou ornamentação jurídica antiga.
 
-## Paleta e tokens
+Nunca usar: cinzas frios/azulados, sombras pretas padrão do Tailwind,
+`shadow-sm`/`shadow-md`, foco azul do navegador.
 
-Valores reais de `frontend/tailwind.config.js`. Os nomes legados (`sand`,
-`ink`, `cream`, `brass`) seguem válidos e são usados em todo o app; os aliases
-semânticos (`surface`, `text`, `border`, `action`) apontam para os mesmos
-valores.
+### Tipografia
 
-### Superfícies
+- **Fraunces** (`font-serif`): títulos, números editoriais, destaques.
+  Evitar em toda a aplicação.
+- **Manrope** (`font-sans`): navegação, labels, botões, corpo, metadados.
+- Não importar Newsreader, Plus Jakarta Sans, Playfair ou Cinzel para imitar
+  referências externas.
 
-| Papel | Token | Valor |
-| --- | --- | --- |
-| Fundo da página | `sand-50` / `surface-page` / `surface-cream` | `#FAF8F5` |
-| Card principal | `ink-950` / `surface-raised` / `surface-card` | `#FFFFFF` |
-| Subcard / linha interna | `ink-900` / `surface-subtle` | `#FDFCFB` |
+## 2. Paleta final
 
-A página **não** é branco puro, e o branco é superfície de conteúdo — não deve
-dominar a tela.
-
-### Vinho institucional
+### Canvas e superfícies
 
 | Papel | Token | Valor |
 | --- | --- | --- |
-| Vinho principal | `brass` / `action-primary` | `#7A1B38` |
-| Vinho hover | `brass-hover` / `action-hover` | `#64142E` |
-| Rosa suave (fundos de ícone/badge) | `brass-soft` / `action-soft` | `#FDF2F4` |
-| Vinho claro legado | `brass-dim` / `action-muted` | `#A8536A` |
+| Página | `sand-50` / `surface-page` / `surface-cream` | `#FAF8F5` |
+| Card mestre | `ink-950` / `surface-raised` / `surface-card` | `#FFFFFF` |
+| Subcard / superfície interna | `ink-900` / `surface-subtle` | `#FDFCFB` |
+
+A página nunca é branco puro; o branco é superfície de conteúdo.
 
 ### Texto
 
 | Papel | Token | Valor |
 | --- | --- | --- |
 | Principal | `cream-50` / `text-primary` / `surface-dark` | `#1A1816` |
-| Botão secundário | `cream-200` | `#3A342F` |
 | Secundário | `cream-400` / `text-secondary` / `surface-muted` | `#6E6760` |
-| Editorial auxiliar (metadados) | `cream-450` | `#736B63` |
+| Editorial / metadados | `cream-450` | `#736B63` |
 | Muted | `cream-600` / `text-muted` | `#9E978E` |
 
 Não usar preto puro.
 
-### Bordas
-
-As bordas foram **deliberadamente aquecidas**. Neutros muito dessaturados
-estavam sendo percebidos como cinza azulado, e esse foi um problema recorrente
-durante o redesign. Não voltar a usar cinzas frios.
+### Marca
 
 | Papel | Token | Valor |
 | --- | --- | --- |
-| Borda geral de cards | `ink-800` / `surface-border` / `border-default` | `#EAE4DC` |
-| Borda de subcard | `surface-border-subtle` | `#E8DCCA` |
-| Borda de botão secundário | `surface-border-button` | `#E8DDCD` |
-| Borda em hover (subcard/controle) | `surface-border-hover` | `#DFD7CB` |
-| Borda de controle (checkbox) | `ink-700` / `border-subtle` | `#D8CCBD` |
-| Borda interna legada | `border-subtle` (alias `border`) | `#F0EAE1` |
+| Vinho institucional | `brass` / `action-primary` | `#7A1B38` |
+| Hover do botão primário | `brass-hover` / `action-hover` | `#64142E` |
+| Hover de link editorial | `brass-link-hover` | `#540F24` |
+| Rosa de marca (badges/ícones) | `brass-soft` / `action-soft` | `#FDF2F4` |
 
-### Hovers por papel
-
-Cada superfície tem seu próprio tom de hover; eles **não** compartilham valor.
+### Feedback semântico
 
 | Papel | Token | Valor |
 | --- | --- | --- |
-| Subcard | `surface-subcard-hover` | `#F7F3EC` |
-| Item inativo da sidebar | `surface-nav-hover` | `#F1EFEC` |
-| Borda do item inativo da sidebar | `surface-nav-hover-border` | `#E6E1DB` |
-| Botão secundário | `surface-button-hover` | `#FAF5F6` |
-
-### Pill editorial e feedback
-
-| Papel | Token | Valor |
-| --- | --- | --- |
-| Fundo da pill de data/turno | `surface-pill` | `#F8EDEF` |
-| Borda da pill | `surface-pill-border` | `#F2D7DD` |
-| Erro / destrutivo | `alert` / `feedback-danger` | `#C23B2E` |
+| Erro | `alert` / `feedback-danger` | `#C23B2E` |
 | Sucesso | `feedback-success` | `#10B981` |
 | Atenção | `feedback-warning` | `#F59E0B` |
 
-Verde, âmbar e vermelho só aparecem quando representam estado real
-(desempenho, conclusão, erro) — nunca como decoração.
+Só aparecem quando representam estado real. Para texto pequeno sobre fundo
+claro, o verde usado na prática é `#059669` (contraste suficiente; o
+`feedback-success` fica abaixo de 4.5:1).
 
-## Tipografia
+## 3. Bordas — hierarquia
 
-- **Fraunces** (`font-serif`): saudação, títulos relevantes, números de
-  destaque e alguns elementos editoriais. Evitar Fraunces em toda a aplicação.
-- **Manrope** (`font-sans`): navegação, labels, botões, textos, metadados,
-  badges e interface em geral.
-- Não importar Playfair Display, Newsreader, Plus Jakarta Sans ou outra fonte
-  apenas para reproduzir uma referência externa.
-- Títulos de página usam Fraunces `text-3xl` (`md:text-4xl` quando houver
-  ênfase), com `leading-tight tracking-tight`. Títulos internos usam `text-xl`
-  ou `text-2xl`; corpo usa `text-sm`; metadados usam `text-xs`.
-- Rótulos em caixa alta usam `text-[11px]` com tracking amplo; `text-[10px]` e
-  `text-[9px]` ficam reservados a contextos densos.
-- Títulos de destaque podem usar variação óptica da Fraunces (`opsz`).
+**Cada papel tem seu token. Nunca reutilizar um por conveniência.**
 
-## Marca
+| Papel | Token | Valor |
+| --- | --- | --- |
+| Borda de card mestre | `ink-800` / `surface-border` / `border-default` | `#EAE4DC` |
+| Borda de subcard | `surface-border-subtle` | `#E8DCCA` |
+| Borda de botão outlined | `surface-border-button` | `#E2DBD0` |
+| Hover de borda de **subcard** | `surface-border-hover` | `#DFD7CB` |
+| Hover de borda de **botão** | `surface-border-button-hover` | `#E6DED3` |
+| Divisor | `border-subtle` | `#F0EAE1` |
+| Trilha de progresso | `surface-track` | `#EFEAE2` |
+| Borda de controle (checkbox) | `ink-700` | `#D8CCBD` |
 
-- `frontend/src/components/Brand.jsx` reúne o símbolo de balança, a Fraunces e
-  o wordmark. "Facilita" usa a cor de texto principal; "OAB" usa o vinho.
-- As variantes de tamanho atendem Sidebar, Início em mobile e Login.
-- `frontend/public/favicon.svg` usa somente a balança em vinho.
+> `border-subtle` (`#F0EAE1`, divisor) e `surface-border-subtle` (`#E8DCCA`,
+> borda de subcard) têm nomes parecidos e papéis diferentes. Conferir qual é
+> antes de usar.
 
-## Cabeçalho do Dashboard (referência de identidade)
+As bordas são **deliberadamente quentes**. Neutros muito dessaturados foram
+percebidos como cinza azulado várias vezes durante o redesign — é o erro
+mais recorrente do projeto. Não voltar a cinzas frios.
 
-### Pill de data + turno
+### Caixa dentro de caixa
 
-Uma única pill contém data, separador e turno — um detalhe editorial, não um
-badge chamativo:
+Em listas e estruturas tabulares, **preferir divisor horizontal a borda
+completa**. "Matérias que pedem atenção" é a referência: cada linha é
+`px-1 py-3` com `border-b border-border-subtle`, sem borda completa, sem
+radius próprio e sem fundo no estado normal — o último item não leva
+divisor.
 
-```
-bg-surface-pill border border-surface-pill-border rounded-full
-px-3.5 py-1.5 gap-2 w-fit shadow-[0_1px_2px_rgba(122,27,56,0.04)]
-```
+Subcards com borda completa só se justificam quando o item é um bloco
+autônomo, como os itens de "Foco de hoje".
 
-- Data: `text-[11px] font-semibold uppercase tracking-[0.14em] text-brass`.
-- Separador `•`: `text-brass/[0.35] text-xs select-none`.
-- Ícone do turno: `h-3.5 w-3.5 shrink-0 text-brass`, muda conforme o horário.
-- Turno: `text-xs font-normal text-cream-450`.
-- Todos os três blocos usam `leading-none`.
+## 4. Superfícies interativas
 
-### Saudação
-
-Fraunces, com `font-medium` e texto principal quente; o nome em
-`font-semibold italic text-brass`, seguido de um traço SVG artesanal:
-
-```
-absolute -bottom-1.5 left-0 h-[7px] w-full overflow-visible
-text-brass/75 · viewBox="0 0 120 8" · preserveAspectRatio="none"
-strokeWidth 2.5 · pointer-events-none · aria-hidden
-```
-
-`preserveAspectRatio="none"` faz o traço acompanhar nomes de qualquer
-tamanho. O nome vem de dados reais e tem fallback. O traço é sutil — não deve
-virar decoração.
-
-## Sidebar (navegação desktop)
-
-`w-72` (288px), `bg-sand-50`, `border-r border-ink-800`, `p-5`.
-
-O item de navegação usa `border border-transparent` na base, para a borda do
-hover não deslocar o layout:
-
-| Estado | Fundo | Borda | Texto |
-| --- | --- | --- | --- |
-| Inativo | transparente | transparente | `cream-400` |
-| Hover | `surface-nav-hover` | `surface-nav-hover-border` | `cream-50` |
-| Ativo | `brass` | — | branco |
-
-O item ativo é o ponto de maior contraste da navegação. Os ícones acompanham
-`currentColor`. Evitar hover branco, hover azul, vinho em todos os itens,
-sombras, `scale` e animação chamativa.
-
-Mobile usa bottom navigation (`BottomNav.jsx`). O breakpoint estrutural é
-`md`; `sm` ajusta densidade e grids compactos.
-
-## Cards
+### Card mestre
 
 ```
 bg-ink-950 border border-ink-800 rounded-2xl p-4 sm:p-5
 ```
 
-Blocos compactos do cabeçalho (ex.: "Próxima prova") usam `rounded-xl p-3`.
+16px de radius, **sem sombra**. A hierarquia vem de espaçamento, tamanho,
+tipografia, agrupamento e bordas. Cards de métrica/KPI seguem o mesmo
+padrão (16px, sem sombra).
 
-Cards não devem parecer flutuando. A hierarquia vem de espaçamento, tamanho,
-tipografia, agrupamento e bordas — **não** de sombra pesada. O Dashboard atual
-não usa sombra nos cards.
-
-Nem toda tela precisa de card flutuante único: Plano e telas de configuração
-usam esse padrão, enquanto Caderno, Estatísticas e Simulado privilegiam
-densidade ou leitura. Chat e Início são exceções full-bleed (`w-full
-max-w-[1600px] mx-auto`, sem card externo), com blocos internos usando as
-superfícies padrão. No Chat, mensagens e composer preservam `max-w-[800px]`.
-
-## Subcards e linhas interativas
-
-Padrão aprovado em "Foco de Hoje" e "Matérias que pedem atenção":
+### Subcard interativo
 
 ```
 bg-ink-900 border border-surface-border-subtle rounded-xl p-3
 hover:bg-surface-subcard-hover hover:border-surface-border-hover
-transition-colors duration-200 ease-in-out
+hover:shadow-subcard-hover
+transition-[background-color,border-color,box-shadow] duration-200 ease-editorial
 ```
 
-A interação deve ser percebida sem o elemento "pular": nada de `translateY`,
-`scale`, sombra forte, brilho ou hover escuro.
+Hover vai para branco (`#FFFFFF`) com borda `#DFD7CB` e sombra
+`0 4px 14px rgba(122,27,56,0.04)`. Sem `translateY`, sem `scale`, sem
+brilho. A transição anima **apenas** as propriedades afetadas — nunca
+`transition-all`.
 
-Quando a linha contém um controle que reage ao conjunto (ex.: o checkbox de
-"Foco de Hoje"), use `group` no container e `group-hover:` no controle — o
-checkbox usa `w-5 h-5 border-2 border-ink-700` e vira `group-hover:border-brass`.
+Quando um controle interno reage ao conjunto (ex.: o checkbox de "Foco de
+hoje"), usar `group` no container e `group-hover:` no controle.
 
-## Botões
-
-### Primário
-
-```
-bg-brass text-ink-950 hover:bg-brass-hover
-focus-visible:ring-2 focus-visible:ring-brass/40
-```
-
-Reservado a ações realmente principais. Não transformar toda ação em botão
-vinho.
-
-### Secundário outlined
+## 5. Botões primários
 
 ```
-bg-ink-950 border border-surface-border-button text-cream-200
-hover:bg-surface-button-hover hover:border-brass hover:text-brass
-focus-visible:ring-2 focus-visible:ring-brass/20 focus-visible:border-brass
+bg-brass text-ink-950 shadow-btn-primary
+hover:bg-brass-hover hover:shadow-btn-primary-hover
+rounded-lg
 ```
 
-Base comum aos dois níveis:
+`#7A1B38` com texto branco, 8px de radius, sombra
+`0 1px 3px rgba(122,27,56,0.15)` que vai a `0 2px 6px rgba(122,27,56,0.25)`
+no hover. Reservado a ações realmente principais — não transformar toda
+ação em botão vinho.
+
+A seta interna pode mover 3px no hover, usando group nomeado para o botão
+não se deslocar junto:
+
+```
+group/btn  →  group-hover/btn:translate-x-[3px]
+```
+
+## 6. Botões secundários / outlined
+
+**Padrão obrigatório em telas novas.**
+
+| Estado | Fundo | Borda | Texto |
+| --- | --- | --- | --- |
+| Normal | `ink-950` `#FFFFFF` | `surface-border-button` `#E2DBD0` | `cream-50` `#1A1816` |
+| Hover | `surface-button-hover` `#FBF9F6` | `surface-border-button-hover` `#E6DED3` | `brass` `#7A1B38` |
+
+Radius 8px (`rounded-lg`), **sem sombra**, transição de 150ms `ease-out`
+limitada a `background-color`, `border-color` e `color`.
+
+Base compartilhada:
 
 ```
 appearance-none inline-flex items-center gap-1.5 min-h-9 px-3.5 py-2
-rounded-lg text-[13px] font-medium transition-all duration-200 ease-in-out
+rounded-lg text-[13px] font-medium
+transition-[background-color,border-color,color] duration-150 ease-out
 focus:outline-none focus-visible:outline-none active:outline-none
+focus-visible:ring-2 focus-visible:ring-brass/20 focus-visible:border-brass
 ```
 
-`appearance-none` e os três `outline-none` existem para remover o estilo
-nativo e o foco azul do navegador. **O foco de teclado permanece acessível e
-usa a identidade vinho** — nunca o azul padrão. Não remover o anel de foco sem
-substituí-lo.
+Aplicado em: Nova conversa (desktop e mobile), Salvar no caderno, Tentar
+novamente, Revisar, Abrir notas, Começar, chips de sugestão e as ações
+rápidas do estado vazio do Chat.
 
-Setas em botões usam group nomeado para mover só a seta:
-`group/btn` no botão e `group-hover/btn:translate-x-[3px]` na seta
-(`transition-transform duration-200 ease-in-out`, `aria-hidden`).
+**Não usar rosa (`#FAF0F2`, `brass-soft`) como hover genérico de botão.** O
+rosa fica reservado a pills, badges, superfícies de marca discretas e
+estados específicos.
 
-## Vinho como acento
+**Nunca reutilizar `surface-border-hover` (subcard) em botão.** São dois
+tokens distintos justamente para que ajustar um não arraste o outro.
 
-`#7A1B38` é o acento principal: navegação ativa, CTA principal, links
-importantes, labels selecionadas, detalhes editoriais, ícones de destaque,
-progresso, nome na saudação e pequenos marcadores.
+## 7. Links editoriais
 
-Não usar vinho em grandes blocos sem necessidade. O Dashboard funciona porque
-o vinho aparece em pontos estratégicos sobre base clara e quente.
+Exemplos: "Ver plano completo", "Ver todas", "Ver histórico", "Ajustar
+cronograma".
 
-## Badges
+```
+text-brass hover:text-brass-link-hover hover:underline
+```
 
-Badges podem introduzir cores secundárias muito suaves para comunicar
-categorias, desde que **a cor represente informação real**. No Dashboard, a
-categoria vem de `item.tipo`:
+Normal `#7A1B38`, hover `#540F24` com underline quando couber. **Sem fundo,
+sem borda, sem padding horizontal** que dê aparência de botão. Se for link
+textual, não deve virar pill.
+
+## 8. Pills e badges
+
+**Pill de data/turno** (cabeçalho do Dashboard) — detalhe editorial, não
+badge chamativo:
+
+```
+bg-surface-pill border border-surface-pill-border rounded-full
+px-3.5 py-1.5 gap-2 w-fit
+```
+
+`#FCF6F7` com borda `#F0D9DE`, **sem sombra**. Dentro: data em
+`text-[11px] font-semibold uppercase tracking-[0.14em] text-brass`,
+separador `•` em `text-brass/[0.35]`, ícone a 60% e turno em `cream-450`.
+Todos com `leading-none`.
+
+**Badges de categoria** podem usar cor secundária suave **desde que a cor
+represente informação real**. No Dashboard, derivada de `item.tipo`:
 
 | Tipo real | Badge |
 | --- | --- |
@@ -271,90 +228,230 @@ categoria vem de `item.tipo`:
 | `caderno` → "Caderno" | `bg-amber-50 text-amber-700` |
 | `simulado` → "Simulado" | `bg-brass-soft text-brass` |
 
-Não criar badge fictício para decorar nem transformar a interface em coleção
-de cores.
+Pills de status não reutilizam o hover de botão outlined.
 
-## Ícones
+## 9. Sombras
 
-SVGs simples, traço fino, `currentColor`, cerca de 16–20px em navegação e
-ações. O ícone apoia a leitura; não preencher espaço com ícones.
+Regra geral: **evitar `shadow-sm`/`shadow-md` e qualquer rgba preto.** As
+sombras do projeto são todas vinho, de opacidade baixa.
 
-## Microinterações
+| Elemento | Sombra |
+| --- | --- |
+| Card mestre e métricas | nenhuma |
+| Subcard normal | nenhuma |
+| Subcard hover | `shadow-subcard-hover` `0 4px 14px rgba(122,27,56,0.04)` |
+| Botão primário | `shadow-btn-primary` `0 1px 3px rgba(122,27,56,0.15)` |
+| Botão primário hover | `shadow-btn-primary-hover` `0 2px 6px rgba(122,27,56,0.25)` |
+| Item ativo da sidebar | `shadow-nav-active` `0 2px 6px rgba(122,27,56,0.20)` |
+| Composer do Chat | `shadow-[0_4px_16px_rgba(26,24,22,0.04)]` |
+| Botão outlined | nenhuma |
 
-Movimento sutil, funcional e previsível. Preferir `transition-colors`,
-`duration-200`, `ease-in-out`. Quando houver movimento: deslocamento de poucos
-pixels, alteração leve de borda, mudança sutil de fundo.
+## 10. Radius
 
-Evitar bounce, `scale` excessivo, grandes translações, glow, efeito de vidro e
-animação decorativa constante.
+| Elemento | Radius |
+| --- | --- |
+| Card mestre, métricas | 16px (`rounded-2xl`) |
+| Subcard | 12px (`rounded-xl`) |
+| Botões | 8px (`rounded-lg`) |
+| Composer | 16px (`rounded-2xl`) |
+| Pill | `rounded-full` |
+| Tag pequena | ~6px (`rounded`) |
 
-## Grid e composição
-
-O Dashboard é a referência de composição desktop: sidebar à esquerda, área
-central ampla, header horizontal e conteúdo em coluna principal + coluna
-lateral, com a principal maior:
+## 11. Transições
 
 ```
-grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(280px,0.8fr)]
-esquerda → Foco de Hoje + Matérias
-direita  → Progresso Geral + Atividade Recente
+transitionTimingFunction.editorial = cubic-bezier(0.16, 1, 0.3, 1)
 ```
 
-É referência de hierarquia, não regra universal: outras telas podem ter
-composições diferentes quando o conteúdo exigir.
+- Subcards: 200ms `ease-editorial`
+- Botões outlined: 150ms `ease-out`
+- Hover de navegação: 200ms `ease-in-out`
 
-A página padrão usa `px-4 py-6` no mobile e `px-8`/`px-10` com `py-8`/`py-10`
-no desktop. Conteúdo focado usa `max-w-xl`; questões e resultados usam
-`max-w-2xl`. Controles compactos usam `rounded-lg`; campos e ações principais,
-`rounded-xl`.
+Sempre listar as propriedades animadas (`transition-[background-color,…]`)
+em vez de `transition-all`. Evitar bounce, `scale`, translações grandes,
+glow e efeito de vidro.
 
-## Densidade
+## 12. Sidebar
 
-A interface deve respirar. Evitar dezenas de cards pequenos, informação
-duplicada, KPIs sem utilidade, números fictícios e excesso de divisórias.
+`w-72` (288px), `bg-sand-50`, `border-r border-ink-800`, `p-5`.
 
-O Dashboard mostra **somente métricas reais existentes** — os indicadores são
-montados condicionalmente e só aparecem quando há dado. Manter essa regra.
+O item de navegação leva `border border-transparent` na base, para a borda
+do hover não deslocar o layout:
 
-## Dados reais e referências externas
+| Estado | Fundo | Borda | Texto |
+| --- | --- | --- | --- |
+| Inativo | transparente | transparente | `cream-400` `#6E6760` |
+| Hover | `surface-nav-hover` `#F2ECE2` | `surface-nav-hover-border` `#EAE4DC` | `cream-50` `#1A1816` |
+| Ativo | `brass` `#7A1B38` + `shadow-nav-active` | — | branco |
 
-Referências visuais externas (Stitch e similares) podem ser usadas para
-composição, tipografia, espaçamento, cores, bordas e microinterações — **mas
-nunca para introduzir funcionalidades ou dados inexistentes** no Facilita OAB.
+O ativo é o maior contraste da navegação. Ícones acompanham `currentColor`.
+Evitar hover branco, hover azul, vinho em todos os itens, `scale` e
+animação chamativa.
 
-Não copiar de referências: Pomodoro, streak, horas estudadas não calculadas,
-ranking, tópicos de edital, previsão de conclusão, contagens fictícias de
-questões, paginação sem endpoint ou qualquer ação sem backend.
+Mobile usa `BottomNav.jsx`. Breakpoint estrutural é `md`.
 
-O objetivo não é reproduzir uma tela inteira literalmente. A referência é
-adaptada à arquitetura atual, à identidade Facilita OAB, aos dados reais, às
-fontes Fraunces + Manrope e aos componentes existentes.
+## 13. Chat — referência oficial
 
-Também não introduzir sem pedido explícito e sem backend correspondente: busca
-global, notificações, menu dropdown de conta ou subtítulos temáticos
-inventados para tarefas.
+### Eixo de leitura
 
-## Estados e controles
+Conversa, resposta do mentor e composer compartilham `max-w-[860px]`. A
+mensagem do usuário usa `max-w-[68%]`.
+
+### Histórico lateral
+
+Coluna de `270px`, `bg-ink-900`, altura total, à esquerda da área principal.
+
+- Títulos **inativos escuros** (`cream-50`), 13px — a hierarquia vem do
+  fundo e do peso da ativa, nunca de apagar o título.
+- Datas em `cream-600`, 10px.
+- Ativa: `bg-brass-soft` + `border-brass/25` + título vinho medium. **Nunca
+  vinho sólido.**
+- Grupos "HOJE"/"ANTERIORES": 10px uppercase em `cream-400`.
+- Scrollbar discreta: `#DFD7CB`, 4px (`.chat-scrollbar`, `.conversas-scrollbar`).
+
+### Sugestões rápidas
+
+Chips compactos no padrão de botão outlined, centralizados na largura de
+leitura. **Sem faixa de fundo nem borda horizontal** — não devem parecer uma
+segunda navbar abaixo do header.
+
+Só aparecem enquanto `messages.length === 0` (via `isEmpty`). Assim que a
+conversa começa, somem junto com o estado vazio.
+
+### Estado vazio
+
+Coluna única `mx-auto w-full max-w-[640px]`, centralizada verticalmente na
+área útil com `min-h-full flex flex-col justify-center` **apenas quando
+vazio**. Ícone, eyebrow, título e descrição centralizados; ações rápidas e
+bloco de ajuda em `w-full`, alinhados à mesma coluna.
+
+Ações rápidas: 3 cards outlined em `sm:grid-cols-3`, título + subtítulo,
+que apenas preenchem o composer via `fillInput` — sem endpoint novo.
+
+"Como o mentor pode ajudar": seção editorial com `border-t border-border-subtle`
+e `pt-4`, fundo transparente, sem radius e sem sombra. Capacidades
+numeradas (`01`–`04`) em Fraunces vinho a 50%, grid 2×2 no desktop.
+**Não é feature card.**
+
+### Composer
+
+Mesma largura da conversa, `bg-ink-950`, borda de botão outlined,
+`rounded-2xl`, sombra `0 4px 16px rgba(26,24,22,0.04)`. Foco leva a borda a
+vinho, sem glow e sem azul. **Sem `border-top` atravessando a tela** — deve
+flutuar sobre o canvas, não ancorar como barra.
+
+Botão enviar circular: `bg-brass` quando habilitado,
+`disabled:bg-ink-800 disabled:text-cream-600` (bege quente) quando vazio.
+Texto auxiliar abaixo em 10px centralizado.
+
+### Mensagens
+
+**Usuário:** bubble `bg-brass` com texto branco, `rounded-2xl rounded-br-md`,
+largura contida.
+
+**Mentor:** card editorial branco com borda quente e `rounded-2xl`.
+Cabeçalho próprio ("MENTOR JURÍDICO • IA ESPECIALIZADA") separado por
+divisor, markdown no corpo, e rodapé separado por divisor com "Salvar no
+caderno" no padrão outlined. **Não é bolha cinza.**
+
+### Markdown
+
+Estilizado em `index.css` (`.markdown`). Regra central: **estilizar apenas
+os elementos que o markdown já produz** — nunca interpretar o conteúdo da
+IA em JS para inventar seções como "Ponto de atenção" ou "Top temas".
+
+- Parágrafo: `margin-bottom: 1.1em`, `line-height: 1.75`
+- Listas: `margin-left: 1.5em`, item `0.5em` / 1.7
+- Títulos: Fraunces, `mt-7 mb-2.5`, weight 600
+- `strong`: `text-cream-50 font-semibold` — **destaque por peso, não por
+  cor**; o vinho fica para links e títulos
+- `blockquote`: faixa editorial com `border-l-2 border-brass` + `bg-ink-900`
+- `code`: `bg-ink-900` + `border-border-subtle`
+- Tabelas: divisores `border-subtle`
+
+## 14. Questão para revisão
+
+Quando a pessoa chega do caderno/simulado para revisar uma questão, a
+mensagem **não** é renderizada como bubble vinho gigante: vira bloco
+editorial de contexto.
+
+Reconhecimento em `lib/revisaoQuestao.js`. O Chat recebe só a string do
+prompt — não há tipo estruturado na mensagem persistida. O parser reconhece
+o template determinístico gerado por `App.discussWithMentor` e **devolve
+`null` diante de qualquer divergência**, caindo no bubble normal. Nenhuma
+mensagem comum quebra.
+
+> O parser espelha um template que mora em `App.jsx`. Se a frase mudar lá e
+> não aqui, o bloco degrada para bubble. A blindagem seria extrair o
+> template para o módulo e fazer o `App` importar o builder.
+
+Estrutura: cabeçalho "QUESTÃO PARA REVISÃO" → Enunciado → Sua resposta +
+Gabarito lado a lado → anotação (se houver) → pedido final separado por
+divisor.
+
+Card branco, borda `#EAE4DC`, **borda esquerda 3px vinho**, `rounded-2xl`.
+
+Os dois cards comparativos são **irmãos de mesma base neutra**
+(`bg-ink-900` + `border-ink-800`). O status aparece só em três detalhes:
+
+- badge 10px uppercase ("Incorreta" / "Correta")
+- ícone semântico (`XCircleIcon` / `CheckCircleIcon`)
+- acento de 2px na borda esquerda
+
+Erro em `alert` `#C23B2E`, acerto em `#059669`. **Nunca pintar o card
+inteiro** — o objetivo é mostrar o que foi marcado e o que era o gabarito
+sem virar tela de erro.
+
+## 15. Checklist para telas novas
+
+Antes de criar qualquer tela:
+
+1. Usar tokens existentes; não criar hex solto sem justificativa.
+2. Classificar cada elemento: card mestre, subcard, linha editorial, botão
+   primário, botão outlined, link textual ou pill/status.
+3. Evitar caixa dentro de caixa — em listas, divisor em vez de borda
+   completa.
+4. Não usar rosa como hover genérico de botão.
+5. Não usar `shadow-sm`/`shadow-md` nem rgba preto.
+6. Não usar cinza ou azul frio em borda, fundo ou foco.
+7. Manter Fraunces + Manrope nos papéis corretos.
+8. Preservar foco de teclado acessível, sempre em vinho.
+9. Reutilizar os padrões de `Inicio.jsx` e `Chat.jsx`.
+10. Não inventar dado ou funcionalidade para imitar referência externa.
+
+## 16. Dados reais e referências externas
+
+Referências visuais externas (Stitch e similares) servem para composição,
+tipografia, espaçamento, cor, bordas e microinteração — **nunca para
+introduzir funcionalidade ou dado inexistente**.
+
+Não copiar: Pomodoro, streak, horas estudadas não calculadas, ranking,
+tópicos de edital, previsão de conclusão, contagens fictícias de questões,
+paginação sem endpoint, badges de exame ou qualquer ação sem backend.
+
+O objetivo nunca é reproduzir uma tela inteira: a referência é adaptada à
+arquitetura atual, aos dados reais e às fontes do projeto.
+
+Também não introduzir sem pedido explícito e sem backend: busca global,
+notificações, menu dropdown de conta ou subtítulos temáticos inventados.
+
+## 17. Estados e controles
 
 - Campos usam `bg-ink-900 border border-ink-800`.
-- Disabled é representado por opacidade ou superfície/texto atenuados, e deve
-  bloquear a interação.
-- Loading é comunicado pelo rótulo da ação ("Entrando…", "Importando…").
-- O padrão de `focus-visible` documentado acima vale para os botões do
-  Dashboard; componentes antigos ainda não o adotaram — inspecionar o código
-  antes de presumir.
+- Disabled: opacidade ou superfície/texto atenuados, e deve bloquear a
+  interação.
+- Loading é comunicado pelo rótulo ("Entrando…", "Importando…").
+- O padrão de `focus-visible` em vinho vale para Dashboard e Chat;
+  componentes antigos ainda não o adotaram — inspecionar antes de presumir.
 
-## Pendências conhecidas
+## 18. Pendências conhecidas
 
-- Os tokens `boxShadow` (`card-subtle`, `card-hover`, `pill`) e a escala
-  `brand-*` (50–950) existem no config mas **não são usados** por nenhum
-  componente. Foram criados durante o estudo da referência Stitch e a direção
-  final dispensou sombras e manteve `brass`. Remover quando houver uma rodada
-  de limpeza autorizada.
-- `border-subtle` (`#F0EAE1`, usado por Caderno) e `surface-border-subtle`
-  (`#E8DCCA`, usado pelos subcards do Dashboard) têm nomes parecidos e valores
-  diferentes. Preferir o segundo em telas novas.
-- `frontend/src/index.css` ainda tem `#8B1E3F` e `#6F1731` hardcoded na
-  scrollbar do Chat — são o vinho **antigo**, anterior a `#7A1B38`.
-- Telas fora do Dashboard ainda usam `brass-dim` e as superfícies antigas;
-  elas serão alinhadas gradualmente.
+- A escala `brand-*` (50–950) e as sombras `card-subtle`, `card-hover` e
+  `pill` existem no config e **não são usadas por nenhum componente**.
+  Sobraram do estudo da referência Stitch. Remover em limpeza autorizada.
+- `cream-200` (`#3A342F`) ficou com uso residual após o texto do botão
+  outlined migrar para `cream-50`.
+- Telas fora de Dashboard e Chat (Caderno, Cronograma, Simulado,
+  Estatísticas, Login, QuestionCard) ainda usam `brass-dim` e as
+  superfícies antigas. Serão alinhadas gradualmente — ao tocar numa delas,
+  migrar para os padrões desta página.
