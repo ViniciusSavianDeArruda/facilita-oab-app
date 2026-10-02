@@ -11,57 +11,87 @@ preservar a identidade estabelecida ao aplicar um refinamento aprovado.
 
 ## Fonte de verdade
 
-Leia .claude/docs/design-system.md antes de alterar uma interface de frontend e
-consulte frontend/tailwind.config.js para os tokens implementados. Não copie
-valores de tokens para esta skill. Se a documentação e a implementação
-divergirem, identifique a diferença antes de modificar qualquer uma delas.
+Leia `.claude/docs/design-system.md` antes de alterar uma interface e consulte
+`frontend/tailwind.config.js` para os tokens implementados. Não copie valores
+de tokens para esta skill. Se documentação e implementação divergirem,
+identifique a diferença antes de modificar qualquer uma delas.
+
+**O Dashboard (`Inicio.jsx`) e a Sidebar (`Sidebar.jsx`) são a referência
+visual principal.** Compare qualquer tela nova com eles antes de inventar um
+padrão.
 
 ## Identidade
 
-Preserve a identidade vinho e bordô, o fundo creme quente da página, as
-superfícies claras, os títulos editoriais em Fraunces e o texto de interface em
-Manrope. Priorize hierarquia por tipografia e espaçamento, bordas discretas e
-sombras suaves somente quando elas apoiarem o agrupamento.
+Preserve o vinho institucional, o fundo creme quente, as superfícies claras, os
+títulos editoriais em Fraunces e o texto de interface em Manrope. A hierarquia
+vem de tipografia, espaçamento, agrupamento e bordas quentes — não de sombra.
 
-Use a marca reutilizável do aplicativo onde o wordmark for necessário. Não
-crie uma nova identidade visual com azul primário genérico, gradientes
-chamativos, efeitos de vidro sem justificativa, sombras pesadas, emojis
-decorativos ou cards e badges sem propósito claro.
+Use a marca reutilizável onde o wordmark for necessário. Não crie uma
+identidade nova com azul primário genérico, gradientes chamativos, efeito de
+vidro, sombras pesadas, emojis decorativos ou cards e badges sem propósito.
+
+## Ordem de trabalho com tokens
+
+1. **Consulte primeiro os tokens existentes.** Se já houver um que compile
+   exatamente para o valor desejado, use-o.
+2. **Reutilize padrões existentes** (card, subcard, botão primário/secundário,
+   pill) antes de criar variações.
+3. **Evite hex hardcoded** quando já existir token equivalente.
+4. **Crie token semântico** quando realmente não houver equivalente — com nome
+   que descreva o papel, não a cor.
+5. **Não altere tokens globais para resolver um detalhe local.** Antes de mudar
+   o valor de um token, verifique quantos componentes o usam; se o uso for
+   amplo, crie um token específico em vez de retunar o compartilhado.
+
+## Verificar antes de "corrigir"
+
+Não altere um valor apenas porque parece diferente de uma referência ou porque
+"parece errado". Primeiro inspecione o CSS computado e os tokens reais.
+
+O redesign do Dashboard mostrou que percepção de cor depende de fundo,
+contraste e renderização: bordas matematicamente quentes foram percebidas como
+azuladas várias vezes, e em um dos casos a causa real era o foco nativo do
+navegador, não a cor. Confirme a camada antes de mexer na cor.
 
 ## Escolhas de layout
 
 Escolha o layout a partir do propósito da tela, em vez de impor uma composição
 universal:
 
-- Dashboard e telas de plano de estudos podem usar uma superfície principal.
+- Dashboard usa coluna principal + coluna lateral de contexto.
 - Chat é um workspace integrado e não exige card externo.
 - Caderno usa uma lista de registros com painel de leitura.
 - A resolução do Simulado permanece concentrada nas questões.
-- Estatísticas é analítica, com seções próprias em vez de um card externo
-  obrigatório e excessivamente grande.
+- Estatísticas é analítica, com seções próprias.
 
-Consistência é visual e comportamental; ela não exige telas estruturalmente
-idênticas nem um card flutuante em todas as páginas.
+Consistência é visual e comportamental; não exige telas estruturalmente
+idênticas nem card flutuante em todas as páginas.
 
 ## Diretrizes de implementação
 
 - Inspecione o componente existente e telas aprovadas comparáveis antes de editar.
-- Reutilize tokens e componentes aprovados quando apropriado.
+- Implemente incrementalmente e valide visualmente a cada passo, em vez de
+  entregar um redesign inteiro de uma vez.
 - Preserve lógica de negócio, contratos de API, navegação, persistência,
-  comportamento em desktop e mobile e acessibilidade.
+  responsividade e acessibilidade.
+- Preserve o foco de teclado. Ao remover o outline nativo, substitua-o por um
+  anel na identidade vinho.
 - Não invente endpoints, dados, métricas ou funcionalidades, nem adicione
   dependências sem necessidade e autorização.
+- Referências externas servem para composição, espaçamento, cor e
+  microinteração — nunca para introduzir funcionalidade inexistente.
 
 Para uma direção visual substancial, considere uma prévia isolada somente em
 DEV antes de alterar um componente real. Preserve a tela real, obtenha
 aprovação visual, transfira somente o design aprovado e então remova o
-componente temporário, o acesso e as referências. Refinamentos pequenos de
-espaçamento, tipografia ou alinhamento não exigem prévia.
+componente temporário. Refinamentos pequenos de espaçamento, tipografia ou
+alinhamento não exigem prévia.
 
 ## Validação
 
-Para alterações de frontend, execute npm --prefix frontend run build e revise
-git diff --check. Verifique visualmente as resoluções relevantes quando houver
-um navegador disponível e informe as verificações manuais não realizadas. Siga
-.claude/docs/workflow.md para as regras de Git; não faça commit ou push sem
-aprovação explícita.
+Para alterações de frontend, execute `npm --prefix frontend run build` e revise
+`git diff --check`. Quando uma cor ou estado for crítico, confirme o valor no
+CSS compilado em vez de presumir. Verifique visualmente as resoluções
+relevantes quando houver navegador disponível e informe as verificações
+manuais não realizadas. Siga `.claude/docs/workflow.md` para as regras de Git;
+não faça commit ou push sem aprovação explícita.

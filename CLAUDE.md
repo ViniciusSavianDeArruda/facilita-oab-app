@@ -14,7 +14,7 @@ single-user, com autenticação privada, usado em contexto real de estudo.
 - Visão geral, setup e deploy: README.md
 - Fluxo de desenvolvimento: .claude/docs/workflow.md
 - Contratos e modelos relevantes ao frontend: .claude/docs/data-models.md
-- Design System: .claude/docs/design-system.md
+- Design System: .claude/docs/design-system.md (fonte de verdade visual; o Dashboard é a referência principal)
 - Limitações e riscos conhecidos: .claude/docs/debito-tecnico.md
 - Pendências acionáveis: TODO.md
 
@@ -24,6 +24,8 @@ single-user, com autenticação privada, usado em contexto real de estudo.
 - Preserve funcionalidades de produção, contratos existentes e lógica de negócio.
 - Faça alterações incrementais e não invente endpoints, dados ou funcionalidades.
 - Alterações visuais não devem modificar API, persistência ou regras de negócio sem solicitação explícita.
+- Antes de alterações relevantes de UI, leia .claude/skills/facilita-oab-design/SKILL.md e preserve a identidade do Dashboard em telas novas.
+- Referências visuais externas servem para composição e acabamento; nunca para introduzir funcionalidades ou dados inexistentes.
 - Preserve a branch atual e todas as alterações locais. Não descarte trabalho existente, troque de branch, faça merge, commit ou push sem solicitação explícita.
 - Não altere banco de dados, autenticação ou infraestrutura sem necessidade comprovada e escopo autorizado.
 
