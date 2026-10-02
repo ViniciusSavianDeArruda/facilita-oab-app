@@ -15,7 +15,7 @@ funcionalidades em produção.
 - README.md: visão geral, setup e deploy.
 - .claude/docs/workflow.md: processo detalhado de desenvolvimento e validação.
 - .claude/docs/data-models.md: contratos e modelos consumidos pelo frontend.
-- .claude/docs/design-system.md: identidade visual e padrões aprovados.
+- .claude/docs/design-system.md: fonte de verdade visual e padrões aprovados. O Dashboard (Inicio.jsx + Sidebar.jsx) é a referência visual principal do produto; telas novas devem preservar essa identidade.
 - .claude/docs/debito-tecnico.md: riscos e limitações persistentes.
 - TODO.md: pendências acionáveis.
 
@@ -24,6 +24,7 @@ funcionalidades em produção.
 - Investigue antes de editar e confirme o comportamento no código.
 - Preserve contratos, persistência, regras de negócio e funcionalidades existentes.
 - Não invente endpoints, campos, dados ou recursos ausentes.
+- Referências visuais externas podem inspirar composição e acabamento, mas não podem introduzir funcionalidades ou dados inexistentes.
 - Prefira alterações pequenas e incrementais.
 - Alterações visuais não autorizam mudanças em backend, API, banco ou lógica de negócio.
 - Preserve alterações locais; não descarte trabalho, troque de branch, faça merge, commit ou push sem solicitação explícita.
@@ -32,7 +33,7 @@ funcionalidades em produção.
 ## Skills especializadas
 
 - Para auditorias de UI/UX, consulte .claude/skills/design-review/SKILL.md.
-- Para criação ou refinamento visual de telas e componentes, consulte .claude/skills/facilita-oab-design/SKILL.md.
+- Para criação ou refinamento visual de telas e componentes, consulte .claude/skills/facilita-oab-design/SKILL.md antes de alterações relevantes de UI.
 - Quando a tarefa envolver auditoria e implementação visual, consulte ambas.
 - As skills complementam estas instruções gerais e a documentação oficial.
 

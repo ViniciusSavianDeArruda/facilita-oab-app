@@ -10,22 +10,27 @@ export default {
       colors: {
         ink: {
           950: '#FFFFFF',
-          900: '#FFFBF7',
-          800: '#EBE3DA',
+          900: '#FDFCFB',
+          800: '#EAE4DC',
           700: '#D8CCBD',
         },
         sand: {
-          50: '#FBF9F5',
+          50: '#FAF8F5',
           100: '#EFECE6',
         },
         cream: {
-          50: '#2A2422',
-          400: '#5C524D',
-          600: '#8A7E78',
+          50: '#1A1816',
+          200: '#3A342F',
+          400: '#6E6760',
+          // Tom de metadados da referência Stitch — um passo mais claro que
+          // o secundário; hoje só o turno no cabeçalho usa.
+          450: '#736B63',
+          600: '#9E978E',
         },
         brass: {
-          DEFAULT: '#8B1E3F',
-          hover: '#6F1731',
+          DEFAULT: '#7A1B38',
+          hover: '#64142E',
+          soft: '#FDF2F4',
           dim: '#A8536A',
         },
         // Escala de vinho inspirada na referência Stitch — usada no redesign
@@ -47,30 +52,43 @@ export default {
         },
 
         surface: {
-          page: '#FBF9F5',
+          page: '#FAF8F5',
           raised: '#FFFFFF',
-          subtle: '#FFFBF7',
+          subtle: '#FDFCFB',
+          // Hovers por papel — cada um tem valor próprio (subcard, nav e
+          // botão secundário não compartilham tom).
+          'subcard-hover': '#F7F3EC',
+          'nav-hover': '#F1EFEC',
+          'nav-hover-border': '#E6E1DB',
+          'button-hover': '#FAF5F6',
+          'border-hover': '#DFD7CB',
+          // Rosado sólido da pill de data/turno no cabeçalho — calibrado
+          // para ser mais perceptível que a composição translúcida do brass.
+          pill: '#F8EDEF',
+          'pill-border': '#F2D7DD',
+          'border-button': '#E8DDCD',
           // Nomenclatura da referência Stitch (valores próprios, conferidos
           // no HTML fornecido) — complementa os aliases acima sem removê-los.
-          cream: '#FBF9F5',
+          cream: '#FAF8F5',
           card: '#FFFFFF',
-          border: '#EBE5DC',
-          'border-subtle': '#F2ECE2',
-          muted: '#736B63',
-          dark: '#1C1917',
+          border: '#EAE4DC',
+          'border-subtle': '#E8DCCA',
+          muted: '#6E6760',
+          dark: '#1A1816',
         },
         text: {
-          primary: '#2A2422',
-          secondary: '#5C524D',
-          muted: '#8A7E78',
+          primary: '#1A1816',
+          secondary: '#6E6760',
+          muted: '#9E978E',
         },
         border: {
-          default: '#EBE3DA',
-          subtle: '#D8CCBD',
+          default: '#EAE4DC',
+          subtle: '#F0EAE1',
         },
         action: {
-          primary: '#8B1E3F',
-          hover: '#6F1731',
+          primary: '#7A1B38',
+          hover: '#64142E',
+          soft: '#FDF2F4',
           muted: '#A8536A',
         },
         feedback: {
