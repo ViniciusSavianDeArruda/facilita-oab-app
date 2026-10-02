@@ -35,9 +35,13 @@ Os aliases de feedback aceitam o prefixo apropriado à propriedade, como
 `bg-feedback-success` ou `border-feedback-danger`. Verde e âmbar correspondem
 às cores de desempenho já usadas no frontend; não constituem uma paleta nova.
 
-Também existem aplicações locais de apoio: o item ativo da navegação usa fundo
-`#F7E4EA` com texto `brass`, e gráficos podem usar cores próprias. Antes de
-transformar esses valores em tokens, confirmar repetição e necessidade real.
+Também existem aplicações locais de apoio: `#F7E4EA` (tom claro de vinho)
+aparece como fundo de badges/ícones discretos (calendário, sequência de
+estudo), e gráficos podem usar cores próprias. Antes de transformar esses
+valores em tokens, confirmar repetição e necessidade real.
+
+O item ativo da navegação principal (Sidebar) usa fundo `brass` sólido com
+texto branco — não o tom claro `#F7E4EA` usado em badges.
 
 ## Tipografia
 
@@ -62,7 +66,7 @@ transformar esses valores em tokens, confirmar repetição e necessidade real.
 
 ## Layout, superfícies e containers
 
-- Desktop usa sidebar à esquerda (`w-60`, aproximadamente 240px), com wordmark
+- Desktop usa sidebar à esquerda (`w-72`, aproximadamente 288px), com wordmark
   “Facilita OAB”: “Facilita” em texto primário e “OAB” em vinho.
 - Mobile usa bottom navigation. O breakpoint estrutural principal é `md`; `sm`
   é usado para ajustes de densidade e grids compactos.
@@ -76,11 +80,13 @@ transformar esses valores em tokens, confirmar repetição e necessidade real.
 - Controles compactos usam `rounded-lg`; campos e ações principais usam
   `rounded-xl`.
 
-Nem toda tela deve ser forçada a um card flutuante único: Início, Plano e
-algumas telas de configuração usam esse padrão, enquanto Caderno,
-Estatísticas e Simulado privilegiam densidade ou leitura. O Chat é uma exceção
-intencional full-bleed: a estrutura ocupa a área disponível, mas mensagens e
-composer preservam largura de leitura de `max-w-[800px]`.
+Nem toda tela deve ser forçada a um card flutuante único: Plano e algumas
+telas de configuração usam esse padrão, enquanto Caderno, Estatísticas e
+Simulado privilegiam densidade ou leitura. Chat e Início são exceções
+intencionais full-bleed: a estrutura ocupa a área disponível (`w-full
+max-w-[1600px] mx-auto`, sem card externo), com blocos internos (cards,
+listas) usando as superfícies padrão. No Chat, mensagens e composer
+preservam largura de leitura de `max-w-[800px]`.
 
 ## Ações e estados interativos
 

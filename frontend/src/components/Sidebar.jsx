@@ -33,16 +33,9 @@ export default function Sidebar({
   ];
 
   return (
-    <aside className="hidden md:flex w-60 flex-col gap-5 border-r border-ink-800 p-4 flex-shrink-0 bg-sand-50">
-      <div className="flex items-center justify-between px-2 pb-3 border-b border-ink-800">
+    <aside className="hidden md:flex w-72 flex-col gap-6 border-r border-ink-800 p-5 flex-shrink-0 bg-sand-50">
+      <div className="px-2 pb-4 border-b border-ink-800">
         <Brand size="sidebar" />
-        <button
-          onClick={onOpenSettings}
-          className="text-cream-400 hover:text-cream-50 transition-colors p-1"
-          aria-label="Ajustes"
-        >
-          <CogIcon />
-        </button>
       </div>
 
       <nav className="flex-1 flex flex-col gap-0.5">
@@ -55,7 +48,7 @@ export default function Sidebar({
               onClick={() => onGoto(item.key)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${
                 isActive
-                  ? "text-brass bg-[#F7E4EA]"
+                  ? "bg-brass text-white"
                   : "text-cream-400 hover:text-cream-50 hover:bg-[#F3ECE4]"
               }`}
             >
@@ -71,14 +64,14 @@ export default function Sidebar({
         })}
       </nav>
 
-      {/* Perfil do usuário */}
+      {/* Perfil do usuário + ajustes */}
       <div className="mt-auto border-t border-ink-800 pt-4">
         <div className="flex items-center gap-3 px-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brass/10 text-brass font-semibold text-sm">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brass/10 text-brass font-semibold text-sm shrink-0">
             {nome.charAt(0).toUpperCase()}
           </div>
 
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-cream-50 truncate">
               {nome}
             </p>
@@ -87,6 +80,14 @@ export default function Sidebar({
               1ª fase • OAB
             </p>
           </div>
+
+          <button
+            onClick={onOpenSettings}
+            className="shrink-0 text-cream-400 hover:text-cream-50 hover:bg-ink-900 transition-colors p-1.5 rounded-lg"
+            aria-label="Ajustes"
+          >
+            <CogIcon />
+          </button>
         </div>
       </div>
     </aside>
