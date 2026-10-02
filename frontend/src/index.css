@@ -37,15 +37,21 @@ body {
 .chat-scrollbar,
 .conversas-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #8B1E3F transparent;
+  scrollbar-color: #DFD7CB transparent;
 }
 .chat-scrollbar::-webkit-scrollbar-thumb,
 .conversas-scrollbar::-webkit-scrollbar-thumb {
-  background: #8B1E3F;
+  background: #DFD7CB;
+  border-radius: 6px;
+}
+.chat-scrollbar::-webkit-scrollbar,
+.conversas-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
 }
 .chat-scrollbar::-webkit-scrollbar-thumb:hover,
 .conversas-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #6F1731;
+  background: #D8CCBD;
 }
 
 /* Estilos para markdown do mentor */
@@ -53,21 +59,21 @@ body {
   overflow-wrap: anywhere;
 }
 .markdown p {
-  margin-bottom: 0.75em;
-  line-height: 1.65;
+  margin-bottom: 1.1em;
+  line-height: 1.75;
 }
 .markdown p:last-child {
   margin-bottom: 0;
 }
 .markdown strong {
-  @apply text-brass font-medium;
+  @apply text-cream-50 font-semibold;
 }
 .markdown code {
-  @apply bg-ink-800 text-brass px-1.5 py-0.5 rounded text-[0.9em];
+  @apply bg-ink-900 border border-border-subtle text-brass px-1.5 py-0.5 rounded text-[0.9em];
   font-family: 'JetBrains Mono', ui-monospace, monospace;
 }
 .markdown pre {
-  @apply bg-ink-800 border border-ink-700 rounded-lg px-3 py-2.5 my-3 overflow-x-auto text-sm;
+  @apply bg-ink-900 border border-border-subtle rounded-lg px-3.5 py-3 my-4 overflow-x-auto text-sm;
   max-width: 100%;
 }
 .markdown pre code {
@@ -82,8 +88,8 @@ body {
 }
 .markdown ul,
 .markdown ol {
-  margin-left: 1.25em;
-  margin-bottom: 0.75em;
+  margin-left: 1.5em;
+  margin-bottom: 1.1em;
 }
 .markdown ul {
   list-style-type: disc;
@@ -92,37 +98,37 @@ body {
   list-style-type: decimal;
 }
 .markdown li {
-  margin-bottom: 0.35em;
-  line-height: 1.6;
+  margin-bottom: 0.5em;
+  line-height: 1.7;
 }
 .markdown h1,
 .markdown h2,
 .markdown h3 {
-  @apply font-serif text-cream-50 mt-4 mb-2;
-  font-weight: 500;
+  @apply font-serif text-cream-50 mt-7 mb-2.5;
+  font-weight: 600;
 }
-.markdown h1 { font-size: 1.25em; }
-.markdown h2 { font-size: 1.15em; }
-.markdown h3 { font-size: 1.05em; }
+.markdown h1 { font-size: 1.3em; }
+.markdown h2 { font-size: 1.2em; }
+.markdown h3 { font-size: 1.1em; }
 .markdown blockquote {
-  @apply border-l-2 border-brass-dim pl-3 text-cream-400 italic my-2;
+  @apply border-l-2 border-brass bg-ink-900 pl-4 pr-4 py-3 text-cream-400 my-4 rounded-r-lg;
 }
 .markdown-table-scroll {
-  @apply my-4 max-w-full overflow-x-auto rounded-lg border border-ink-700;
+  @apply my-4 max-w-full overflow-x-auto rounded-lg border border-border-subtle;
 }
 .markdown table {
   @apply w-max min-w-full border-collapse text-sm leading-relaxed;
 }
 .markdown th,
 .markdown td {
-  @apply border-b border-ink-700 px-3 py-2.5 text-left align-top break-words;
+  @apply border-b border-border-subtle px-3 py-2.5 text-left align-top break-words;
 }
 .markdown th:not(:last-child),
 .markdown td:not(:last-child) {
-  @apply border-r border-ink-700;
+  @apply border-r border-border-subtle;
 }
 .markdown th {
-  @apply bg-ink-800 text-cream-50 font-medium;
+  @apply bg-ink-900 text-cream-50 font-semibold;
 }
 .markdown td {
   @apply text-cream-400;

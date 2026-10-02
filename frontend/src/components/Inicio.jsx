@@ -247,7 +247,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
         {/* ===== Header: saudação à esquerda + próxima prova compacta à direita ===== */}
         <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 sm:max-w-2xl">
-            <div className="mb-2.5 inline-flex w-fit items-center gap-2 rounded-full border border-surface-pill-border bg-surface-pill px-3.5 py-1.5 shadow-[0_1px_2px_rgba(122,27,56,0.04)]">
+            <div className="mb-2.5 inline-flex w-fit items-center gap-2 rounded-full border border-surface-pill-border bg-surface-pill px-3.5 py-1.5">
               <span className="text-[11px] font-semibold uppercase leading-none tracking-[0.14em] text-brass">
                 {formatarDataCurta(new Date())}
               </span>
@@ -255,7 +255,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                 •
               </span>
               <span className="inline-flex items-center gap-1 text-xs font-normal leading-none text-cream-450">
-                <turno.Icon className="h-3.5 w-3.5 shrink-0 text-brass" aria-hidden="true" />
+                <turno.Icon className="h-3.5 w-3.5 shrink-0 text-brass/60" aria-hidden="true" />
                 {turno.label}
               </span>
             </div>
@@ -335,7 +335,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                 </div>
                 <button
                   onClick={() => onGoto("cronograma-config")}
-                  className="min-h-6 text-[11px] text-brass hover:underline transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
+                  className="min-h-6 text-[11px] text-brass hover:text-brass-link-hover hover:underline transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
                 >
                   Ajustar cronograma
                 </button>
@@ -439,7 +439,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                 return (
                   <section aria-labelledby="foco-de-hoje">
                     <div className="bg-ink-950 border border-ink-800 rounded-2xl p-4 sm:p-5">
-                      <div className="flex flex-col gap-2 pb-3 mb-4 border-b border-ink-800 sm:flex-row sm:items-baseline sm:justify-between">
+                      <div className="flex flex-col gap-2 pb-3 mb-4 border-b border-border-subtle sm:flex-row sm:items-baseline sm:justify-between">
                         <div className="flex items-baseline gap-2 flex-wrap">
                           <p className="text-[11px] tracking-widest uppercase text-brass/70 font-medium">
                             Foco de hoje
@@ -469,7 +469,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                       </div>
                       <button
                         onClick={() => onGoto("cronograma")}
-                        className="min-h-9 text-xs text-brass hover:bg-brass-soft mt-2 px-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950"
+                        className="min-h-9 text-xs text-brass hover:text-brass-link-hover hover:underline mt-2 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950"
                       >
                         Ver plano completo
                       </button>
@@ -481,21 +481,26 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
             {porMateria.length > 0 && (
               <section aria-labelledby="materias-atencao">
                 <div className="bg-ink-950 border border-ink-800 rounded-2xl p-4 sm:p-5">
-                  <div className="flex items-baseline justify-between gap-3 pb-3 mb-4 border-b border-ink-800">
+                  <div className="flex items-baseline justify-between gap-3 pb-3 mb-4 border-b border-border-subtle">
                     <h2 id="materias-atencao" className="flex items-center gap-1.5 text-[11px] tracking-widest uppercase text-brass/70 font-medium">
                       <ExclamationCircleIcon className="w-3.5 h-3.5 shrink-0" />
                       Matérias que pedem atenção
                     </h2>
                     <button
                       onClick={() => onGoto("estatisticas")}
-                      className="min-h-10 text-xs text-brass hover:bg-brass-soft px-2 transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
+                      className="min-h-10 text-xs text-brass hover:text-brass-link-hover hover:underline transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
                     >
                       Ver todas
                     </button>
                   </div>
-                  <div className="space-y-2">
-                    {porMateria.slice(0, 3).map((m) => (
-                      <MateriaAtencaoRow key={m.materia} m={m} onGoto={onGoto} />
+                  <div>
+                    {porMateria.slice(0, 3).map((m, i, arr) => (
+                      <MateriaAtencaoRow
+                        key={m.materia}
+                        m={m}
+                        onGoto={onGoto}
+                        ultimo={i === arr.length - 1}
+                      />
                     ))}
                   </div>
                 </div>
@@ -517,13 +522,13 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                 carregadas (chat, histórico de simulados, caderno)*/}
             <section aria-labelledby="atividade-recente">
               <div className="bg-ink-950 border border-ink-800 rounded-2xl p-4 sm:p-5">
-                <div className="flex items-baseline justify-between gap-3 pb-3 mb-4 border-b border-ink-800">
+                <div className="flex items-baseline justify-between gap-3 pb-3 mb-4 border-b border-border-subtle">
                   <h2 id="atividade-recente" className="text-[11px] tracking-widest uppercase text-brass/70 font-medium">
                     Atividade recente
                   </h2>
                   <button
                     onClick={() => onGoto("estatisticas")}
-                    className="min-h-10 text-xs text-brass hover:bg-brass-soft px-2 transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
+                    className="min-h-10 text-xs text-brass hover:text-brass-link-hover hover:underline transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
                   >
                     Ver histórico
                   </button>
@@ -591,9 +596,9 @@ function focoHojeTextos(item) {
 // Foco sempre no vinho do projeto: o azul padrão do navegador é removido em
 // focus/focus-visible/active, e devolvido como ring discreto do mesmo token.
 const BTN_BASE =
-  "group/btn appearance-none shrink-0 inline-flex items-center gap-1.5 min-h-9 px-3.5 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 ease-in-out focus:outline-none focus-visible:outline-none active:outline-none";
-const BTN_SECUNDARIO = `${BTN_BASE} bg-ink-950 border border-surface-border-button text-cream-200 hover:bg-surface-button-hover hover:border-brass hover:text-brass focus-visible:ring-2 focus-visible:ring-brass/20 focus-visible:border-brass`;
-const BTN_PRIMARIO = `${BTN_BASE} bg-brass text-ink-950 hover:bg-brass-hover focus-visible:ring-2 focus-visible:ring-brass/40`;
+  "group/btn appearance-none shrink-0 inline-flex items-center gap-1.5 min-h-9 px-3.5 py-2 rounded-lg text-[13px] font-medium transition-[background-color,border-color,color] duration-150 ease-out focus:outline-none focus-visible:outline-none active:outline-none";
+const BTN_SECUNDARIO = `${BTN_BASE} bg-ink-950 border border-surface-border-button text-cream-50 hover:bg-surface-button-hover hover:border-surface-border-button-hover hover:text-brass focus-visible:ring-2 focus-visible:ring-brass/20 focus-visible:border-brass`;
+const BTN_PRIMARIO = `${BTN_BASE} bg-brass text-ink-950 shadow-btn-primary hover:bg-brass-hover hover:shadow-btn-primary-hover focus-visible:ring-2 focus-visible:ring-brass/40`;
 
 function SetaBotao() {
   return (
@@ -614,7 +619,7 @@ function FocoHojeItem({ item, onGoto }) {
 
   if (item.concluido) {
     return (
-      <div className="flex items-center gap-3 bg-ink-900 border border-surface-border-subtle hover:bg-surface-subcard-hover hover:border-surface-border-hover transition-colors duration-200 ease-in-out rounded-xl p-3">
+      <div className="flex items-center gap-3 bg-ink-900 border border-surface-border-subtle hover:bg-surface-subcard-hover hover:border-surface-border-hover hover:shadow-subcard-hover transition-[background-color,border-color,box-shadow] duration-200 ease-editorial rounded-xl p-3">
         <CheckCircleIcon
           className="w-5 h-5 shrink-0"
           style={{ color: "#10b981" }}
@@ -638,7 +643,7 @@ function FocoHojeItem({ item, onGoto }) {
         : "chat";
 
   return (
-    <div className="group flex items-center gap-3 bg-ink-900 border border-surface-border-subtle hover:bg-surface-subcard-hover hover:border-surface-border-hover transition-colors duration-200 ease-in-out rounded-xl p-3">
+    <div className="group flex items-center gap-3 bg-ink-900 border border-surface-border-subtle hover:bg-surface-subcard-hover hover:border-surface-border-hover hover:shadow-subcard-hover transition-[background-color,border-color,box-shadow] duration-200 ease-editorial rounded-xl p-3">
       <span className="w-5 h-5 rounded-full border-2 border-ink-700 group-hover:border-brass transition-colors duration-200 ease-in-out shrink-0"></span>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
@@ -686,11 +691,20 @@ function corPorPerformance(pct) {
   return { texto: "#059669", fundo: "#d1fae5" };
 }
 
-function MateriaAtencaoRow({ m, onGoto }) {
+// Linha editorial, não card: sem borda completa nem radius próprio — as
+// matérias são separadas por um divisor inferior dentro do card mestre,
+// evitando o efeito de caixa dentro de caixa.
+function MateriaAtencaoRow({ m, onGoto, ultimo }) {
   const p = m.total > 0 ? Math.round((m.acertos / m.total) * 100) : 0;
   const { texto } = corPorPerformance(p);
   return (
-    <div className="flex items-center gap-4 bg-ink-900 border border-surface-border-subtle hover:bg-surface-subcard-hover hover:border-surface-border-hover transition-colors duration-200 ease-in-out rounded-xl p-3">
+    <div
+      className={`flex items-center gap-4 px-1 py-3 transition-[background-color,border-color] duration-200 ease-editorial hover:bg-ink-900 ${
+        ultimo
+          ? ""
+          : "border-b border-border-subtle hover:border-surface-border-subtle"
+      }`}
+    >
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2 mb-1.5">
           <span className="text-sm text-cream-50 font-medium truncate">
@@ -701,7 +715,7 @@ function MateriaAtencaoRow({ m, onGoto }) {
           </span>
         </div>
         <div
-          className="h-1.5 bg-ink-800 rounded-full overflow-hidden"
+          className="h-1.5 bg-surface-track rounded-full overflow-hidden"
           role="progressbar"
           aria-label={`Aproveitamento em ${m.materia}`}
           aria-valuemin={0}
@@ -730,7 +744,7 @@ function MateriaAtencaoRow({ m, onGoto }) {
 // (verde/âmbar/vermelho real, não cor decorativa arbitrária).
 function IndicatorCard({ Icon, label, valor, texto, fundo }) {
   return (
-    <div className="flex items-center gap-3 bg-ink-950 border border-ink-800 rounded-xl px-4 py-3">
+    <div className="flex items-center gap-3 bg-ink-950 border border-ink-800 rounded-2xl px-4 py-3">
       <span
         className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${fundo ? "" : "bg-brass-soft"}`}
         style={fundo ? { backgroundColor: fundo } : undefined}
@@ -775,7 +789,7 @@ function CircularProgress({ percent, size = 104, stroke = 9 }) {
         cy={size / 2}
         r={radius}
         fill="none"
-        className="stroke-ink-800"
+        className="stroke-surface-track"
         strokeWidth={stroke}
       />
       {percent > 0 && (
@@ -812,7 +826,7 @@ function ProgressoCard({ planoPercentual, resumo, streak }) {
 
   return (
     <div className="bg-ink-950 border border-ink-800 rounded-2xl p-5">
-      <p className="text-[11px] tracking-widest uppercase text-brass/70 font-medium pb-3 mb-4 border-b border-ink-800">
+      <p className="text-[11px] tracking-widest uppercase text-brass/70 font-medium pb-3 mb-4 border-b border-border-subtle">
         Progresso geral
       </p>
       <div
@@ -838,7 +852,7 @@ function ProgressoCard({ planoPercentual, resumo, streak }) {
         </div>
       </div>
       {linhas.length > 0 && (
-        <div className="divide-y divide-ink-800">
+        <div className="divide-y divide-border-subtle">
           {linhas.map((l) => (
             <div key={l.key} className="flex items-center justify-between py-2">
               <span className="text-sm text-cream-400">{l.label}</span>

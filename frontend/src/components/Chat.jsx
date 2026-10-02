@@ -1,11 +1,16 @@
 import {
   Bars3Icon,
+  AcademicCapIcon,
+  BookmarkIcon,
+  CheckCircleIcon,
   CheckIcon,
   EllipsisHorizontalIcon,
   ExclamationTriangleIcon,
   PencilIcon,
   PlusIcon,
+  SparklesIcon,
   TrashIcon,
+  XCircleIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { useEffect, useRef, useState } from "react";
@@ -25,6 +30,7 @@ import {
   subscribeConversas,
 } from "../lib/conversas";
 import { mensagemErroAmigavel } from "../lib/erros";
+import { parseRevisaoQuestao } from "../lib/revisaoQuestao";
 import { saveLastChat } from "../lib/lastActivity";
 import { diasAteProva, loadSettings, subscribeSettings } from "../lib/settings";
 import ChatComposer from "./ChatComposer";
@@ -112,13 +118,13 @@ function ListaConversas({
   const grupos = agruparPorPeriodo(conversas);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {grupos.map((grupo) => (
         <div key={grupo.label}>
-          <p className="text-[10px] tracking-widest uppercase text-cream-600 font-medium px-3 mb-1">
+          <p className="text-[10px] tracking-[0.16em] uppercase text-cream-400 font-semibold px-2 mb-2">
             {grupo.label}
           </p>
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {grupo.itens.map((c) => (
               <ItemConversa
                 key={c.id}
@@ -341,89 +347,37 @@ export default function Chat({
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Header — título+subtítulo (ou matéria da sessão atual, se houver) +
-          contagem regressiva pra prova, mesmo dado usado no Início
-          (settings.dataProva via diasAteProva). ~68-72px de altura. */}
-      <div className="flex items-center justify-between gap-3 px-6 md:px-8 py-4 border-b border-ink-800 shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
+    <div className="h-full flex flex-col md:flex-row bg-sand-50">
+      {/* Histórico — coluna própria com altura total, à esquerda da área
+          principal; recolhível no desktop via historyOpen. */}
+      <aside
+        className={`hidden md:flex md:flex-col shrink-0 bg-ink-900 conversas-scrollbar transition-[width] duration-200 ${
+          historyOpen
+            ? "md:w-[270px] md:border-r md:border-ink-800 overflow-y-auto"
+            : "md:w-0 md:border-r-0 overflow-hidden"
+        }`}
+      >
+        <div className="px-3 py-4">
           <button
-            onClick={() => setHistoryOpen((v) => !v)}
-            className="hidden md:flex min-h-10 min-w-10 text-cream-400 hover:text-cream-50 transition-colors items-center justify-center rounded-lg shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
-            aria-label={historyOpen ? "Recolher histórico" : "Expandir histórico"}
-            title={historyOpen ? "Recolher histórico" : "Expandir histórico"}
+            onClick={iniciarNovaConversa}
+            className="w-full min-h-10 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-ink-950 border border-surface-border-button text-sm font-medium text-cream-200 hover:bg-surface-button-hover hover:border-surface-border-button-hover hover:text-brass transition-colors duration-200 ease-in-out focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/20 focus-visible:border-brass"
           >
-            <Bars3Icon className="w-4 h-4" />
-          </button>
-          <div className="min-w-0">
-            {materia ? (
-              <span className="font-serif text-lg text-cream-50 truncate">
-                {materia}
-              </span>
-            ) : (
-              <>
-                <h1 className="font-serif text-lg text-cream-50 leading-tight truncate">
-                  Mentor Jurídico Inteligente
-                </h1>
-                <p className="text-xs text-cream-400 mt-0.5 truncate">
-                  Tire dúvidas e revise conteúdos para a 1ª fase da OAB.
-                </p>
-              </>
-            )}
-          </div>
-        </div>
-        {dias !== null && dias >= 0 && (
-          <div className="shrink-0 flex items-center gap-1.5 border border-brass rounded-full px-3 py-1">
-            <span className="font-serif text-brass text-sm leading-none">
-              {dias}
-            </span>
-            <span className="text-[11px] text-cream-400 leading-none">
-              dias até a 1ª Fase OAB
-            </span>
-          </div>
-        )}
-      </div>
-
-      <div className="flex-1 min-h-0 w-full flex flex-col md:flex-row">
-        {/* Sidebar interna — desktop: coluna fixa à esquerda, recolhível via historyOpen */}
-        <aside
-          className={`hidden md:flex md:flex-col shrink-0 conversas-scrollbar transition-[width] duration-200 ${
-            historyOpen
-              ? "md:w-[270px] md:border-r md:border-ink-700 overflow-y-auto"
-              : "md:w-0 md:border-r-0 overflow-hidden"
-          }`}
-        >
-          <div className="px-4 pt-8 pb-4 border-b border-ink-800">
-            <button
-              onClick={iniciarNovaConversa}
-              className="w-full min-h-10 flex items-center gap-2 px-3 py-2 rounded-lg border border-ink-800 hover:border-brass-dim text-sm text-cream-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
-            >
-              <PlusIcon className="w-4 h-4 text-brass-dim" />
-              Nova conversa
-            </button>
-          </div>
-          <div className="flex-1 px-4 py-4 overflow-y-auto conversas-scrollbar">
-            <ListaConversas
-              conversas={conversas}
-              conversaAtivaId={conversaAtivaId}
-              onSelecionar={selecionarConversa}
-              onRenomear={renomearConversaItem}
-              onDeletar={deletarConversaItem}
-            />
-          </div>
-        </aside>
-
-        {/* Mobile: botão discreto que abre a lista de conversas em drawer */}
-        <div className="md:hidden flex items-center px-6 py-3 border-b border-ink-800">
-          <button
-            onClick={() => setMostrarDrawer(true)}
-            className="min-h-10 flex items-center gap-2 text-sm text-cream-400 hover:text-cream-50 transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
-          >
-            <Bars3Icon className="w-4 h-4" />
-            Conversas
+            <PlusIcon className="w-4 h-4" />
+            Nova conversa
           </button>
         </div>
+        <div className="flex-1 px-3 pb-4 overflow-y-auto conversas-scrollbar">
+          <ListaConversas
+            conversas={conversas}
+            conversaAtivaId={conversaAtivaId}
+            onSelecionar={selecionarConversa}
+            onRenomear={renomearConversaItem}
+            onDeletar={deletarConversaItem}
+          />
+        </div>
+      </aside>
 
+      <div className="flex-1 min-h-0 min-w-0 w-full flex flex-col">
         {/* Drawer mobile — lista completa de conversas em overlay */}
         {mostrarDrawer && (
           <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end">
@@ -450,9 +404,9 @@ export default function Chat({
               <div className="flex-1 overflow-y-auto px-4 py-4 conversas-scrollbar">
                 <button
                   onClick={iniciarNovaConversa}
-                  className="w-full min-h-10 flex items-center gap-2 px-3 py-2.5 rounded-lg border border-ink-800 hover:border-brass-dim text-sm text-cream-50 transition-colors mb-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
+                  className="w-full min-h-10 flex items-center gap-2 px-3 py-2.5 mb-3 rounded-lg border border-surface-border-button bg-ink-950 text-sm text-cream-50 hover:bg-surface-button-hover hover:border-surface-border-button-hover hover:text-brass transition-[background-color,border-color,color] duration-150 ease-out focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/20 focus-visible:border-brass"
                 >
-                  <PlusIcon className="w-4 h-4 text-brass-dim" />
+                  <PlusIcon className="w-4 h-4" />
                   Nova conversa
                 </button>
                 <ListaConversas
@@ -468,19 +422,102 @@ export default function Chat({
           </div>
         )}
 
-        {/* Área principal: mensagens + input — largura própria contida
-            (max-w-[800px]) mesmo com a coluna ocupando o resto da tela,
-            senão bubbles ficam esticadas demais em telas largas. */}
-        <div className="flex-1 min-w-0 flex flex-col min-h-0">
+        {/* Área principal: header + sugestões + conversa + composer. A
+            conversa usa largura própria contida (max-w-[800px]) mesmo com a
+            coluna ocupando o resto da tela, senão bubbles ficam esticadas. */}
+        <div className="flex-1 min-w-0 flex flex-col min-h-0 bg-ink-950">
+          {/* Header do mentor — título+subtítulo (ou matéria da sessão atual)
+              + contagem regressiva pra prova, mesmo dado usado no Início
+              (settings.dataProva via diasAteProva). */}
+          <div className="flex items-center justify-between gap-3 px-6 md:px-8 py-3 border-b border-ink-800 shrink-0">
+            <div className="flex items-center gap-3 min-w-0">
+              <button
+                onClick={() => setHistoryOpen((v) => !v)}
+                className="hidden md:flex min-h-10 min-w-10 text-cream-400 hover:text-cream-50 transition-colors items-center justify-center rounded-lg shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
+                aria-label={historyOpen ? "Recolher histórico" : "Expandir histórico"}
+                title={historyOpen ? "Recolher histórico" : "Expandir histórico"}
+              >
+                <Bars3Icon className="w-4 h-4" />
+              </button>
+              <div className="min-w-0">
+                {materia ? (
+                  <span className="font-serif text-xl text-cream-50 truncate">
+                    {materia}
+                  </span>
+                ) : (
+                  <>
+                    <h1
+                      className="font-serif text-xl text-cream-50 leading-tight tracking-tight truncate"
+                      style={{ fontVariationSettings: '"opsz" 60' }}
+                    >
+                      Mentor Jurídico Inteligente
+                    </h1>
+                    <p className="text-xs text-cream-400 mt-1 truncate">
+                      Tire dúvidas, aprofunde temas e revise conteúdos para a 1ª
+                      fase da OAB.
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+            {dias !== null && dias >= 0 && (
+              <div className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-brass/25 bg-brass-soft px-3 py-1.5">
+                <span className="font-serif text-brass text-sm leading-none tabular-nums">
+                  {dias}
+                </span>
+                <span className="text-[11px] text-brass leading-none">
+                  dias até a 1ª fase OAB
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile: acesso ao histórico em drawer (a coluna fica oculta) */}
+          <div className="md:hidden flex items-center px-6 py-3 border-b border-ink-800 shrink-0">
+            <button
+              onClick={() => setMostrarDrawer(true)}
+              className="min-h-10 flex items-center gap-2 text-sm text-cream-400 hover:text-cream-50 transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
+            >
+              <Bars3Icon className="w-4 h-4" />
+              Conversas
+            </button>
+          </div>
+
+          {/* Sugestões rápidas — só no estado inicial. Assim que a conversa
+              começa, saem de cena para a tela focar nas mensagens. Usa o
+              mesmo `isEmpty` que já controla o estado vazio. */}
+          {isEmpty && (
+          <div
+            className="shrink-0 px-6 md:px-8 pt-4 pb-1 overflow-x-auto"
+            aria-label="Sugestões rápidas"
+          >
+            <div className="max-w-[860px] mx-auto flex flex-wrap justify-center gap-2">
+              {SUGGESTIONS.map((s, i) => (
+                <button
+                  key={i}
+                  onClick={() => composerRef.current?.fillInput(s.pergunta)}
+                  className="shrink-0 rounded-full border border-surface-border-button bg-ink-950 px-2.5 py-1 text-[11px] text-cream-200 hover:bg-surface-button-hover hover:border-surface-border-button-hover hover:text-brass transition-colors duration-200 ease-in-out focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/20 focus-visible:border-brass"
+                >
+                  {s.pergunta}
+                </button>
+              ))}
+            </div>
+          </div>
+          )}
+
           <div
             ref={scrollRef}
-            className="flex-1 overflow-y-auto px-6 md:px-8 py-8 chat-scrollbar"
+            className="flex-1 overflow-y-auto px-6 md:px-8 py-6 chat-scrollbar"
           >
-            <div className="max-w-[800px] mx-auto">
+            <div
+              className={`max-w-[860px] mx-auto ${
+                isEmpty ? "flex min-h-full flex-col justify-center" : ""
+              }`}
+            >
               {isEmpty ? (
-                <EmptyState onPick={(texto) => composerRef.current?.fillInput(texto)} />
+                <EmptyState onPick={(t) => composerRef.current?.fillInput(t)} />
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-5">
                   {messages.map((msg, i) => (
                     <Message
                       key={i}
@@ -608,15 +645,21 @@ function ItemConversa({
 
   return (
     <div
-      className={`group relative w-full rounded-lg border transition-colors ${
+      className={`group relative w-full rounded-lg border transition-colors duration-200 ease-in-out ${
         ativa
-          ? "bg-brass/10 border-brass"
-          : "border-transparent hover:bg-ink-900"
+          ? "bg-brass-soft border-brass/25"
+          : "border-transparent hover:bg-surface-nav-hover"
       }`}
     >
-      <button onClick={onClick} className="w-full min-h-12 text-left px-3 py-2.5 pr-9 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-inset">
-        <div className="text-sm text-cream-50 truncate">{titulo}</div>
-        <div className="text-[11px] text-cream-600 mt-0.5">
+      <button onClick={onClick} className="w-full min-h-11 text-left px-2.5 py-2 pr-9 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/20 focus-visible:ring-inset">
+        <div
+          className={`text-[13px] truncate ${
+            ativa ? "text-brass font-medium" : "text-cream-50"
+          }`}
+        >
+          {titulo}
+        </div>
+        <div className="text-[10px] text-cream-600 mt-1">
           {formatarDataRelativa(conversa.atualizadaEm)}
         </div>
       </button>
@@ -668,6 +711,106 @@ function ItemConversa({
   );
 }
 
+// Bloco editorial da questão enviada para revisão. Só apresentação: o texto
+// que vai para a IA continua sendo a string original da mensagem.
+function QuestaoRevisao({ dados }) {
+  return (
+    <div className="fade-in ml-auto w-full max-w-[94%]">
+      <div className="rounded-2xl border border-ink-800 border-l-[3px] border-l-brass bg-ink-950 px-5 py-4 sm:px-6">
+        <div className="flex items-center gap-2 pb-3 mb-4 border-b border-border-subtle">
+          <AcademicCapIcon
+            className="h-4 w-4 shrink-0 text-brass"
+            aria-hidden="true"
+          />
+          <span className="font-sans text-[11px] tracking-[0.16em] uppercase font-semibold text-brass">
+            Questão para revisão
+          </span>
+        </div>
+
+        <Campo rotulo="Enunciado">
+          <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-cream-50">
+            {dados.enunciado}
+          </p>
+        </Campo>
+
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Campo rotulo="Sua resposta">
+            <CardAlternativa
+              status="Incorreta"
+              Icone={XCircleIcon}
+              cor="text-alert"
+              acento="border-l-alert"
+              letra={dados.letraDada}
+              texto={dados.respostaDada}
+            />
+          </Campo>
+          <Campo rotulo="Gabarito">
+            <CardAlternativa
+              status="Correta"
+              Icone={CheckCircleIcon}
+              cor="text-[#059669]"
+              acento="border-l-[#059669]"
+              letra={dados.letraCorreta}
+              texto={dados.respostaCorreta}
+            />
+          </Campo>
+        </div>
+
+        {dados.anotacao && (
+          <div className="mt-4">
+            <Campo rotulo="Sua anotação">
+              <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-cream-400">
+                {dados.anotacao}
+              </p>
+            </Campo>
+          </div>
+        )}
+
+        {dados.pedido && (
+          <div className="mt-5 pt-4 border-t border-border-subtle">
+            <p className="text-sm font-medium leading-relaxed text-cream-50">
+              {dados.pedido}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Campo({ rotulo, children }) {
+  return (
+    <div>
+      <p className="mb-1.5 text-[10px] tracking-[0.14em] uppercase font-semibold text-brass">
+        {rotulo}
+      </p>
+      {children}
+    </div>
+  );
+}
+
+// Dois cards irmãos de mesma base neutra: o status aparece só no badge, no
+// ícone e num acento de 2px na lateral — nunca preenchendo o card inteiro.
+function CardAlternativa({ status, Icone, cor, acento, letra, texto }) {
+  return (
+    <div
+      className={`rounded-lg border border-ink-800 border-l-2 ${acento} bg-ink-900 px-3 py-2.5`}
+    >
+      <span
+        className={`inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.1em] ${cor}`}
+      >
+        <Icone className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        {status}
+      </span>
+      <p className="mt-1.5 text-sm leading-relaxed text-cream-50">
+        <span className="font-semibold">{letra}</span>
+        <span className="text-cream-600"> — </span>
+        {texto}
+      </p>
+    </div>
+  );
+}
+
 function Message({
   role,
   content,
@@ -679,10 +822,17 @@ function Message({
   const savingRef = useRef(false);
 
   if (role === "user") {
+    // Questão vinda do caderno/simulado: vira bloco editorial de contexto.
+    // Se o reconhecimento falhar, cai no bubble normal.
+    const revisao = parseRevisaoQuestao(content);
+    if (revisao) return <QuestaoRevisao dados={revisao} />;
+
     return (
       <div className="flex justify-end fade-in">
-        <div className="max-w-[85%] bg-brass text-ink-950 px-4 py-3 rounded-2xl rounded-br-md">
-          <p className="whitespace-pre-wrap break-words leading-relaxed">{content}</p>
+        <div className="max-w-[68%] bg-brass text-ink-950 px-3.5 py-2.5 rounded-2xl rounded-br-md">
+          <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed">
+            {content}
+          </p>
         </div>
       </div>
     );
@@ -709,10 +859,21 @@ function Message({
   }
 
   return (
-    <div className="flex fade-in">
-      <div className="max-w-[92%] min-w-0 pl-4 border-l-2 border-brass-dim">
-        <div className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-2 font-sans">
-          Mentor
+    <div className="fade-in">
+      <div className="min-w-0 rounded-2xl border border-ink-800 bg-ink-950 px-5 py-4 sm:px-6 sm:py-5">
+        <div className="flex items-center gap-2.5 pb-4 mb-5 border-b border-border-subtle">
+          <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brass-soft">
+            <SparklesIcon className="h-4 w-4 text-brass" aria-hidden="true" />
+          </span>
+          <span className="font-sans text-[11px] tracking-[0.16em] uppercase font-semibold text-brass">
+            Mentor Jurídico
+          </span>
+          <span className="text-brass/[0.35] text-xs select-none" aria-hidden="true">
+            •
+          </span>
+          <span className="font-sans text-[11px] tracking-[0.16em] uppercase text-cream-450">
+            IA especializada
+          </span>
         </div>
         <div
           className={`markdown text-cream-50 ${streaming ? "typing-cursor" : ""}`}
@@ -727,11 +888,14 @@ function Message({
           ) : null}
         </div>
         {!streaming && content && pergunta && (
-          <div className="mt-3" aria-live="polite">
+          <div
+            className="mt-5 pt-4 border-t border-border-subtle"
+            aria-live="polite"
+          >
             {saveStatus === "saved" ? (
               <span
                 role="status"
-                className="inline-flex min-h-10 items-center gap-1.5 px-1 text-[11px] text-brass tracking-wide"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-brass/25 bg-brass-soft px-3 py-1.5 text-xs font-medium text-brass"
               >
                 <CheckIcon className="h-3.5 w-3.5" aria-hidden="true" />
                 Salvo no caderno
@@ -739,18 +903,19 @@ function Message({
             ) : saveStatus === "saving" ? (
               <button
                 disabled
-                className="min-h-10 px-1 text-[11px] text-cream-400 tracking-wide disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-surface-border-button bg-ink-950 px-3 py-1.5 text-xs font-medium text-cream-400 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Salvando...
+                <BookmarkIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                Salvando…
               </button>
             ) : saveStatus === "error" ? (
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                <span role="alert" className="text-[11px] text-alert tracking-wide">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                <span role="alert" className="text-xs text-alert">
                   Não foi possível salvar no caderno.
                 </span>
                 <button
                   onClick={salvar}
-                  className="min-h-10 px-1 text-[11px] text-brass hover:text-brass-hover tracking-wide transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950"
+                  className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-surface-border-button bg-ink-950 px-3 py-1.5 text-xs font-medium text-brass hover:bg-surface-button-hover hover:border-surface-border-button-hover transition-colors duration-200 ease-in-out focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/20 focus-visible:border-brass"
                   aria-label="Tentar salvar resposta no caderno"
                 >
                   Tentar novamente
@@ -759,10 +924,11 @@ function Message({
             ) : (
               <button
                 onClick={salvar}
-                className="min-h-10 px-1 text-[11px] text-cream-400 hover:text-brass tracking-wide transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-surface-border-button bg-ink-950 px-3 py-1.5 text-xs font-medium text-brass hover:bg-surface-button-hover hover:border-surface-border-button-hover transition-colors duration-200 ease-in-out focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/20 focus-visible:border-brass disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={saveStatus === "saving"}
                 aria-label="Salvar resposta no caderno"
               >
+                <BookmarkIcon className="h-3.5 w-3.5" aria-hidden="true" />
                 Salvar no caderno
               </button>
             )}
@@ -773,47 +939,98 @@ function Message({
   );
 }
 
+// Atalhos do estado vazio: só preenchem o composer com um prompt inicial
+// aberto, para a pessoa completar. Não criam ação nem endpoint novo.
+const ACOES_RAPIDAS = [
+  {
+    label: "Revisar um tema",
+    descricao: "Retome um assunto importante",
+    prompt: "Quero revisar um tema da 1ª fase. Comece pelos pontos que a FGV mais cobra em ",
+  },
+  {
+    label: "Tirar uma dúvida",
+    descricao: "Pergunte sobre um ponto específico",
+    prompt: "Tenho uma dúvida sobre ",
+  },
+  {
+    label: "Treinar para a OAB",
+    descricao: "Comece por uma revisão direcionada",
+    prompt: "Me faça perguntas no estilo da FGV sobre ",
+  },
+];
+
+const COMO_AJUDA = [
+  { titulo: "Explicar conceitos", descricao: "conceitos jurídicos de forma objetiva" },
+  { titulo: "Apontar artigos", descricao: "referências legais relevantes" },
+  { titulo: "Resumir pontos-chave", descricao: "síntese para revisão rápida" },
+  { titulo: "Revisar erros", descricao: "apoio para entender onde errou" },
+];
+
 function EmptyState({ onPick }) {
   return (
-    <div className="pt-16 pb-8">
-      <p className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-3">
-        Preparação focada & jurisprudência
-      </p>
-      <h2
-        className="font-serif text-3xl md:text-4xl text-cream-50 leading-tight tracking-tight"
-        style={{ fontVariationSettings: '"opsz" 96' }}
-      >
-        Bom estudo hoje.
-      </h2>
-      <p className="text-cream-400 mt-3 leading-relaxed max-w-md">
-        Pergunte qualquer coisa sobre as matérias da 1ª fase. O Mentor cita os
-        artigos correspondentes, resume o essencial e alerta sobre as
-        pegadinhas que a FGV costuma cobrar.
-      </p>
-      <div className="mt-10">
-        <p className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-3">
-          Sugestões rápidas para começar
+    <div className="mx-auto w-full max-w-[640px] py-8">
+      <div className="flex flex-col items-center text-center">
+        <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-brass-soft border border-brass/[0.14]">
+          <SparklesIcon className="h-5 w-5 text-brass" aria-hidden="true" />
+        </span>
+        <p className="text-[10px] tracking-[0.14em] uppercase text-brass font-semibold mt-4">
+          Preparação focada & jurisprudência
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {SUGGESTIONS.map((s, i) => (
-            <button
-              key={i}
-              onClick={() => onPick(s.pergunta)}
-              className="min-h-[116px] text-left px-4 py-3.5 rounded-xl bg-ink-900 border border-ink-800 hover:border-brass-dim hover:bg-ink-800/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950"
-            >
-              <div className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-1.5">
-                {s.categoria}
-              </div>
-              <div className="text-cream-50 text-sm font-medium leading-snug">
-                {s.pergunta}
-              </div>
-              <div className="text-cream-400 text-xs mt-1 leading-snug">
-                {s.descricao}
-              </div>
-            </button>
-          ))}
-        </div>
+        <h2
+          className="font-serif text-3xl md:text-4xl text-cream-50 leading-tight tracking-tight mt-2"
+          style={{ fontVariationSettings: '"opsz" 96' }}
+        >
+          Bom estudo hoje.
+        </h2>
+        <p className="text-cream-400 mt-2.5 leading-relaxed max-w-[560px]">
+          Pergunte qualquer coisa sobre as matérias da 1ª fase. O Mentor cita
+          os artigos correspondentes, resume o essencial e alerta sobre as
+          pegadinhas que a FGV costuma cobrar.
+        </p>
       </div>
+
+      <div className="mt-5 grid w-full grid-cols-1 gap-2.5 sm:grid-cols-3">
+        {ACOES_RAPIDAS.map((a) => (
+          <button
+            key={a.label}
+            onClick={() => onPick(a.prompt)}
+            className="group/acao rounded-xl border border-surface-border-button bg-ink-950 px-3.5 py-3 text-left transition-[background-color,border-color,color] duration-150 ease-out hover:bg-surface-button-hover hover:border-surface-border-button-hover focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/20 focus-visible:border-brass"
+          >
+            <span className="block text-[13px] font-medium text-cream-50 transition-colors duration-150 ease-out group-hover/acao:text-brass">
+              {a.label}
+            </span>
+            <span className="mt-0.5 block text-[11px] leading-snug text-cream-600">
+              {a.descricao}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <section className="mt-6 w-full border-t border-border-subtle pt-4 text-left">
+        <p className="text-[10px] tracking-[0.14em] uppercase text-brass font-semibold">
+          Como o mentor pode ajudar
+        </p>
+        <ul className="mt-4 grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
+          {COMO_AJUDA.map((item, i) => (
+            <li key={item.titulo} className="flex gap-3">
+              <span
+                className="shrink-0 font-serif text-[11px] leading-5 tabular-nums text-brass/50"
+                aria-hidden="true"
+              >
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <div className="min-w-0">
+                <p className="text-[13px] font-medium leading-5 text-cream-50">
+                  {item.titulo}
+                </p>
+                <p className="mt-0.5 text-xs leading-snug text-cream-600">
+                  {item.descricao}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }
