@@ -17,6 +17,17 @@ body {
   font-feature-settings: 'ss01', 'cv11';
 }
 
+/* Superfícies do navegador — seleção e cursor de texto saem do padrão do
+   sistema (azul) e passam a usar o vinho da marca. */
+::selection {
+  @apply bg-brass/[0.14] text-cream-50;
+}
+
+input,
+textarea {
+  @apply caret-brass;
+}
+
 /* Scrollbar minimalista */
 ::-webkit-scrollbar {
   width: 6px;
