@@ -1,11 +1,15 @@
 import {
   AcademicCapIcon,
+  ArrowTrendingDownIcon,
   BookOpenIcon,
+  CalendarDaysIcon,
   ChartBarIcon,
+  ChatBubbleLeftRightIcon,
   CheckBadgeIcon,
+  ChevronRightIcon,
   CheckCircleIcon,
+  ClipboardDocumentCheckIcon,
   ClockIcon,
-  ExclamationCircleIcon,
   FireIcon,
   FlagIcon,
   MoonIcon,
@@ -26,6 +30,7 @@ import {
   percentualConcluido,
   planoDeHoje,
   planoEstaValido,
+  planoFoiCarregado,
   subscribeCrono,
 } from "../lib/cronograma";
 import {
@@ -93,6 +98,20 @@ function isHoje(iso) {
   );
 }
 
+// Registros legados ou de teste podem não seguir o formato atual de 10 questões.
+function resultadoCompativelComSintese(resultado) {
+  return Boolean(
+    resultado &&
+    Number.isFinite(Date.parse(resultado.createdAt)) &&
+    Array.isArray(resultado.questoes) &&
+    resultado.questoes.length === 10 &&
+    resultado.total === resultado.questoes.length &&
+    Number.isInteger(resultado.acertos) &&
+    resultado.acertos >= 0 &&
+    resultado.acertos <= resultado.total,
+  );
+}
+
 // Mesmos limiares de hora que saudacao() (lib/settings.js), só que como
 // rótulo substantivo — "Turno da X" — em vez de saudação ("Boa X"). O ícone
 // usa os heroicons já presentes no projeto (sem nova dependência).
@@ -110,6 +129,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
   const [lastSim, setLastSim] = useState(ultimoSimulado());
   const [cadItems, setCadItems] = useState(listarCaderno());
   const [plano, setPlano] = useState(loadPlano());
+  const [planoConsultado, setPlanoConsultado] = useState(planoFoiCarregado());
   const [streak, setStreak] = useState(0);
   const [resumo, setResumo] = useState(null);
   const [porMateria, setPorMateria] = useState([]);
@@ -120,7 +140,10 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
     const u3 = subscribeCaderno(() => {
       setCadItems(listarCaderno());
     });
-    const u4 = subscribeCrono(() => setPlano(loadPlano()));
+    const u4 = subscribeCrono(() => {
+      setPlano(loadPlano());
+      setPlanoConsultado(planoFoiCarregado());
+    });
     const u5 = subscribeSimulados(() => setLastSim(ultimoSimulado()));
     return () => {
       u1();
@@ -154,6 +177,19 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
   const planoValido = plano && planoEstaValido(plano, settings.dataProva);
   const diaHoje = planoValido ? planoDeHoje(plano) : null;
 
+  const resultadosValidos = listarSimulados()
+    .filter(resultadoCompativelComSintese)
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  const ultimoResultado = resultadosValidos[0];
+  const resultadoAnterior = resultadosValidos[1];
+  const percentualUltimo = ultimoResultado
+    ? Math.round((ultimoResultado.acertos / ultimoResultado.total) * 100)
+    : null;
+  const diferencaPontos = resultadoAnterior &&
+    Date.parse(ultimoResultado.createdAt) > Date.parse(resultadoAnterior.createdAt)
+    ? percentualUltimo - Math.round((resultadoAnterior.acertos / resultadoAnterior.total) * 100)
+    : null;
+
   const estudouHoje =
     isHoje(lastChat?.updatedAt) ||
     isHoje(lastSim?.updatedAt) ||
@@ -163,6 +199,12 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
   const turno = turnoDoDia();
   const planoPercentual = percentualConcluido(plano);
   const temQuestoes = resumo && resumo.totalQuestoes > 0;
+
+  // Ausência de plano só é confirmada após a leitura bem-sucedida do endpoint.
+  // Uma falha de /me/stats também impede o estado inicial.
+  const statsCarregou = resumo !== null;
+  const semPlano = planoPercentual === null;
+  const ausenciaConfirmada = !semPlano || (statsCarregou && planoConsultado);
 
   // Indicadores — só os que têm dado real entram; a largura de cada card se
   // adapta à contagem (não força 4 colunas quando só há 2 ou 3 reais).
@@ -191,6 +233,9 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
 
   // Atividade recente — combina as 3 fontes reais já carregadas (nenhum
   // dado inventado): última conversa, histórico de simulados e caderno.
+  // `destino` só é preenchido quando existe rota real para o conteúdo. Não há
+  // rota para reabrir o resultado de um simulado passado, então simulado fica
+  // informativo — nada de hover/chevron fingindo interatividade.
   const atividades = [
     ...(lastChat
       ? [
@@ -198,46 +243,66 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
             key: `chat-${lastChat.updatedAt}`,
             tipo: "chat",
             timestamp: lastChat.updatedAt,
-            titulo: "Conversa com o mentor",
-            subtitulo: lastChat.materia || "Dúvida geral",
+            rotulo: "Mentor Jurídico",
+            descricao:
+              lastChat.pergunta || lastChat.materia || "Dúvida geral",
+            destino: "chat",
           },
         ]
       : []),
     ...listarSimulados()
       .slice(0, 5)
-      .map((s) => ({
-        key: `sim-${s.id ?? s.createdAt}`,
-        tipo: "simulado",
-        timestamp: s.createdAt,
-        titulo: "Simulado concluído",
-        subtitulo: `${s.acertos}/${s.total} acertos`,
-        // Verde só quando faz sentido semanticamente (bom desempenho real);
-        // os demais eventos ficam no tom neutro/vinho.
-        positivo: s.total > 0 && s.acertos / s.total >= 0.7,
-      })),
+      .map((s) => {
+        const percentual =
+          s.total > 0 ? Math.round((s.acertos / s.total) * 100) : null;
+        return {
+          key: `sim-${s.id ?? s.createdAt}`,
+          tipo: "simulado",
+          timestamp: s.createdAt,
+          rotulo: "Simulado",
+          descricao:
+            percentual === null
+              ? `${s.acertos}/${s.total} acertos`
+              : `${s.acertos}/${s.total} acertos · ${percentual}% de aproveitamento`,
+          destino: null,
+        };
+      }),
     ...cadItems.slice(0, 5).map((c) => ({
       key: `cad-${c.id}`,
       tipo: "caderno",
       timestamp: c.createdAt,
-      titulo:
-        c.origin === "simulado"
-          ? "Erro registrado no caderno"
-          : "Pergunta salva no caderno",
-      subtitulo: c.materia || "Geral",
+      rotulo: "Caderno",
+      descricao: c.pergunta || c.materia || "Geral",
+      destino: "caderno",
     })),
   ]
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
     .slice(0, 4);
 
+  // Não afirma "primeiro acesso": os sinais provam ausência de dados, não que
+  // a pessoa nunca usou o app. Depende de `statsCarregou` para não aparecer
+  // durante a carga nem quando /me/stats falha.
+  const estadoInicial =
+    statsCarregou &&
+    planoConsultado &&
+    semPlano &&
+    resultadosValidos.length === 0 &&
+    atividades.length === 0 &&
+    resumo.totalQuestoes === 0 &&
+    streak === 0;
+
   return (
     <div className="h-full overflow-y-auto bg-sand-50">
       <div className="w-full max-w-[1600px] mx-auto px-4 pt-6 pb-10 sm:px-6 md:px-8 lg:px-10">
         {/* Header interno com wordmark + settings — mobile only. */}
-        <div className="flex items-baseline justify-between mb-4 md:hidden">
+        <div
+          className="dashboard-enter flex items-baseline justify-between mb-4 md:hidden"
+          style={{ "--dashboard-delay": "0ms" }}
+        >
           <Brand size="mobile" />
           <button
             onClick={onOpenSettings}
-            className="w-10 h-10 -mr-2 flex items-center justify-center rounded-lg text-cream-400 hover:text-cream-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
+            className="w-10 h-10 -mr-2 flex items-center justify-center rounded-lg text-cream-400 hover:text-cream-50 transition-[color,transform] duration-150 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:transform-none"
             aria-label="Ajustes"
           >
             <CogIcon />
@@ -245,7 +310,10 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
         </div>
 
         {/* ===== Header: saudação à esquerda + próxima prova compacta à direita ===== */}
-        <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-start sm:justify-between">
+        <div
+          className={`dashboard-enter flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between ${ultimoResultado ? "mb-3" : "mb-6"}`}
+          style={{ "--dashboard-delay": "40ms" }}
+        >
           <div className="min-w-0 sm:max-w-2xl">
             <div className="mb-2.5 inline-flex w-fit items-center gap-2 rounded-full border border-surface-pill-border bg-surface-pill px-3.5 py-1.5">
               <span className="text-[11px] font-semibold uppercase leading-none tracking-[0.14em] text-brass">
@@ -345,7 +413,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
           {dias === null && (
             <button
               onClick={() => onGoto("cronograma-config")}
-              className="w-full sm:w-auto sm:min-w-[240px] shrink-0 bg-ink-950 border border-ink-800 rounded-xl p-3 flex items-center gap-3 hover:border-brass/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
+              className="w-full sm:w-auto sm:min-w-[240px] shrink-0 bg-ink-950 border border-ink-800 rounded-xl p-3 flex items-center gap-3 hover:border-brass/20 transition-[border-color,transform] duration-150 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:transform-none"
             >
               <div className="shrink-0 w-14 h-14 bg-brass-soft rounded-lg flex items-center justify-center text-brass">
                 <span
@@ -368,7 +436,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
           {dias !== null && dias < 0 && (
             <button
               onClick={() => onGoto("cronograma-config")}
-              className="w-full sm:w-auto sm:min-w-[240px] shrink-0 bg-ink-950 border border-ink-800 rounded-xl p-3 flex items-center gap-3 hover:border-brass/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
+              className="w-full sm:w-auto sm:min-w-[240px] shrink-0 bg-ink-950 border border-ink-800 rounded-xl p-3 flex items-center gap-3 hover:border-brass/20 transition-[border-color,transform] duration-150 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:transform-none"
             >
               <div className="shrink-0 w-14 h-14 bg-alert/10 rounded-lg flex items-center justify-center text-alert">
                 <span
@@ -390,45 +458,170 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
           )}
         </div>
 
+        {ultimoResultado && (
+          <div
+            className="dashboard-enter mb-6 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xs leading-relaxed text-cream-400"
+            style={{ "--dashboard-delay": "70ms" }}
+          >
+            <span>Último simulado</span>
+            <span className="inline-flex items-baseline gap-2">
+              <span className="text-cream-600" aria-hidden="true">·</span>
+              <span key={`${ultimoResultado.id}-placar`} className="dashboard-value-change inline-block font-medium text-cream-50">
+                {ultimoResultado.acertos}/{ultimoResultado.total}
+              </span>
+            </span>
+            <span className="inline-flex items-baseline gap-2">
+              <span className="text-cream-600" aria-hidden="true">·</span>
+              <span>
+                <span key={`${ultimoResultado.id}-percentual`} className="dashboard-value-change inline-block font-semibold text-brass">
+                  {percentualUltimo}%
+                </span>{" "}
+                de aproveitamento
+              </span>
+            </span>
+            {diferencaPontos !== null && (
+              <span className="inline-flex items-baseline gap-2">
+                <span className="text-cream-600" aria-hidden="true">·</span>
+                <span key={`${ultimoResultado.id}-diferenca`} className={`dashboard-value-change inline-block font-medium ${
+                  diferencaPontos > 0
+                    ? "text-[#059669]"
+                    : diferencaPontos < 0
+                      ? "text-feedback-danger"
+                      : "text-cream-400"
+                }`}>
+                  {diferencaPontos > 0 ? "+" : ""}{diferencaPontos} p.p. vs anterior
+                </span>
+              </span>
+            )}
+          </div>
+        )}
+
         {/* ===== Faixa de ação do dia — reaproveita o nudge real de "ainda não estudou" ===== */}
         {!estudouHoje && (
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-ink-900 border border-ink-800 rounded-xl px-4 py-3 mb-6">
+          <div
+            className="dashboard-enter flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-ink-900 border border-ink-800 rounded-xl px-4 py-3 mb-6"
+            style={{ "--dashboard-delay": "80ms" }}
+          >
             <div className="flex items-center gap-3 min-w-0">
               <span className="w-8 h-8 rounded-full bg-brass-soft flex items-center justify-center shrink-0">
                 <BookOpenIcon className="w-4 h-4 text-brass" aria-hidden="true" />
               </span>
               <p className="text-sm text-cream-400 truncate">
-                Você ainda não iniciou sua meta de hoje. Que tal aquecer com um
-                simulado rápido de 10 questões comentadas?
+                Você ainda não estudou hoje. Comece com um simulado rápido de 10
+                questões comentadas.
               </p>
             </div>
             <button
               onClick={() => onGoto("simulado-landing")}
-              className="shrink-0 min-h-9 text-xs font-medium text-ink-950 bg-brass hover:bg-brass-hover px-3.5 py-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
+              className="shrink-0 min-h-9 text-xs font-medium text-ink-950 bg-brass hover:bg-brass-hover px-3.5 py-1.5 rounded-lg transition-[background-color,transform] duration-150 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:transform-none"
             >
               Iniciar Aquecimento
             </button>
           </div>
         )}
 
+        {/* ===== Comece sua preparação — só no estado inicial confirmado.
+            Ocupa a coluna principal para a Home vazia não ficar oca. ===== */}
+        {estadoInicial && (
+          <section
+            aria-labelledby="comece-preparacao"
+            className="dashboard-enter bg-ink-950 border border-ink-800 rounded-2xl px-5 py-5 sm:px-7 sm:py-6 mb-6"
+            style={{ "--dashboard-delay": "100ms" }}
+          >
+            <p className="text-[10px] tracking-[0.14em] uppercase text-brass font-semibold">
+              Seu ponto de partida
+            </p>
+            <h2
+              id="comece-preparacao"
+              className="mt-2 font-serif text-2xl text-cream-50 leading-tight tracking-tight"
+              style={{ fontVariationSettings: '"opsz" 60' }}
+            >
+              Comece sua preparação
+            </h2>
+            <p className="mt-2 max-w-[460px] text-pretty text-sm leading-relaxed text-cream-400">
+              Monte seu plano, pratique com simulados e revise seus erros com
+              ajuda do Mentor Jurídico.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2.5">
+              <button
+                onClick={() => onGoto("cronograma-config")}
+                className={BTN_PRIMARIO}
+              >
+                Criar meu plano
+                <SetaBotao />
+              </button>
+              <button onClick={() => onGoto("chat")} className={BTN_SECUNDARIO}>
+                Perguntar ao Mentor
+              </button>
+            </div>
+
+            {/* Explicação das três áreas do produto — não é dado do usuário. */}
+            <ul className="mt-6 grid grid-cols-1 border-t border-border-subtle pt-5 divide-y divide-border-subtle sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+              {ETAPAS_INICIAIS.map((etapa, i) => (
+                <li
+                  key={etapa.titulo}
+                  className="flex gap-3 py-3 sm:py-0 sm:px-5 sm:first:pl-0 sm:last:pr-0"
+                >
+                  <span
+                    className="shrink-0 font-serif text-[11px] leading-5 tabular-nums text-brass/70"
+                    aria-hidden="true"
+                  >
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-medium leading-5 text-cream-50">
+                      {etapa.titulo}
+                    </p>
+                    <p className="mt-0.5 text-xs leading-snug text-cream-400">
+                      {etapa.descricao}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         {/* ===== Indicadores — compactos, só com dado real; ficam acima da divisão em colunas ===== */}
         {indicadores.length > 0 && (
           <div className={`grid grid-cols-1 gap-3 mb-6 ${INDICADOR_GRID_CLASS[indicadores.length]}`}>
-            {indicadores.map((ind) => (
-              <IndicatorCard key={ind.key} {...ind} />
+            {indicadores.map((ind, index) => (
+              <IndicatorCard
+                key={ind.key}
+                {...ind}
+                animationDelay={`${100 + index * 35}ms`}
+              />
             ))}
           </div>
         )}
 
         {/* ===== Coluna principal (Foco de hoje + Matérias) + coluna lateral
             (Progresso + Atividade recente) — 2 colunas a partir de lg. ===== */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(280px,0.8fr)] lg:items-start lg:gap-6">
+        {/* No estado inicial sobram exatamente 3 cards (Matérias fica oculto):
+            os wrappers viram `contents` e os cards passam a ser itens diretos
+            do grid, numa linha de 3. Nos demais estados, grid normal. */}
+        <div
+          className={
+            estadoInicial
+              ? "grid grid-cols-1 items-stretch gap-6 sm:grid-cols-2 xl:grid-cols-3"
+              : "grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(280px,0.8fr)] lg:items-start lg:gap-6"
+          }
+        >
           {/* Coluna principal */}
-          <div className="flex flex-col gap-6 min-w-0">
+          <div
+            className={
+              estadoInicial
+                ? "contents"
+                : "dashboard-enter flex flex-col gap-6 min-w-0"
+            }
+            style={{ "--dashboard-delay": "180ms" }}
+          >
             {diaHoje &&
               (() => {
                 const totalItens = diaHoje.itens.length;
                 const concluidos = diaHoje.itens.filter((i) => i.concluido).length;
+                const progressoHoje = totalItens > 0 ? concluidos / totalItens : 0;
+                const focoCompleto = totalItens > 0 && concluidos === totalItens;
                 const materias = [
                   ...new Set(
                     diaHoje.itens
@@ -439,7 +632,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                 return (
                   <section aria-labelledby="foco-de-hoje">
                     <div className="bg-ink-950 border border-ink-800 rounded-2xl p-4 sm:p-5">
-                      <div className="flex flex-col gap-2 pb-3 mb-4 border-b border-border-subtle sm:flex-row sm:items-baseline sm:justify-between">
+                      <div className="relative flex flex-col gap-2 pb-3 mb-4 border-b border-border-subtle sm:flex-row sm:items-baseline sm:justify-between">
                         <div className="flex items-baseline gap-2 flex-wrap">
                           <p className="text-[11px] tracking-widest uppercase text-brass/70 font-medium">
                             Foco de hoje
@@ -455,12 +648,38 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                           </h2>
                         </div>
                         <span
-                          className="self-start shrink-0 text-xs font-medium text-brass bg-brass-soft px-3 py-1.5 rounded-full tabular-nums"
+                          className={`self-start shrink-0 text-xs font-medium px-3 py-1.5 rounded-full tabular-nums transition-[background-color,color] duration-200 motion-reduce:transition-none ${
+                            focoCompleto
+                              ? "bg-feedback-success/10 text-[#059669]"
+                              : "bg-brass-soft text-brass"
+                          }`}
                           aria-label={`${concluidos} de ${totalItens} blocos concluídos`}
+                          aria-live="polite"
+                          aria-atomic="true"
                         >
-                          {concluidos} de {totalItens} concluído
-                          {concluidos === 1 && totalItens === 1 ? "" : "s"}
+                          <span
+                            key={`${concluidos}-${totalItens}`}
+                            className="dashboard-value-change inline-block"
+                          >
+                            {concluidos} de {totalItens} concluído
+                            {concluidos === 1 && totalItens === 1 ? "" : "s"}
+                          </span>
                         </span>
+                        <div
+                          className="absolute inset-x-0 -bottom-px h-0.5 overflow-hidden bg-surface-track"
+                          role="progressbar"
+                          aria-label="Progresso das atividades de hoje"
+                          aria-valuemin={0}
+                          aria-valuemax={totalItens}
+                          aria-valuenow={concluidos}
+                        >
+                          <span
+                            className={`dashboard-focus-progress block h-full w-full ${
+                              focoCompleto ? "bg-feedback-success" : "bg-brass"
+                            }`}
+                            style={{ "--dashboard-focus-progress": progressoHoje }}
+                          />
+                        </div>
                       </div>
                       <div className="space-y-2">
                         {diaHoje.itens.map((item, i) => (
@@ -478,12 +697,81 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                 );
               })()}
 
+            {/* Sem atividades hoje: o card permanece, com mensagem e CTA que
+                dependem de existir plano ou não. */}
+            {!diaHoje && ausenciaConfirmada && (
+              <section aria-labelledby="foco-de-hoje-vazio">
+                {/* Compacto de propósito: card vazio não deve ter a mesma
+                    altura de um card com conteúdo. */}
+                <div className="h-full bg-ink-950 border border-ink-800 rounded-2xl px-4 py-4 sm:px-5">
+                  <p
+                    id="foco-de-hoje-vazio"
+                    className="text-[11px] tracking-widest uppercase text-brass/70 font-medium"
+                  >
+                    Foco de hoje
+                  </p>
+                  {estadoInicial ? (
+                    // Coluna estreita: empilha ícone, texto e link em vez de
+                    // forçar tudo na mesma linha.
+                    <div className="mt-3">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-subtle bg-ink-900">
+                        <CalendarDaysIcon
+                          className="h-4 w-4 text-brass"
+                          aria-hidden="true"
+                        />
+                      </span>
+                      <p className="mt-3 text-sm leading-snug text-cream-400">
+                        Crie um plano para montar seu primeiro foco diário.
+                      </p>
+                      <button
+                        onClick={() => onGoto("cronograma-config")}
+                        className="mt-3 inline-flex items-center gap-1 rounded text-sm text-brass transition-colors duration-150 ease-out hover:text-brass-link-hover hover:underline focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/20"
+                      >
+                        Criar plano
+                        <span aria-hidden="true">→</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-3 flex items-center gap-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border-subtle bg-ink-900">
+                        <CalendarDaysIcon
+                          className="h-4 w-4 text-brass"
+                          aria-hidden="true"
+                        />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm leading-snug text-cream-400">
+                          {semPlano
+                            ? "Nenhum plano de estudos criado ainda."
+                            : "Seu plano não possui atividades para hoje."}
+                        </p>
+                        {semPlano && (
+                          <p className="mt-1 text-xs leading-relaxed text-cream-600">
+                            Crie um plano para organizar o que estudar a cada
+                            dia.
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() =>
+                          onGoto(semPlano ? "cronograma-config" : "cronograma")
+                        }
+                        className={BTN_SECUNDARIO}
+                      >
+                        {semPlano ? "Criar plano" : "Ver plano completo"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+
             {porMateria.length > 0 && (
               <section aria-labelledby="materias-atencao">
                 <div className="bg-ink-950 border border-ink-800 rounded-2xl p-4 sm:p-5">
                   <div className="flex items-baseline justify-between gap-3 pb-3 mb-4 border-b border-border-subtle">
                     <h2 id="materias-atencao" className="flex items-center gap-1.5 text-[11px] tracking-widest uppercase text-brass/70 font-medium">
-                      <ExclamationCircleIcon className="w-3.5 h-3.5 shrink-0" />
+                      <ArrowTrendingDownIcon className="w-3.5 h-3.5 shrink-0" />
                       Matérias que pedem atenção
                     </h2>
                     <button
@@ -509,19 +797,46 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
           </div>
 
           {/* Coluna lateral */}
-          <div className="flex flex-col gap-6 min-w-0">
-            {planoPercentual !== null && (
+          <div
+            className={
+              estadoInicial
+                ? "contents"
+                : "dashboard-enter flex flex-col gap-6 min-w-0"
+            }
+            style={{ "--dashboard-delay": "230ms" }}
+          >
+            {planoPercentual !== null ? (
               <ProgressoCard
                 planoPercentual={planoPercentual}
                 resumo={resumo}
                 streak={streak}
               />
-            )}
+            ) : statsCarregou ? (
+              // Card mantido, mas sem arco: ausência de plano não é 0%. A
+              // track vazia dá presença visual sem fingir um valor.
+              <div className="h-full bg-ink-950 border border-ink-800 rounded-2xl p-5">
+                <p className="text-[11px] tracking-widest uppercase text-surface-muted font-semibold pb-3 mb-4 border-b border-border-subtle">
+                  Progresso geral
+                </p>
+                <div
+                  className="h-1.5 rounded-full bg-surface-track"
+                  aria-hidden="true"
+                />
+                <p className="mt-3 text-sm leading-relaxed text-cream-400">
+                  {estadoInicial
+                    ? "Seu progresso aparecerá conforme você concluir seus primeiros blocos."
+                    : "Seu progresso começa a aparecer conforme você conclui atividades e simulados."}
+                </p>
+              </div>
+            ) : null}
 
             {/*Atividade recente — timeline vertical; combina 3 fontes reais já
                 carregadas (chat, histórico de simulados, caderno)*/}
-            <section aria-labelledby="atividade-recente">
-              <div className="bg-ink-950 border border-ink-800 rounded-2xl p-4 sm:p-5">
+            <section
+              aria-labelledby="atividade-recente"
+              className={estadoInicial ? "sm:col-span-2 xl:col-span-1" : undefined}
+            >
+              <div className="h-full bg-ink-950 border border-ink-800 rounded-2xl p-4 sm:p-5">
                 <div className="flex items-baseline justify-between gap-3 pb-3 mb-4 border-b border-border-subtle">
                   <h2 id="atividade-recente" className="text-[11px] tracking-widest uppercase text-brass/70 font-medium">
                     Atividade recente
@@ -534,16 +849,24 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                   </button>
                 </div>
                 {atividades.length === 0 ? (
-                  <p className="text-sm text-cream-400">
-                    Sua atividade recente aparece aqui.
-                  </p>
+                  <div className="py-2">
+                    <p className="text-sm text-cream-400">
+                      Nenhuma atividade recente ainda.
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-cream-600">
+                      Seus estudos aparecerão aqui conforme você usar o
+                      Facilita OAB.
+                    </p>
+                  </div>
                 ) : (
                   <div>
                     {atividades.map((a, i) => (
-                      <AtividadeTimelineItem
+                      <AtividadeItem
                         key={a.key}
                         atividade={a}
                         ultimo={i === atividades.length - 1}
+                        animationDelay={`${260 + i * 35}ms`}
+                        onGoto={onGoto}
                       />
                     ))}
                   </div>
@@ -566,6 +889,14 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
 
 // Categoria real derivada de item.tipo (único dado categórico que existe —
 // não inventa "TEORIA + QUESTÕES" etc. sem equivalente real).
+// Explicação das três áreas do produto no estado inicial. Conteúdo fixo de
+// interface — não é métrica nem dado do usuário.
+const ETAPAS_INICIAIS = [
+  { titulo: "Planeje", descricao: "Defina sua rotina de estudo" },
+  { titulo: "Pratique", descricao: "Resolva questões e simulados" },
+  { titulo: "Revise", descricao: "Entenda seus erros com o Mentor" },
+];
+
 const CATEGORIA_LABEL = { revisar: "Revisão", simulado: "Simulado", caderno: "Caderno" };
 
 // Cor do badge por tipo REAL do item. "Simulado" não tem equivalente na
@@ -596,7 +927,7 @@ function focoHojeTextos(item) {
 // Foco sempre no vinho do projeto: o azul padrão do navegador é removido em
 // focus/focus-visible/active, e devolvido como ring discreto do mesmo token.
 const BTN_BASE =
-  "group/btn appearance-none shrink-0 inline-flex items-center gap-1.5 min-h-9 px-3.5 py-2 rounded-lg text-[13px] font-medium transition-[background-color,border-color,color] duration-150 ease-out focus:outline-none focus-visible:outline-none active:outline-none";
+  "group/btn appearance-none shrink-0 inline-flex items-center gap-1.5 min-h-9 px-3.5 py-2 rounded-lg text-[13px] font-medium transition-[background-color,border-color,color,box-shadow,transform] duration-150 ease-out active:translate-y-px focus:outline-none focus-visible:outline-none active:outline-none motion-reduce:transition-none motion-reduce:transform-none";
 const BTN_SECUNDARIO = `${BTN_BASE} bg-ink-950 border border-surface-border-button text-cream-50 hover:bg-surface-button-hover hover:border-surface-border-button-hover hover:text-brass focus-visible:ring-2 focus-visible:ring-brass/20 focus-visible:border-brass`;
 const BTN_PRIMARIO = `${BTN_BASE} bg-brass text-ink-950 shadow-btn-primary hover:bg-brass-hover hover:shadow-btn-primary-hover focus-visible:ring-2 focus-visible:ring-brass/40`;
 
@@ -604,7 +935,7 @@ function SetaBotao() {
   return (
     <span
       aria-hidden="true"
-      className="inline-block transition-transform duration-200 ease-in-out group-hover/btn:translate-x-[3px]"
+      className="inline-block transition-transform duration-200 ease-in-out group-hover/btn:translate-x-[3px] motion-reduce:transition-none motion-reduce:transform-none"
     >
       →
     </span>
@@ -621,16 +952,17 @@ function FocoHojeItem({ item, onGoto }) {
     return (
       <div className="flex items-center gap-3 bg-ink-900 border border-surface-border-subtle hover:bg-surface-subcard-hover hover:border-surface-border-hover hover:shadow-subcard-hover transition-[background-color,border-color,box-shadow] duration-200 ease-editorial rounded-xl p-3">
         <CheckCircleIcon
-          className="w-5 h-5 shrink-0"
-          style={{ color: "#10b981" }}
+          className="dashboard-focus-complete w-5 h-5 shrink-0 text-feedback-success"
         />
-        <div className="flex-1 min-w-0">
+        <div className="dashboard-focus-complete flex-1 min-w-0">
           <div className="text-sm font-semibold line-through truncate text-cream-600">
             {titulo}
           </div>
           <div className="text-xs text-cream-600">{subtitulo}</div>
         </div>
-        <span className="text-xs shrink-0 text-cream-600">Concluído</span>
+        <span className="dashboard-focus-complete text-xs font-medium shrink-0 text-[#059669]">
+          Concluído
+        </span>
       </div>
     );
   }
@@ -723,8 +1055,11 @@ function MateriaAtencaoRow({ m, onGoto, ultimo }) {
           aria-valuenow={p}
         >
           <div
-            className="h-full rounded-full transition-all"
-            style={{ width: `${p}%`, backgroundColor: texto }}
+            className="dashboard-progress-fill h-full w-full rounded-full"
+            style={{
+              "--dashboard-progress-scale": p / 100,
+              backgroundColor: texto,
+            }}
           ></div>
         </div>
       </div>
@@ -742,9 +1077,12 @@ function MateriaAtencaoRow({ m, onGoto, ultimo }) {
 // Card compacto de indicador — ícone + label + valor, pouco espaço vertical.
 // `texto`/`fundo` (opcionais) reaproveitam corPorPerformance pro Aproveitamento
 // (verde/âmbar/vermelho real, não cor decorativa arbitrária).
-function IndicatorCard({ Icon, label, valor, texto, fundo }) {
+function IndicatorCard({ Icon, label, valor, texto, fundo, animationDelay }) {
   return (
-    <div className="flex items-center gap-3 bg-ink-950 border border-ink-800 rounded-2xl px-4 py-3">
+    <div
+      className="dashboard-enter flex items-center gap-3 bg-ink-950 border border-ink-800 rounded-2xl px-4 py-3"
+      style={{ "--dashboard-delay": animationDelay }}
+    >
       <span
         className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${fundo ? "" : "bg-brass-soft"}`}
         style={fundo ? { backgroundColor: fundo } : undefined}
@@ -760,7 +1098,8 @@ function IndicatorCard({ Icon, label, valor, texto, fundo }) {
           {label}
         </div>
         <div
-          className="font-serif text-xl text-cream-50 leading-tight"
+          key={String(valor)}
+          className="dashboard-value-change font-serif text-xl text-cream-50 leading-tight"
           style={{ fontVariationSettings: '"opsz" 60' }}
         >
           {valor}
@@ -792,19 +1131,21 @@ function CircularProgress({ percent, size = 104, stroke = 9 }) {
         className="stroke-surface-track"
         strokeWidth={stroke}
       />
-      {percent > 0 && (
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          className="stroke-brass"
-          strokeWidth={stroke}
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-        />
-      )}
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        className="dashboard-progress-arc stroke-brass"
+        strokeWidth={stroke}
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        style={{
+          "--dashboard-progress-start": circumference,
+          "--dashboard-progress-end": offset,
+        }}
+      />
     </svg>
   );
 }
@@ -841,7 +1182,8 @@ function ProgressoCard({ planoPercentual, resumo, streak }) {
         <CircularProgress percent={planoPercentual} size={120} stroke={8} />
         <div className="absolute inset-0 flex flex-col items-center justify-center px-3 text-center">
           <span
-            className="font-serif text-3xl text-cream-50 leading-none tabular-nums"
+            key={planoPercentual}
+            className="dashboard-value-change font-serif text-3xl text-cream-50 leading-none tabular-nums"
             style={{ fontVariationSettings: '"opsz" 96' }}
           >
             {planoPercentual}%
@@ -873,23 +1215,69 @@ function ProgressoCard({ planoPercentual, resumo, streak }) {
 // Timeline vertical — ponto + linha conectando os eventos via flexbox (sem
 // posicionamento absoluto com valores mágicos). Verde só quando a atividade
 // é semanticamente positiva (ex.: simulado com bom desempenho real).
-function AtividadeTimelineItem({ atividade, ultimo }) {
-  const corPonto = atividade.positivo ? "bg-[#10b981]" : "bg-brass";
+const ATIVIDADE_ICONE = {
+  chat: ChatBubbleLeftRightIcon,
+  simulado: ClipboardDocumentCheckIcon,
+  caderno: BookOpenIcon,
+};
+
+// Linha editorial separada por divisor — sem card por item. Vira botão só
+// quando `destino` existe; caso contrário permanece informativa, sem hover.
+function AtividadeItem({ atividade, ultimo, animationDelay, onGoto }) {
+  const Icone = ATIVIDADE_ICONE[atividade.tipo] || BookOpenIcon;
+  const clicavel = Boolean(atividade.destino);
+
+  const conteudo = (
+    <>
+      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border-subtle bg-ink-900">
+        <Icone className="h-3.5 w-3.5 text-brass" aria-hidden="true" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-baseline justify-between gap-3">
+          <span className="text-xs font-medium text-cream-50">
+            {atividade.rotulo}
+          </span>
+          <span className="shrink-0 text-[11px] text-cream-600">
+            {tempoRelativo(atividade.timestamp)}
+          </span>
+        </span>
+        <span className="mt-0.5 block truncate text-sm text-cream-400">
+          {atividade.descricao}
+        </span>
+      </span>
+      {clicavel && (
+        <ChevronRightIcon
+          className="mt-1 h-3.5 w-3.5 shrink-0 text-cream-600 opacity-0 transition-[opacity,transform] duration-150 ease-out group-hover/atv:translate-x-0.5 group-hover/atv:opacity-100 group-focus-visible/atv:translate-x-0.5 group-focus-visible/atv:opacity-100"
+          aria-hidden="true"
+        />
+      )}
+    </>
+  );
+
+  const base = `dashboard-activity-enter flex gap-3 py-3 ${
+    ultimo ? "" : "border-b border-border-subtle"
+  }`;
+
+  if (!clicavel) {
+    return (
+      <div
+        className={base}
+        style={{ "--dashboard-delay": animationDelay }}
+      >
+        {conteudo}
+      </div>
+    );
+  }
+
   return (
-    <div className="flex gap-3">
-      <div className="flex flex-col items-center shrink-0">
-        <span className={`w-2 h-2 rounded-full mt-1.5 ${corPonto}`} aria-hidden="true" />
-        {!ultimo && <span className="w-px flex-1 bg-ink-800 my-1" aria-hidden="true" />}
-      </div>
-      <div className={`min-w-0 ${ultimo ? "" : "pb-5"}`}>
-        <div className="text-sm text-cream-50 font-medium truncate">
-          {atividade.titulo}
-        </div>
-        <div className="text-xs text-cream-400 mt-0.5 truncate">
-          {atividade.subtitulo} · {tempoRelativo(atividade.timestamp)}
-        </div>
-      </div>
-    </div>
+    <button
+      type="button"
+      onClick={() => onGoto(atividade.destino)}
+      className={`group/atv ${base} -mx-2 w-[calc(100%+1rem)] rounded-lg px-2 text-left transition-colors duration-150 ease-out hover:bg-ink-900 active:translate-y-px focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/20`}
+      style={{ "--dashboard-delay": animationDelay }}
+    >
+      {conteudo}
+    </button>
   );
 }
 

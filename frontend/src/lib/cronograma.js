@@ -19,6 +19,7 @@ const DEFAULT_CONFIG = {
 
 let _config = DEFAULT_CONFIG;
 let _plano = null;
+let _planoFoiCarregado = false;
 
 function notify() {
   window.dispatchEvent(new CustomEvent("crono:changed"));
@@ -67,11 +68,17 @@ export function loadPlano() {
   return _plano;
 }
 
+export function planoFoiCarregado() {
+  return _planoFoiCarregado;
+}
+
 export async function hydrateCronogramaPlano() {
   try {
     _plano = await authFetchJson("/me/cronograma/plano");
+    _planoFoiCarregado = true;
   } catch {
     _plano = null;
+    _planoFoiCarregado = false;
   }
   notify();
   return _plano;
@@ -86,6 +93,7 @@ export async function savePlano(plano) {
       method: "PUT",
       body: JSON.stringify(plano),
     });
+    _planoFoiCarregado = true;
   } catch (e) {
     console.error("Falha ao salvar plano:", e);
     _plano = previous;
@@ -100,6 +108,7 @@ export async function limparPlano() {
   notify();
   try {
     await authFetchJson("/me/cronograma/plano", { method: "DELETE" });
+    _planoFoiCarregado = true;
   } catch (e) {
     console.error("Falha ao limpar plano:", e);
     _plano = previous;
