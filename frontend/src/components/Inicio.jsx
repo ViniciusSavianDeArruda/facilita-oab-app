@@ -1,5 +1,4 @@
 import {
-  AcademicCapIcon,
   ArrowTrendingDownIcon,
   BookOpenIcon,
   CalendarDaysIcon,
@@ -7,18 +6,14 @@ import {
   ChatBubbleLeftRightIcon,
   CheckBadgeIcon,
   ChevronRightIcon,
-  CheckCircleIcon,
   ClipboardDocumentCheckIcon,
-  ClockIcon,
+  Cog6ToothIcon,
   FireIcon,
-  FlagIcon,
   MoonIcon,
-  RocketLaunchIcon,
-  ScaleIcon,
-  SparklesIcon,
   SunIcon,
 } from "@heroicons/react/24/outline";
 import Brand from "./Brand";
+import { ItemCheckbox } from "./Cronograma";
 import { useEffect, useState } from "react";
 import { authFetchJson } from "../lib/api";
 import {
@@ -27,6 +22,7 @@ import {
 } from "../lib/caderno";
 import {
   loadPlano,
+  marcarItemConcluido,
   percentualConcluido,
   planoDeHoje,
   planoEstaValido,
@@ -52,29 +48,17 @@ import {
 
 // Frases motivacionais — trocam por dia (estável dentro do mesmo dia).
 const FRASES_GERAIS = [
-  {
-    Icon: AcademicCapIcon,
-    texto: "Cada questão resolvida hoje aproxima você da aprovação.",
-  },
-  { Icon: ScaleIcon, texto: "A aprovação é construída um estudo de cada vez." },
-  {
-    Icon: ChartBarIcon,
-    texto: "Pequenos avanços diários geram grandes resultados.",
-  },
-  {
-    Icon: SparklesIcon,
-    texto: "Seu futuro como advogado começa com a próxima questão.",
-  },
-  {
-    Icon: RocketLaunchIcon,
-    texto: "Continue firme. A OAB recompensa a constância.",
-  },
+  { texto: "Cada questão resolvida hoje aproxima você da aprovação." },
+  { texto: "A aprovação é construída um estudo de cada vez." },
+  { texto: "Pequenos avanços diários geram grandes resultados." },
+  { texto: "Seu futuro como advogado começa com a próxima questão." },
+  { texto: "Continue firme. A OAB recompensa a constância." },
 ];
 
 const FRASES_RETA_FINAL = [
-  { Icon: ClockIcon, texto: "Faltam poucos dias. Mantenha o ritmo!" },
-  { Icon: FlagIcon, texto: "Hora da reta final. Foque nas revisões." },
-  { Icon: CheckBadgeIcon, texto: "Você chegou até aqui. Continue!" },
+  { texto: "Faltam poucos dias. Mantenha o ritmo!" },
+  { texto: "Hora da reta final. Foque nas revisões." },
+  { texto: "Você chegou até aqui. Continue!" },
 ];
 
 function fraseDoDia(dias) {
@@ -159,8 +143,12 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
       .then((s) => {
         setStreak(s.streak || 0);
         setPorMateria(s.porMateria || []);
-        const totalQuestoes = s.trend.reduce((acc, t) => acc + t.total, 0);
-        const totalAcertos = s.trend.reduce((acc, t) => acc + t.acertos, 0);
+        // Sem a guarda, um payload sem `trend` lança dentro do .then() e cai
+        // no .catch(), deixando `resumo` nulo para sempre — o que congela a
+        // Home num limbo de carregamento.
+        const trend = Array.isArray(s.trend) ? s.trend : [];
+        const totalQuestoes = trend.reduce((acc, t) => acc + (t.total || 0), 0);
+        const totalAcertos = trend.reduce((acc, t) => acc + (t.acertos || 0), 0);
         setResumo({
           totalQuestoes,
           aproveitamento:
@@ -176,6 +164,9 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
   const nome = settings.nome;
   const planoValido = plano && planoEstaValido(plano, settings.dataProva);
   const diaHoje = planoValido ? planoDeHoje(plano) : null;
+  // Plano existe mas não cobre mais a data da prova atual. Não é o mesmo que
+  // "hoje está livre": o plano precisa ser regerado, não apenas consultado.
+  const planoDesatualizado = Boolean(plano) && !planoValido;
 
   const resultadosValidos = listarSimulados()
     .filter(resultadoCompativelComSintese)
@@ -207,7 +198,9 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
   const ausenciaConfirmada = !semPlano || (statsCarregou && planoConsultado);
 
   // Indicadores — só os que têm dado real entram; a largura de cada card se
-  // adapta à contagem (não força 4 colunas quando só há 2 ou 3 reais).
+  // adapta à contagem (não força 4 colunas quando só há 2 ou 3 reais). Os três
+  // compartilham o mesmo vocabulário visual: nenhum recebe cor própria, porque
+  // a diferença entre eles é de métrica, não de severidade.
   const indicadores = [
     ...(temQuestoes
       ? [{ key: "questoes", Icon: CheckBadgeIcon, label: "Questões resolvidas", valor: resumo.totalQuestoes }]
@@ -218,7 +211,6 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
           Icon: ChartBarIcon,
           label: "Aproveitamento",
           valor: `${resumo.aproveitamento}%`,
-          ...corPorPerformance(resumo.aproveitamento),
         }]
       : []),
     ...(streak > 0
@@ -305,13 +297,13 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
             className="w-10 h-10 -mr-2 flex items-center justify-center rounded-lg text-cream-400 hover:text-cream-50 transition-[color,transform] duration-150 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:transform-none"
             aria-label="Ajustes"
           >
-            <CogIcon />
+            <Cog6ToothIcon className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
 
         {/* ===== Header: saudação à esquerda + próxima prova compacta à direita ===== */}
         <div
-          className={`dashboard-enter flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between ${ultimoResultado ? "mb-3" : "mb-6"}`}
+          className={`dashboard-enter flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between ${ultimoResultado ? "mb-4" : "mb-6"}`}
           style={{ "--dashboard-delay": "40ms" }}
         >
           <div className="min-w-0 sm:max-w-2xl">
@@ -336,8 +328,13 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                   {saudacao()},{" "}
                   <span className="relative inline-block font-semibold italic text-brass">
                     {nome}.
+                    {/* `preserveAspectRatio="none"` estica a curva até a
+                        largura real do nome — é o que queremos. O que não
+                        queremos é o traço engrossar/afinar junto: daí o
+                        vector-effect, que trava a espessura em 2.5px para
+                        qualquer nome. */}
                     <svg
-                      className="pointer-events-none absolute -bottom-1.5 left-0 h-[7px] w-full overflow-visible text-brass/75"
+                      className="pointer-events-none absolute -bottom-1 left-0 h-[7px] w-full overflow-visible text-brass/75"
                       viewBox="0 0 120 8"
                       fill="none"
                       preserveAspectRatio="none"
@@ -348,6 +345,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                         stroke="currentColor"
                         strokeWidth="2.5"
                         strokeLinecap="round"
+                        vectorEffect="non-scaling-stroke"
                       />
                     </svg>
                   </span>
@@ -383,19 +381,16 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
               label/data/ação; sem borda vinho envolvendo o card inteiro. */}
           {dias !== null && dias >= 0 && (
             <div className="w-full sm:w-auto sm:min-w-[240px] shrink-0 bg-ink-950 border border-ink-800 rounded-xl p-3 flex items-center gap-3">
-              <div className="shrink-0 w-14 h-14 bg-brass rounded-lg flex flex-col items-center justify-center text-white">
-                <span
-                  className="font-serif text-xl leading-none"
-                  style={{ fontVariationSettings: '"opsz" 60' }}
-                >
+              <div className="shrink-0 w-12 h-12 bg-brass rounded-lg flex flex-col items-center justify-center text-white">
+                <span className="text-lg font-bold leading-none tabular-nums">
                   {dias}
                 </span>
-                <span className="text-[9px] uppercase tracking-wide leading-none mt-1">
+                <span className="text-[10px] uppercase tracking-wide leading-none mt-0.5">
                   {dias === 1 ? "dia" : "dias"}
                 </span>
               </div>
               <div className="min-w-0">
-                <div className="text-[10px] tracking-widest uppercase text-brass/70 font-medium mb-0.5">
+                <div className="text-[11px] tracking-wider uppercase text-cream-400 font-medium mb-0.5">
                   Próxima prova OAB
                 </div>
                 <div className="text-xs text-cream-400 truncate">
@@ -415,16 +410,11 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
               onClick={() => onGoto("cronograma-config")}
               className="w-full sm:w-auto sm:min-w-[240px] shrink-0 bg-ink-950 border border-ink-800 rounded-xl p-3 flex items-center gap-3 hover:border-brass/20 transition-[border-color,transform] duration-150 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:transform-none"
             >
-              <div className="shrink-0 w-14 h-14 bg-brass-soft rounded-lg flex items-center justify-center text-brass">
-                <span
-                  className="font-serif text-xl leading-none"
-                  style={{ fontVariationSettings: '"opsz" 60' }}
-                >
-                  —
-                </span>
+              <div className="shrink-0 w-12 h-12 bg-brass-soft rounded-lg flex items-center justify-center text-brass">
+                <span className="text-lg font-bold leading-none">—</span>
               </div>
               <div className="min-w-0 text-left">
-                <div className="text-[10px] tracking-widest uppercase text-brass/70 font-medium mb-0.5">
+                <div className="text-[11px] tracking-wider uppercase text-cream-400 font-medium mb-0.5">
                   Próxima prova OAB
                 </div>
                 <div className="text-[11px] text-cream-400">
@@ -438,16 +428,11 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
               onClick={() => onGoto("cronograma-config")}
               className="w-full sm:w-auto sm:min-w-[240px] shrink-0 bg-ink-950 border border-ink-800 rounded-xl p-3 flex items-center gap-3 hover:border-brass/20 transition-[border-color,transform] duration-150 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:transform-none"
             >
-              <div className="shrink-0 w-14 h-14 bg-alert/10 rounded-lg flex items-center justify-center text-alert">
-                <span
-                  className="font-serif text-xl leading-none"
-                  style={{ fontVariationSettings: '"opsz" 60' }}
-                >
-                  !
-                </span>
+              <div className="shrink-0 w-12 h-12 bg-alert/10 rounded-lg flex items-center justify-center text-alert">
+                <span className="text-lg font-bold leading-none">!</span>
               </div>
               <div className="min-w-0 text-left">
-                <div className="text-[10px] tracking-widest uppercase text-brass/70 font-medium mb-0.5">
+                <div className="text-[11px] tracking-wider uppercase text-cream-400 font-medium mb-0.5">
                   Próxima prova OAB
                 </div>
                 <div className="text-[11px] text-cream-400">
@@ -466,14 +451,14 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
             <span>Último simulado</span>
             <span className="inline-flex items-baseline gap-2">
               <span className="text-cream-600" aria-hidden="true">·</span>
-              <span key={`${ultimoResultado.id}-placar`} className="dashboard-value-change inline-block font-medium text-cream-50">
+              <span key={`${ultimoResultado.id}-placar`} className="dashboard-value-change inline-block font-medium tabular-nums text-cream-50">
                 {ultimoResultado.acertos}/{ultimoResultado.total}
               </span>
             </span>
             <span className="inline-flex items-baseline gap-2">
               <span className="text-cream-600" aria-hidden="true">·</span>
               <span>
-                <span key={`${ultimoResultado.id}-percentual`} className="dashboard-value-change inline-block font-semibold text-brass">
+                <span key={`${ultimoResultado.id}-percentual`} className="dashboard-value-change inline-block font-semibold tabular-nums text-brass">
                   {percentualUltimo}%
                 </span>{" "}
                 de aproveitamento
@@ -482,9 +467,9 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
             {diferencaPontos !== null && (
               <span className="inline-flex items-baseline gap-2">
                 <span className="text-cream-600" aria-hidden="true">·</span>
-                <span key={`${ultimoResultado.id}-diferenca`} className={`dashboard-value-change inline-block font-medium ${
+                <span key={`${ultimoResultado.id}-diferenca`} className={`dashboard-value-change inline-block font-medium tabular-nums ${
                   diferencaPontos > 0
-                    ? "text-[#059669]"
+                    ? "text-feedback-success-text"
                     : diferencaPontos < 0
                       ? "text-feedback-danger"
                       : "text-cream-400"
@@ -496,26 +481,36 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
           </div>
         )}
 
-        {/* ===== Faixa de ação do dia — reaproveita o nudge real de "ainda não estudou" ===== */}
-        {!estudouHoje && (
+        {/* ===== Faixa de convite — mesma condição real de "ainda não estudou
+            hoje", mas propondo em vez de cobrar. Fica fora do estado inicial:
+            lá o card "Comece sua preparação" já carrega a primeira ação, e
+            duas faixas dizendo que nada começou viram ruído. ===== */}
+        {!estudouHoje && !estadoInicial && (
           <div
-            className="dashboard-enter flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-ink-900 border border-ink-800 rounded-xl px-4 py-3 mb-6"
+            className="dashboard-enter flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-ink-900 border border-ink-800 rounded-xl px-4 py-3 mb-8"
             style={{ "--dashboard-delay": "80ms" }}
           >
             <div className="flex items-center gap-3 min-w-0">
+              {/* Único círculo brass-soft que sobrou: o vocabulário de chip de
+                  dado é quadrado (rounded-lg sobre ink-900). */}
               <span className="w-8 h-8 rounded-full bg-brass-soft flex items-center justify-center shrink-0">
                 <BookOpenIcon className="w-4 h-4 text-brass" aria-hidden="true" />
               </span>
-              <p className="text-sm text-cream-400 truncate">
-                Você ainda não estudou hoje. Comece com um simulado rápido de 10
-                questões comentadas.
+              <p className="text-sm text-cream-400">
+                Comece o dia com um aquecimento de 10 questões comentadas.
               </p>
             </div>
+            {/* `self-start` só no mobile: o container é `flex-col` lá, e em
+                coluna o align-items padrão (stretch) esticava o botão de ponta
+                a ponta. A partir de sm o alinhamento volta a ser o do
+                container (`sm:items-center`). */}
             <button
               onClick={() => onGoto("simulado-landing")}
-              className="shrink-0 min-h-9 text-xs font-medium text-ink-950 bg-brass hover:bg-brass-hover px-3.5 py-1.5 rounded-lg transition-[background-color,transform] duration-150 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:transform-none"
+              className={`${BTN_PRIMARIO} self-start sm:self-auto`}
             >
-              Iniciar Aquecimento
+              <span className="sm:hidden">Começar</span>
+              <span className="hidden sm:inline">Iniciar aquecimento</span>
+              <SetaBotao />
             </button>
           </div>
         )}
@@ -525,15 +520,14 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
         {estadoInicial && (
           <section
             aria-labelledby="comece-preparacao"
-            className="dashboard-enter bg-ink-950 border border-ink-800 rounded-2xl px-5 py-5 sm:px-7 sm:py-6 mb-6"
+            className="dashboard-enter bg-ink-950 border border-ink-800 rounded-2xl px-5 py-5 sm:px-7 sm:py-6 mb-8"
             style={{ "--dashboard-delay": "100ms" }}
           >
-            <p className="text-[10px] tracking-[0.14em] uppercase text-brass font-semibold">
-              Seu ponto de partida
-            </p>
+            {/* Sem rótulo acima do título: o h2 editorial carrega sozinho a
+                abertura do bloco. */}
             <h2
               id="comece-preparacao"
-              className="mt-2 font-serif text-2xl text-cream-50 leading-tight tracking-tight"
+              className="font-serif text-2xl text-cream-50 leading-tight tracking-tight"
               style={{ fontVariationSettings: '"opsz" 60' }}
             >
               Comece sua preparação
@@ -563,7 +557,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                   className="flex gap-3 py-3 sm:py-0 sm:px-5 sm:first:pl-0 sm:last:pr-0"
                 >
                   <span
-                    className="shrink-0 font-serif text-[11px] leading-5 tabular-nums text-brass/70"
+                    className="shrink-0 text-[11px] font-semibold leading-5 tabular-nums text-brass/70"
                     aria-hidden="true"
                   >
                     {String(i + 1).padStart(2, "0")}
@@ -584,7 +578,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
 
         {/* ===== Indicadores — compactos, só com dado real; ficam acima da divisão em colunas ===== */}
         {indicadores.length > 0 && (
-          <div className={`grid grid-cols-1 gap-3 mb-6 ${INDICADOR_GRID_CLASS[indicadores.length]}`}>
+          <div className={`grid grid-cols-1 gap-3 mb-8 ${INDICADOR_GRID_CLASS[indicadores.length]}`}>
             {indicadores.map((ind, index) => (
               <IndicatorCard
                 key={ind.key}
@@ -604,7 +598,11 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
           className={
             estadoInicial
               ? "grid grid-cols-1 items-stretch gap-6 sm:grid-cols-2 xl:grid-cols-3"
-              : "grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(280px,0.8fr)] lg:items-start lg:gap-6"
+              : // A divisão abre em xl, não em lg: em 1024px, descontada a
+                // sidebar de 288px, sobram ~632px — a lateral trava no piso e
+                // a coluna "2fr" fica mais estreita que ela. A proporção 2:0.8
+                // só é real a partir de ~1400px.
+                "grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(300px,0.8fr)] xl:items-start"
           }
         >
           {/* Coluna principal */}
@@ -631,26 +629,33 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                 ];
                 return (
                   <section aria-labelledby="foco-de-hoje">
-                    <div className="bg-ink-950 border border-ink-800 rounded-2xl p-4 sm:p-5">
+                    {/* Card primário: a hierarquia vem do padding maior que o
+                        dos demais cards. O acento vinho na lateral saiu porque
+                        o item concluído já carrega estado visual próprio e os
+                        dois feedbacks competiam. */}
+                    <div className="bg-ink-950 border border-ink-800 rounded-2xl p-5 sm:p-6">
                       <div className="relative flex flex-col gap-2 pb-3 mb-4 border-b border-border-subtle sm:flex-row sm:items-baseline sm:justify-between">
-                        <div className="flex items-baseline gap-2 flex-wrap">
-                          <p className="text-[11px] tracking-widest uppercase text-brass/70 font-medium">
-                            Foco de hoje
-                          </p>
+                        {/* O título do card é "Foco de hoje"; as matérias do
+                            dia descem para subtítulo em sans. Antes o rótulo
+                            miúdo competia com um h2 que mudava de texto. */}
+                        <div className="min-w-0">
                           <h2
                             id="foco-de-hoje"
-                            className="font-serif text-xl text-cream-50 leading-tight"
+                            className="font-serif text-lg text-cream-50 leading-tight"
                             style={{ fontVariationSettings: '"opsz" 60' }}
                           >
-                            {materias.length > 0
-                              ? materias.join(" & ")
-                              : "Seu plano de hoje"}
+                            Foco de hoje
                           </h2>
+                          {materias.length > 0 && (
+                            <p className="mt-0.5 truncate text-[13px] leading-snug text-cream-400">
+                              {materias.join(" & ")}
+                            </p>
+                          )}
                         </div>
                         <span
                           className={`self-start shrink-0 text-xs font-medium px-3 py-1.5 rounded-full tabular-nums transition-[background-color,color] duration-200 motion-reduce:transition-none ${
                             focoCompleto
-                              ? "bg-feedback-success/10 text-[#059669]"
+                              ? "bg-feedback-success/10 text-feedback-success-text"
                               : "bg-brass-soft text-brass"
                           }`}
                           aria-label={`${concluidos} de ${totalItens} blocos concluídos`}
@@ -683,7 +688,13 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                       </div>
                       <div className="space-y-2">
                         {diaHoje.itens.map((item, i) => (
-                          <FocoHojeItem key={item.id ?? i} item={item} onGoto={onGoto} />
+                          <FocoHojeItem
+                            key={item.id ?? i}
+                            item={item}
+                            idx={i}
+                            dataDia={diaHoje.data}
+                            onGoto={onGoto}
+                          />
                         ))}
                       </div>
                       <button
@@ -704,36 +715,33 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                 {/* Compacto de propósito: card vazio não deve ter a mesma
                     altura de um card com conteúdo. */}
                 <div className="h-full bg-ink-950 border border-ink-800 rounded-2xl px-4 py-4 sm:px-5">
-                  <p
+                  <h2
                     id="foco-de-hoje-vazio"
-                    className="text-[11px] tracking-widest uppercase text-brass/70 font-medium"
+                    className="font-serif text-lg text-cream-50 leading-tight"
+                    style={{ fontVariationSettings: '"opsz" 60' }}
                   >
                     Foco de hoje
-                  </p>
+                  </h2>
                   {estadoInicial ? (
-                    // Coluna estreita: empilha ícone, texto e link em vez de
-                    // forçar tudo na mesma linha.
+                    // Coluna estreita: empilha ícone e texto. Sem CTA aqui —
+                    // "Criar meu plano" já é a ação primária do card de
+                    // abertura logo acima; repetir vira dois botões para a
+                    // mesma coisa na mesma tela.
                     <div className="mt-3">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-subtle bg-ink-900">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-border-subtle bg-ink-900">
                         <CalendarDaysIcon
                           className="h-4 w-4 text-brass"
                           aria-hidden="true"
                         />
                       </span>
                       <p className="mt-3 text-sm leading-snug text-cream-400">
-                        Crie um plano para montar seu primeiro foco diário.
+                        Seu foco diário aparece aqui assim que você criar um
+                        plano.
                       </p>
-                      <button
-                        onClick={() => onGoto("cronograma-config")}
-                        className="mt-3 inline-flex items-center gap-1 rounded text-sm text-brass transition-colors duration-150 ease-out hover:text-brass-link-hover hover:underline focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/20"
-                      >
-                        Criar plano
-                        <span aria-hidden="true">→</span>
-                      </button>
                     </div>
                   ) : (
                     <div className="mt-3 flex items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border-subtle bg-ink-900">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border-subtle bg-ink-900">
                         <CalendarDaysIcon
                           className="h-4 w-4 text-brass"
                           aria-hidden="true"
@@ -743,7 +751,9 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                         <p className="text-sm leading-snug text-cream-400">
                           {semPlano
                             ? "Nenhum plano de estudos criado ainda."
-                            : "Seu plano não possui atividades para hoje."}
+                            : planoDesatualizado
+                              ? "Seu plano não cobre mais a data da prova atual."
+                              : "Seu plano não possui atividades para hoje."}
                         </p>
                         {semPlano && (
                           <p className="mt-1 text-xs leading-relaxed text-cream-600">
@@ -751,14 +761,28 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                             dia.
                           </p>
                         )}
+                        {planoDesatualizado && (
+                          <p className="mt-1 text-xs leading-relaxed text-cream-600">
+                            Gere o plano de novo para voltar a ver o foco do
+                            dia.
+                          </p>
+                        )}
                       </div>
                       <button
                         onClick={() =>
-                          onGoto(semPlano ? "cronograma-config" : "cronograma")
+                          onGoto(
+                            semPlano || planoDesatualizado
+                              ? "cronograma-config"
+                              : "cronograma",
+                          )
                         }
                         className={BTN_SECUNDARIO}
                       >
-                        {semPlano ? "Criar plano" : "Ver plano completo"}
+                        {semPlano
+                          ? "Criar plano"
+                          : planoDesatualizado
+                            ? "Atualizar plano"
+                            : "Ver plano completo"}
                       </button>
                     </div>
                   )}
@@ -770,8 +794,12 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
               <section aria-labelledby="materias-atencao">
                 <div className="bg-ink-950 border border-ink-800 rounded-2xl p-4 sm:p-5">
                   <div className="flex items-baseline justify-between gap-3 pb-3 mb-4 border-b border-border-subtle">
-                    <h2 id="materias-atencao" className="flex items-center gap-1.5 text-[11px] tracking-widest uppercase text-brass/70 font-medium">
-                      <ArrowTrendingDownIcon className="w-3.5 h-3.5 shrink-0" />
+                    <h2
+                      id="materias-atencao"
+                      className="flex min-w-0 items-center gap-2 font-serif text-lg text-cream-50 leading-tight"
+                      style={{ fontVariationSettings: '"opsz" 60' }}
+                    >
+                      <ArrowTrendingDownIcon className="h-4 w-4 shrink-0 text-brass" />
                       Matérias que pedem atenção
                     </h2>
                     <button
@@ -806,18 +834,21 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
             style={{ "--dashboard-delay": "230ms" }}
           >
             {planoPercentual !== null ? (
-              <ProgressoCard
-                planoPercentual={planoPercentual}
-                resumo={resumo}
-                streak={streak}
-              />
+              <ProgressoCard planoPercentual={planoPercentual} />
             ) : statsCarregou ? (
               // Card mantido, mas sem arco: ausência de plano não é 0%. A
               // track vazia dá presença visual sem fingir um valor.
-              <div className="h-full bg-ink-950 border border-ink-800 rounded-2xl p-5">
-                <p className="text-[11px] tracking-widest uppercase text-surface-muted font-semibold pb-3 mb-4 border-b border-border-subtle">
+              <section
+                aria-labelledby="progresso-geral-vazio"
+                className="h-full bg-ink-950 border border-ink-800 rounded-2xl p-5"
+              >
+                <h2
+                  id="progresso-geral-vazio"
+                  className="font-serif text-lg text-cream-50 leading-tight pb-3 mb-4 border-b border-border-subtle"
+                  style={{ fontVariationSettings: '"opsz" 60' }}
+                >
                   Progresso geral
-                </p>
+                </h2>
                 <div
                   className="h-1.5 rounded-full bg-surface-track"
                   aria-hidden="true"
@@ -827,7 +858,7 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
                     ? "Seu progresso aparecerá conforme você concluir seus primeiros blocos."
                     : "Seu progresso começa a aparecer conforme você conclui atividades e simulados."}
                 </p>
-              </div>
+              </section>
             ) : null}
 
             {/*Atividade recente — timeline vertical; combina 3 fontes reais já
@@ -838,7 +869,11 @@ export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
             >
               <div className="h-full bg-ink-950 border border-ink-800 rounded-2xl p-4 sm:p-5">
                 <div className="flex items-baseline justify-between gap-3 pb-3 mb-4 border-b border-border-subtle">
-                  <h2 id="atividade-recente" className="text-[11px] tracking-widest uppercase text-brass/70 font-medium">
+                  <h2
+                    id="atividade-recente"
+                    className="font-serif text-lg text-cream-50 leading-tight"
+                    style={{ fontVariationSettings: '"opsz" 60' }}
+                  >
                     Atividade recente
                   </h2>
                   <button
@@ -899,14 +934,11 @@ const ETAPAS_INICIAIS = [
 
 const CATEGORIA_LABEL = { revisar: "Revisão", simulado: "Simulado", caderno: "Caderno" };
 
-// Cor do badge por tipo REAL do item. "Simulado" não tem equivalente na
-// referência (que só define Revisão/Fixação/Teoria), então fica no vinho
-// da marca em vez de ganhar uma cor inventada.
-const CATEGORIA_BADGE = {
-  revisar: "bg-blue-50 text-blue-700",
-  caderno: "bg-amber-50 text-amber-700",
-  simulado: "bg-brass-soft text-brass",
-};
+// Badge de categoria em superfície neutra quente e única. As cores anteriores
+// (azul e âmbar da paleta padrão do Tailwind) eram frias e arbitrárias: não
+// codificavam nada que o próprio rótulo já não diga. Um tom só mantém o vinho
+// reservado para ação e acento.
+const CATEGORIA_BADGE = "bg-sand-100 text-cream-400";
 
 // Título em negrito + subtítulo muted — só com campos reais do item
 // (tipo/matéria/minutos; simulado sempre tem 10 questões, é constante
@@ -944,23 +976,26 @@ function SetaBotao() {
 
 // Item individual do "Foco de hoje" — cartão interno leve sobre a superfície
 // branca do card, tratado como componente completo: checkbox, título, badge
-// de categoria real, metadados e ação. O checkbox acompanha o hover da linha.
-function FocoHojeItem({ item, onGoto }) {
+// de categoria real, metadados e ação.
+//
+// O círculo é o mesmo ItemCheckbox do Cronograma e grava pela função real
+// `marcarItemConcluido`. Antes ele era um `span` decorativo: tinha aparência
+// de controle sem comportamento nenhum.
+function FocoHojeItem({ item, idx, dataDia, onGoto }) {
   const { titulo, subtitulo, categoria } = focoHojeTextos(item);
+  const alternar = () => marcarItemConcluido(dataDia, idx, !item.concluido);
 
   if (item.concluido) {
     return (
       <div className="flex items-center gap-3 bg-ink-900 border border-surface-border-subtle hover:bg-surface-subcard-hover hover:border-surface-border-hover hover:shadow-subcard-hover transition-[background-color,border-color,box-shadow] duration-200 ease-editorial rounded-xl p-3">
-        <CheckCircleIcon
-          className="dashboard-focus-complete w-5 h-5 shrink-0 text-feedback-success"
-        />
+        <ItemCheckbox marcado onToggle={alternar} rotulo={titulo} />
         <div className="dashboard-focus-complete flex-1 min-w-0">
           <div className="text-sm font-semibold line-through truncate text-cream-600">
             {titulo}
           </div>
           <div className="text-xs text-cream-600">{subtitulo}</div>
         </div>
-        <span className="dashboard-focus-complete text-xs font-medium shrink-0 text-[#059669]">
+        <span className="dashboard-focus-complete text-xs font-medium shrink-0 text-feedback-success-text">
           Concluído
         </span>
       </div>
@@ -975,17 +1010,15 @@ function FocoHojeItem({ item, onGoto }) {
         : "chat";
 
   return (
-    <div className="group flex items-center gap-3 bg-ink-900 border border-surface-border-subtle hover:bg-surface-subcard-hover hover:border-surface-border-hover hover:shadow-subcard-hover transition-[background-color,border-color,box-shadow] duration-200 ease-editorial rounded-xl p-3">
-      <span className="w-5 h-5 rounded-full border-2 border-ink-700 group-hover:border-brass transition-colors duration-200 ease-in-out shrink-0"></span>
+    <div className="flex items-center gap-3 bg-ink-900 border border-surface-border-subtle hover:bg-surface-subcard-hover hover:border-surface-border-hover hover:shadow-subcard-hover transition-[background-color,border-color,box-shadow] duration-200 ease-editorial rounded-xl p-3">
+      <ItemCheckbox marcado={false} onToggle={alternar} rotulo={titulo} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-semibold truncate text-cream-50">
             {titulo}
           </span>
           <span
-            className={`shrink-0 text-[9px] tracking-wide uppercase font-medium px-1.5 py-0.5 rounded ${
-              CATEGORIA_BADGE[item.tipo] || CATEGORIA_BADGE.simulado
-            }`}
+            className={`shrink-0 text-[10px] tracking-wide uppercase font-medium px-1.5 py-0.5 rounded ${CATEGORIA_BADGE}`}
           >
             {categoria}
           </span>
@@ -1014,13 +1047,18 @@ function FocoHojeItem({ item, onGoto }) {
   );
 }
 
-// Cor por faixa de aproveitamento — mesmo critério de Estatisticas.jsx
-// (corPorPerformance), com par bg/texto pra pílula. Duplicado aqui pra
-// não acoplar os dois componentes.
+// Cor por faixa de aproveitamento. Mesmo critério de Estatisticas.jsx,
+// duplicado aqui pra não acoplar os dois componentes.
+//
+// Os extremos usam valores de token: #C23B2E é `alert`/`feedback-danger`
+// (5,3:1 sobre branco) e #059669 é `feedback-success-text` (3,77:1 — já
+// documentado e aceito no design-system). A faixa intermediária continua hex
+// solto porque promovê-la a token exigiria editar tailwind.config.js, fora do
+// escopo autorizado; #B45309 tem 5,0:1 e atende AA. Pendência registrada.
 function corPorPerformance(pct) {
-  if (pct < 30) return { texto: "#ef4444", fundo: "#fee2e2" };
-  if (pct <= 70) return { texto: "#b45309", fundo: "#fef3c7" };
-  return { texto: "#059669", fundo: "#d1fae5" };
+  if (pct < 30) return { texto: "#C23B2E" };
+  if (pct <= 70) return { texto: "#B45309" };
+  return { texto: "#059669" };
 }
 
 // Linha editorial, não card: sem borda completa nem radius próprio — as
@@ -1042,7 +1080,7 @@ function MateriaAtencaoRow({ m, onGoto, ultimo }) {
           <span className="text-sm text-cream-50 font-medium truncate">
             {m.materia}
           </span>
-          <span className="text-xs font-semibold shrink-0" style={{ color: texto }}>
+          <span className="text-xs font-semibold shrink-0 tabular-nums" style={{ color: texto }}>
             {p}%
           </span>
         </div>
@@ -1075,32 +1113,29 @@ function MateriaAtencaoRow({ m, onGoto, ultimo }) {
 }
 
 // Card compacto de indicador — ícone + label + valor, pouco espaço vertical.
-// `texto`/`fundo` (opcionais) reaproveitam corPorPerformance pro Aproveitamento
-// (verde/âmbar/vermelho real, não cor decorativa arbitrária).
-function IndicatorCard({ Icon, label, valor, texto, fundo, animationDelay }) {
+// Os três compartilham o mesmo chip (28px, rounded-lg, ink-900, borda
+// subtle, glifo 16px) e a mesma tipografia: a diferença entre eles é de
+// métrica, não de severidade, então nenhum ganha cor própria.
+function IndicatorCard({ Icon, label, valor, animationDelay }) {
   return (
     <div
-      className="dashboard-enter flex items-center gap-3 bg-ink-950 border border-ink-800 rounded-2xl px-4 py-3"
+      className="dashboard-enter flex items-center gap-3 bg-ink-950 border border-ink-800 rounded-2xl px-4 py-3.5"
       style={{ "--dashboard-delay": animationDelay }}
     >
-      <span
-        className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${fundo ? "" : "bg-brass-soft"}`}
-        style={fundo ? { backgroundColor: fundo } : undefined}
-      >
-        <Icon
-          className={`w-4 h-4 ${texto ? "" : "text-brass"}`}
-          style={texto ? { color: texto } : undefined}
-          aria-hidden="true"
-        />
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border-subtle bg-ink-900">
+        <Icon className="h-4 w-4 text-brass" aria-hidden="true" />
       </span>
       <div className="min-w-0">
-        <div className="text-[10px] tracking-widest uppercase text-brass/70 font-medium truncate">
+        {/* Rótulo em neutro, não em vinho: o acento fica reservado para ação
+            e para o próprio dado quando ele tem leitura semântica. */}
+        <div className="text-[11px] tracking-wider uppercase text-cream-400 font-medium truncate">
           {label}
         </div>
+        {/* Valor em Manrope, fora da escala serif: Fraunces fica reservado à
+            saudação, aos cabeçalhos de card e ao % do anel. */}
         <div
           key={String(valor)}
-          className="dashboard-value-change font-serif text-xl text-cream-50 leading-tight"
-          style={{ fontVariationSettings: '"opsz" 60' }}
+          className="dashboard-value-change mt-0.5 text-lg font-bold leading-tight tabular-nums text-cream-50"
         >
           {valor}
         </div>
@@ -1150,28 +1185,24 @@ function CircularProgress({ percent, size = 104, stroke = 9 }) {
   );
 }
 
-// "Progresso geral" — anel com o % real do plano em destaque, mais linhas
-// compactas pros demais indicadores reais já carregados.
-function ProgressoCard({ planoPercentual, resumo, streak }) {
-  const linhas = [
-    ...(resumo && resumo.totalQuestoes > 0
-      ? [{ key: "questoes", label: "Questões resolvidas", valor: resumo.totalQuestoes }]
-      : []),
-    ...(resumo && resumo.totalQuestoes > 0 && resumo.aproveitamento !== null
-      ? [{ key: "aproveitamento", label: "Aproveitamento", valor: `${resumo.aproveitamento}%` }]
-      : []),
-    ...(streak > 0
-      ? [{ key: "sequencia", label: "Sequência", valor: `${streak} ${streak === 1 ? "dia" : "dias"}` }]
-      : []),
-  ];
-
+// "Progresso geral" — responde uma pergunta só: quanto do plano já foi. As
+// três linhas de Questões/Aproveitamento/Sequência saíram daqui: eram os
+// mesmos valores da linha de indicadores do topo, construídos duas vezes.
+function ProgressoCard({ planoPercentual }) {
   return (
-    <div className="bg-ink-950 border border-ink-800 rounded-2xl p-5">
-      <p className="text-[11px] tracking-widest uppercase text-brass/70 font-medium pb-3 mb-4 border-b border-border-subtle">
+    <section
+      aria-labelledby="progresso-geral"
+      className="bg-ink-950 border border-ink-800 rounded-2xl p-5"
+    >
+      <h2
+        id="progresso-geral"
+        className="font-serif text-lg text-cream-50 leading-tight pb-3 mb-5 border-b border-border-subtle"
+        style={{ fontVariationSettings: '"opsz" 60' }}
+      >
         Progresso geral
-      </p>
+      </h2>
       <div
-        className="relative mx-auto mb-4"
+        className="relative mx-auto mb-1"
         style={{ width: 120, height: 120 }}
         role="progressbar"
         aria-label="Progresso do plano de estudos"
@@ -1183,7 +1214,7 @@ function ProgressoCard({ planoPercentual, resumo, streak }) {
         <div className="absolute inset-0 flex flex-col items-center justify-center px-3 text-center">
           <span
             key={planoPercentual}
-            className="dashboard-value-change font-serif text-3xl text-cream-50 leading-none tabular-nums"
+            className="dashboard-value-change font-serif text-[32px] text-cream-50 leading-none tabular-nums"
             style={{ fontVariationSettings: '"opsz" 96' }}
           >
             {planoPercentual}%
@@ -1193,22 +1224,7 @@ function ProgressoCard({ planoPercentual, resumo, streak }) {
           </span>
         </div>
       </div>
-      {linhas.length > 0 && (
-        <div className="divide-y divide-border-subtle">
-          {linhas.map((l) => (
-            <div key={l.key} className="flex items-center justify-between py-2">
-              <span className="text-sm text-cream-400">{l.label}</span>
-              <span
-                className="font-serif text-base text-cream-50"
-                style={{ fontVariationSettings: '"opsz" 60' }}
-              >
-                {l.valor}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    </section>
   );
 }
 
@@ -1230,7 +1246,7 @@ function AtividadeItem({ atividade, ultimo, animationDelay, onGoto }) {
   const conteudo = (
     <>
       <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border-subtle bg-ink-900">
-        <Icone className="h-3.5 w-3.5 text-brass" aria-hidden="true" />
+        <Icone className="h-4 w-4 text-brass" aria-hidden="true" />
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-baseline justify-between gap-3">
@@ -1241,7 +1257,7 @@ function AtividadeItem({ atividade, ultimo, animationDelay, onGoto }) {
             {tempoRelativo(atividade.timestamp)}
           </span>
         </span>
-        <span className="mt-0.5 block truncate text-sm text-cream-400">
+        <span className="mt-0.5 block truncate text-sm tabular-nums text-cream-400">
           {atividade.descricao}
         </span>
       </span>
@@ -1346,22 +1362,4 @@ function formatarDuracao(totalMinutos) {
   if (h === 0) return `${min} min`;
   if (min === 0) return `${h}h`;
   return `${h}h${String(min).padStart(2, "0")}`;
-}
-
-function CogIcon() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="3"></circle>
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-    </svg>
-  );
 }

@@ -104,7 +104,11 @@ export default {
           danger: '#C23B2E',
           success: '#10B981',
           warning: '#F59E0B',
-
+          // Verde de TEXTO. `success` (#10B981) é claro demais para rótulo
+          // sobre branco (2,54:1); este tom já era usado solto no Dashboard
+          // (3,77:1) e aqui só ganha nome. Use `success` em preenchimento
+          // (barra, trilha) e `success-text` em texto e ícone.
+          'success-text': '#059669',
         },
       },
       transitionTimingFunction: {

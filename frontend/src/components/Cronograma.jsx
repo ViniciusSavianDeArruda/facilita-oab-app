@@ -421,7 +421,8 @@ function ItemRowPreview({ grupo }) {
 // Checkbox interativo redondo (marcado = preenchido com check) — usado
 // no card "Hoje" do Cronograma.jsx e reaproveitado no painel de detalhe
 // do dia em CronogramaCalendario.jsx, pra não duplicar o visual/estado.
-export function ItemCheckbox({ marcado, onToggle }) {
+export function ItemCheckbox({ marcado, onToggle, rotulo }) {
+  const acao = marcado ? "Desmarcar" : "Marcar concluído";
   return (
     <button
       onClick={onToggle}
@@ -430,7 +431,7 @@ export function ItemCheckbox({ marcado, onToggle }) {
           ? "bg-brass border-brass"
           : "bg-transparent border-ink-700"
       }`}
-      aria-label={marcado ? "Desmarcar" : "Marcar concluído"}
+      aria-label={rotulo ? `${acao}: ${rotulo}` : acao}
     >
       {marcado && (
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
