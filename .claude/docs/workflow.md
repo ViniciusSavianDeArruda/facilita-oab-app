@@ -19,5 +19,5 @@
 - Nunca commitar automaticamente sem confirmação do usuário.
 - Nunca executar push sem confirmação explícita.
 - Se um pedido depender de dado/endpoint que não existe, avisar em vez de inventar.
-- Mudanças de design ficam na branch wip/refinamento-design até aprovação final pra merge.
+- Alterações de design devem ser feitas em uma branch de trabalho dedicada (wip/*) e só integradas após validação.
 - Playwright não está configurado no projeto; pode ser avaliado futuramente, mas não é requisito atual.
