@@ -50,21 +50,29 @@ export function subscribeActivity(cb) {
   return () => window.removeEventListener("activity:changed", handler);
 }
 
+// Tempo relativo compacto. "ontem" usa diferença de calendário, não de horas
+// decorridas — 23h atrás pode ser hoje ou ontem dependendo do horário.
+// Acima de uma semana volta à data real, para não ficar ambíguo.
 export function tempoRelativo(iso) {
   if (!iso) return "";
   const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+
   const now = new Date();
-  const diffMs = now - d;
-  const diffMin = Math.floor(diffMs / 60000);
+  const diffMin = Math.floor((now - d) / 60000);
 
   if (diffMin < 1) return "agora";
-  if (diffMin < 60) return `${diffMin} min atrás`;
+  if (diffMin < 60) return `há ${diffMin} min`;
 
-  const diffH = Math.floor(diffMin / 60);
-  if (diffH < 24) return `${diffH}h atrás`;
-  
-  const diffD = Math.floor(diffH / 24);
+  const inicioDoDia = (x) =>
+    new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diasDeCalendario = Math.round(
+    (inicioDoDia(now) - inicioDoDia(d)) / 86400000,
+  );
 
-  if (diffD < 7) return `${diffD}d atrás`;
+  if (diasDeCalendario === 0) return `há ${Math.floor(diffMin / 60)}h`;
+  if (diasDeCalendario === 1) return "ontem";
+  if (diasDeCalendario < 7) return `há ${diasDeCalendario}d`;
+
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
 }

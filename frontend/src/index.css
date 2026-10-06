@@ -156,9 +156,106 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Microinterações locais do Dashboard. As classes permanecem estáveis entre
+   rerenders; a animação só recomeça quando um nó real é montado. */
+.dashboard-enter {
+  animation: dashboardEnter 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--dashboard-delay, 0ms);
+}
+
+.dashboard-value-change {
+  animation: dashboardValueChange 200ms ease-out both;
+}
+
+.dashboard-activity-enter {
+  animation: dashboardActivityEnter 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--dashboard-delay, 0ms);
+}
+
+.dashboard-progress-arc {
+  animation: dashboardProgressArc 430ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition: stroke-dashoffset 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dashboard-progress-fill {
+  transform: scaleX(var(--dashboard-progress-scale, 0));
+  transform-origin: left center;
+  animation: dashboardProgressFill 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dashboard-focus-progress {
+  transform: scaleX(var(--dashboard-focus-progress, 0));
+  transform-origin: left center;
+  animation: dashboardFocusProgress 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition:
+    transform 280ms cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 180ms ease-out;
+}
+
+.dashboard-focus-complete {
+  animation: dashboardFocusComplete 200ms ease-out both;
+}
+
+@keyframes dashboardEnter {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dashboardValueChange {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dashboardActivityEnter {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dashboardProgressArc {
+  from { stroke-dashoffset: var(--dashboard-progress-start); }
+  to { stroke-dashoffset: var(--dashboard-progress-end); }
+}
+
+@keyframes dashboardProgressFill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(var(--dashboard-progress-scale, 0)); }
+}
+
+@keyframes dashboardFocusProgress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(var(--dashboard-focus-progress, 0)); }
+}
+
+@keyframes dashboardFocusComplete {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .typing-cursor::after,
-  .fade-in {
+  .fade-in,
+  .dashboard-enter,
+  .dashboard-value-change,
+  .dashboard-activity-enter,
+  .dashboard-progress-arc,
+  .dashboard-progress-fill,
+  .dashboard-focus-progress,
+  .dashboard-focus-complete {
     animation: none;
+  }
+
+  .dashboard-enter,
+  .dashboard-value-change,
+  .dashboard-activity-enter,
+  .dashboard-focus-complete {
+    opacity: 1;
+    transform: none;
+  }
+
+  .dashboard-progress-arc,
+  .dashboard-progress-fill,
+  .dashboard-focus-progress {
+    transition: none;
   }
 }
