@@ -16,6 +16,7 @@ funcionalidades em produção.
 - .claude/docs/workflow.md: processo detalhado de desenvolvimento e validação.
 - .claude/docs/data-models.md: contratos e modelos consumidos pelo frontend.
 - .claude/docs/design-system.md: fonte de verdade visual e padrões aprovados. O Dashboard (Inicio.jsx + Sidebar.jsx) é a referência visual principal do produto; telas novas devem preservar essa identidade.
+- .claude/docs/design-workflow.md: orquestração das skills de design, ordem de uso, precedência e conflitos já adjudicados.
 - .claude/docs/debito-tecnico.md: riscos e limitações persistentes.
 - TODO.md: pendências acionáveis.
 
@@ -32,9 +33,9 @@ funcionalidades em produção.
 
 ## Skills especializadas
 
-- Para auditorias de UI/UX, consulte .claude/skills/design-review/SKILL.md.
-- Para criação ou refinamento visual de telas e componentes, consulte .claude/skills/facilita-oab-design/SKILL.md antes de alterações relevantes de UI.
-- Quando a tarefa envolver auditoria e implementação visual, consulte ambas.
+- .claude/docs/design-workflow.md é o orquestrador: diz qual skill usar, em que ordem e quem decide em caso de conflito. Consulte-o antes de trabalho visual não trivial.
+- Próprias do projeto: .claude/skills/facilita-oab-design/SKILL.md (identidade e implementação visual) e .claude/skills/design-review/SKILL.md (auditoria de UI/UX e gate final).
+- Externas instaladas: impeccable (direção UX/UI), emil-design-eng (motion e microinteração) e design-taste-frontend (filtro anti-genérico, sem autoridade sobre estrutura em telas de produto).
 - As skills complementam estas instruções gerais e a documentação oficial.
 
 ## Validação
