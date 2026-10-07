@@ -20,6 +20,7 @@ const DEFAULT_CONFIG = {
 let _config = DEFAULT_CONFIG;
 let _plano = null;
 let _planoFoiCarregado = false;
+let _planoLoadStatus = "loading";
 
 function notify() {
   window.dispatchEvent(new CustomEvent("crono:changed"));
@@ -41,7 +42,7 @@ export async function hydrateCronogramaConfig() {
   return _config;
 }
 
-export async function saveConfig(patch) {
+export async function saveConfig(patch, { throwOnError = false } = {}) {
   const previous = _config;
   const next = { ..._config, ...patch, atualizadoEm: new Date().toISOString() };
   _config = next;
@@ -57,6 +58,8 @@ export async function saveConfig(patch) {
   } catch (e) {
     console.error("Falha ao salvar config do cronograma:", e);
     _config = previous;
+    notify();
+    if (throwOnError) throw e;
   }
   notify();
   return _config;
@@ -72,19 +75,27 @@ export function planoFoiCarregado() {
   return _planoFoiCarregado;
 }
 
+export function planoLoadStatus() {
+  return _planoLoadStatus;
+}
+
 export async function hydrateCronogramaPlano() {
+  _planoLoadStatus = "loading";
+  notify();
   try {
     _plano = await authFetchJson("/me/cronograma/plano");
     _planoFoiCarregado = true;
+    _planoLoadStatus = "ready";
   } catch {
     _plano = null;
     _planoFoiCarregado = false;
+    _planoLoadStatus = "error";
   }
   notify();
   return _plano;
 }
 
-export async function savePlano(plano) {
+export async function savePlano(plano, { throwOnError = false } = {}) {
   const previous = _plano;
   _plano = plano;
   notify();
@@ -97,12 +108,14 @@ export async function savePlano(plano) {
   } catch (e) {
     console.error("Falha ao salvar plano:", e);
     _plano = previous;
+    notify();
+    if (throwOnError) throw e;
   }
   notify();
   return _plano;
 }
 
-export async function limparPlano() {
+export async function limparPlano({ throwOnError = false } = {}) {
   const previous = _plano;
   _plano = null;
   notify();
@@ -113,6 +126,7 @@ export async function limparPlano() {
     console.error("Falha ao limpar plano:", e);
     _plano = previous;
     notify();
+    if (throwOnError) throw e;
   }
 }
 
@@ -337,44 +351,72 @@ export function percentualConcluido(plano) {
  * marca o dia como concluído também.
  */
 export function marcarItemConcluido(dataDia, idxItem, concluido) {
+  marcarItensConcluidos(dataDia, [idxItem], concluido);
+}
+
+export function marcarItensConcluidos(dataDia, indices, concluido) {
   const plano = loadPlano();
   if (!plano) return;
-  const dia = plano.dias.find((d) => d.data === dataDia);
-  if (!dia || !dia.itens[idxItem]) return;
-  dia.itens[idxItem].concluido = concluido;
+  const novoPlano = {
+    ...plano,
+    dias: plano.dias.map((d) => ({
+      ...d,
+      itens: d.itens.map((i) => ({ ...i })),
+    })),
+  };
+  const dia = novoPlano.dias.find((d) => d.data === dataDia);
+  if (!dia || indices.some((idx) => !dia.itens[idx])) return;
+  indices.forEach((idx) => {
+    dia.itens[idx].concluido = concluido;
+  });
   dia.concluido = dia.itens.every((i) => i.concluido);
-  savePlano(plano);
+  savePlano(novoPlano);
 }
 
 /**
- * Redistribui dias não-concluídos que já passaram.
- * Coloca cada item pendente no próximo dia disponível.
+ * Redistribui pendências dos dias passados sem excluir o histórico.
+ * Prioriza dias com menos de 3 itens; quando todos estão cheios, usa o menos carregado.
  */
-export function recompactarPlano() {
+export async function recompactarPlano() {
   const plano = loadPlano();
   if (!plano) return;
   const hoje = new Date().toISOString().slice(0, 10);
+  const novoPlano = {
+    ...plano,
+    dias: plano.dias.map((d) => ({
+      ...d,
+      itens: d.itens.map((i) => ({ ...i })),
+    })),
+  };
+  const futuros = novoPlano.dias.filter((d) => d.data >= hoje);
+  if (futuros.length === 0) return;
 
-  const passados = plano.dias.filter((d) => d.data < hoje && !d.concluido);
-  const futuros = plano.dias.filter((d) => d.data >= hoje);
-
-  // Move itens pendentes dos passados pros primeiros dias futuros com espaço
-  passados.forEach((diaPassado) => {
-    diaPassado.itens
-      .filter((i) => !i.concluido)
-      .forEach((item) => {
-        // Só adiciona se não sobrecarregar (max 3 itens por dia)
-        const diaLivre = futuros.find((d) => d.itens.length < 3);
-        if (diaLivre) diaLivre.itens.push(item);
-      });
+  let moveuItens = false;
+  novoPlano.dias.forEach((diaPassado) => {
+    if (diaPassado.data >= hoje) return;
+    const pendentes = diaPassado.itens.filter((i) => !i.concluido);
+    pendentes.forEach((item) => {
+      // Sem vaga, usa o dia menos carregado; nenhuma tarefa é descartada.
+      const destino =
+        futuros.find((d) => d.itens.length < 3) ||
+        futuros.reduce((menor, d) =>
+          d.itens.length < menor.itens.length ? d : menor,
+        );
+      destino.itens.push(item);
+      destino.concluido = false;
+      moveuItens = true;
+    });
+    if (pendentes.length > 0) {
+      // Mantém o dia no histórico, inclusive seus blocos já concluídos.
+      diaPassado.itens = diaPassado.itens.filter((i) => i.concluido);
+      diaPassado.concluido = diaPassado.itens.length > 0;
+    }
   });
 
-  if (passados.length === 0) return;
-  plano.dias = futuros;
-  savePlano(plano);
+  if (moveuItens) await savePlano(novoPlano, { throwOnError: true });
 }
 
-// ============ Utilities ============
+// Utilities
 
 export function tipoLabel(tipo) {
   return (
