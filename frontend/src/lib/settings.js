@@ -28,7 +28,7 @@ export async function hydrateSettings() {
   return _settings;
 }
 
-export async function saveSettings(patch) {
+export async function saveSettings(patch, { throwOnError = false } = {}) {
   const previous = _settings;
   _settings = { ..._settings, ...patch };
   window.dispatchEvent(new CustomEvent("settings:changed"));
@@ -42,6 +42,8 @@ export async function saveSettings(patch) {
   } catch (e) {
     console.error("Falha ao salvar settings:", e);
     _settings = previous;
+    window.dispatchEvent(new CustomEvent("settings:changed"));
+    if (throwOnError) throw e;
   }
   window.dispatchEvent(new CustomEvent("settings:changed"));
   return _settings;
