@@ -107,7 +107,7 @@ function turnoDoDia() {
   return { label: "Turno da noite", Icon: MoonIcon };
 }
 
-export default function Inicio({ onGoto, onOpenSettings, onDiscussCadItem }) {
+export default function Inicio({ onGoto, onOpenSettings }) {
   const [settings, setSettings] = useState(loadSettings());
   const [lastChat, setLastChat] = useState(loadLastChat());
   const [lastSim, setLastSim] = useState(ultimoSimulado());

@@ -10,14 +10,18 @@ export default function SimuladoRun({ simulado, onFinish, onExit }) {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
       if (saved && saved.id === simulado.id) return saved.answers;
-    } catch {}
+    } catch {
+      // Estado local inválido: mantém o fallback de respostas vazias.
+    }
     return {};
   });
   const [currentIdx, setCurrentIdx] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
       if (saved && saved.id === simulado.id) return saved.currentIdx;
-    } catch {}
+    } catch {
+      // Estado local inválido: começa pela primeira questão.
+    }
     return 0;
   });
   const startedAtRef = useRef(null);
@@ -31,7 +35,9 @@ export default function SimuladoRun({ simulado, onFinish, onExit }) {
       ) {
         startedAtRef.current = saved.startedAt;
       }
-    } catch {}
+    } catch {
+      // Estado local inválido: inicia um novo cronômetro abaixo.
+    }
     if (startedAtRef.current === null) startedAtRef.current = Date.now();
   }
   const startedAt = startedAtRef.current;
