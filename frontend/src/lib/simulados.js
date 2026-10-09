@@ -6,8 +6,23 @@
 
 import { authFetchJson } from "./api";
 import { hydrateCaderno } from "./caderno";
+import { createResultSaveRegistry } from "./simuladoResultSave";
 
 let _historico = [];
+const resultSaves = createResultSaveRegistry({
+  onError: (error) =>
+    console.error("Falha ao confirmar resultado do simulado:", error),
+});
+
+export function getResultSaveState(simuladoId) {
+  return resultSaves.peek(simuladoId);
+}
+
+export function saveResultOnce(payload) {
+  return resultSaves.start(payload.simulado.id, () =>
+    enviarResultadoSimulado(payload),
+  );
+}
 
 function notify() {
   window.dispatchEvent(new CustomEvent("simulados:changed"));

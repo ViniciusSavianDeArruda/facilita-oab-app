@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { enviarResultadoSimulado } from "../lib/simulados";
+import { useEffect, useMemo, useState } from "react";
+import { getResultSaveState, saveResultOnce } from "../lib/simulados";
 import QuestionCard from "./QuestionCard";
 
 export default function SimuladoResults({
@@ -32,32 +32,28 @@ export default function SimuladoResults({
   const eticaStats = stats.porMateria["Ética"];
   const eticaAlerta = eticaStats && eticaStats.acertos / eticaStats.total < 0.5;
 
-  // Envia o resultado pro backend: grava histórico + insere erros no caderno (com dedup).
-  // sentRef evita disparo duplicado sob o double-invoke de efeitos do StrictMode em dev
-  // (cada POST cria uma linha de histórico nova — não é seguro deixar isso repetir).
-  const [savedCount, setSavedCount] = useState(0);
-  const sentRef = useRef(false);
+  // A tentativa é compartilhada por simulado na sessão, inclusive após uma remonta.
+  const [saveState, setSaveState] = useState(
+    () => getResultSaveState(simulado.id) ?? { status: "saving", savedCount: 0 },
+  );
   useEffect(() => {
-    if (sentRef.current) return;
-    sentRef.current = true;
     let cancelled = false;
-    enviarResultadoSimulado({
+    saveResultOnce({
       simulado,
       answers,
       elapsedSec,
       acertos: stats.acertos,
       total: stats.total,
       porMateria: stats.porMateria,
-    })
-      .then((saved) => {
-        if (!cancelled) setSavedCount(saved.savedCount);
-      })
-      .catch((e) => console.error("Falha ao salvar resultado do simulado:", e));
+    }).then((state) => {
+      if (!cancelled) setSaveState(state);
+    });
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [simulado, answers, elapsedSec, stats]);
+
+  const savedCount = saveState.status === "saved" ? saveState.savedCount : 0;
 
   const mm = String(Math.floor(elapsedSec / 60)).padStart(2, "0");
   const ss = String(elapsedSec % 60).padStart(2, "0");
@@ -88,6 +84,23 @@ export default function SimuladoResults({
             </div>
           </div>
         </div>
+
+        <p
+          role={saveState.status === "unconfirmed" ? "alert" : "status"}
+          className={`mb-6 text-sm leading-relaxed ${
+            saveState.status === "saved"
+              ? "text-feedback-success-text"
+              : saveState.status === "unconfirmed"
+                ? "text-alert"
+                : "text-cream-400"
+          }`}
+        >
+          {saveState.status === "saved"
+            ? "Resultado salvo."
+            : saveState.status === "unconfirmed"
+              ? "Não foi possível confirmar o salvamento. O resultado pode ter sido registrado; confira o histórico antes de iniciar outra prova."
+              : "Salvando resultado…"}
+        </p>
 
         {/* Alerta de Ética */}
         {eticaAlerta && (
