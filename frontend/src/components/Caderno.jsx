@@ -34,6 +34,11 @@ const MARKDOWN_COMPONENTS = {
 function cx(...classes) {
   return classes.filter(Boolean).join(" ");
 }
+function matchesFilters(item, status, materia) {
+  if (materia !== "todas" && item.materia !== materia) return false;
+  if (status === "com_anotacao") return Boolean(item.anotacao?.trim());
+  return status === "todos" || item.status === status;
+}
 
 export default function Caderno({ onDiscussWithMentor }) {
   const [items, setItems] = useState(() => listar());
@@ -53,24 +58,26 @@ export default function Caderno({ onDiscussWithMentor }) {
         const nextItems = listar();
         setItems(nextItems);
         setSelectedId((currentId) =>
-          currentId && nextItems.some((item) => item.id === currentId)
+          currentId &&
+          nextItems.some(
+            (item) =>
+              item.id === currentId &&
+              matchesFilters(item, filtroStatus, filtroMateria),
+          )
             ? currentId
             : null,
         );
       }),
-    [],
+    [filtroMateria, filtroStatus],
   );
 
   const materias = useMemo(
     () => Array.from(new Set(items.map((item) => item.materia))).sort(),
     [items],
   );
-  const filtered = items.filter((item) => {
-    if (filtroMateria !== "todas" && item.materia !== filtroMateria)
-      return false;
-    if (filtroStatus === "com_anotacao") return Boolean(item.anotacao?.trim());
-    return filtroStatus === "todos" || item.status === filtroStatus;
-  });
+  const filtered = items.filter((item) =>
+    matchesFilters(item, filtroStatus, filtroMateria),
+  );
   const selected = selectedId
     ? filtered.find((item) => item.id === selectedId) || null
     : null;
@@ -82,15 +89,11 @@ export default function Caderno({ onDiscussWithMentor }) {
   };
 
   useEffect(() => {
-    if (selectedId && !filtered.some((item) => item.id === selectedId))
-      setSelectedId(null);
-  }, [filtered, selectedId]);
-  useEffect(() => {
     panelRef.current?.scrollTo({ top: 0 });
   }, [selected?.id]);
   useEffect(() => {
-    if (mobileReading && selected) rootRef.current?.scrollTo({ top: 0 });
-  }, [mobileReading, selected?.id]);
+    if (mobileReading && selectedId) rootRef.current?.scrollTo({ top: 0 });
+  }, [mobileReading, selectedId]);
   useEffect(() => {
     if (!mobileReading && restoreListScrollRef.current) {
       rootRef.current?.scrollTo({ top: listScrollTopRef.current });
@@ -108,14 +111,30 @@ export default function Caderno({ onDiscussWithMentor }) {
         listButtonRefs.current.get(closingId)?.focus({ preventScroll: true }),
       );
   }
+  function escolherStatus(status) {
+    setFiltroStatus(status);
+    if (selected && !matchesFilters(selected, status, filtroMateria))
+      setSelectedId(null);
+  }
+  function escolherMateria(materia) {
+    setFiltroMateria(materia);
+    if (selected && !matchesFilters(selected, filtroStatus, materia))
+      setSelectedId(null);
+  }
   useEffect(() => {
     if (!selectedId) return undefined;
     const handleKeyDown = (event) => {
-      if (event.key === "Escape") closeReading();
+      if (event.key !== "Escape") return;
+      restoreListScrollRef.current = mobileReading;
+      setSelectedId(null);
+      setMobileReading(false);
+      requestAnimationFrame(() =>
+        listButtonRefs.current.get(selectedId)?.focus({ preventScroll: true }),
+      );
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedId]);
+  }, [selectedId, mobileReading]);
   function selectItem(id) {
     if (selectedId === id) return closeReading();
     listScrollTopRef.current = rootRef.current?.scrollTop || 0;
@@ -190,7 +209,7 @@ export default function Caderno({ onDiscussWithMentor }) {
             <FilterSet label="Status">
               <FilterButton
                 selected={filtroStatus === "todos"}
-                onClick={() => setFiltroStatus("todos")}
+                onClick={() => escolherStatus("todos")}
               >
                 Todos
               </FilterButton>
@@ -198,14 +217,14 @@ export default function Caderno({ onDiscussWithMentor }) {
                 <FilterButton
                   key={status}
                   selected={filtroStatus === status}
-                  onClick={() => setFiltroStatus(status)}
+                  onClick={() => escolherStatus(status)}
                 >
                   {STATUS_LABELS[status]}
                 </FilterButton>
               ))}
               <FilterButton
                 selected={filtroStatus === "com_anotacao"}
-                onClick={() => setFiltroStatus("com_anotacao")}
+                onClick={() => escolherStatus("com_anotacao")}
               >
                 <PencilSquareIcon className="-mt-0.5 mr-1 inline h-3 w-3" />
                 Com anotação
@@ -215,7 +234,7 @@ export default function Caderno({ onDiscussWithMentor }) {
               <FilterSet label="Matéria">
                 <FilterButton
                   selected={filtroMateria === "todas"}
-                  onClick={() => setFiltroMateria("todas")}
+                  onClick={() => escolherMateria("todas")}
                 >
                   Todas
                 </FilterButton>
@@ -223,7 +242,7 @@ export default function Caderno({ onDiscussWithMentor }) {
                   <FilterButton
                     key={materia}
                     selected={filtroMateria === materia}
-                    onClick={() => setFiltroMateria(materia)}
+                    onClick={() => escolherMateria(materia)}
                   >
                     {materia}
                   </FilterButton>
@@ -406,13 +425,11 @@ function RecordListItem({ item, selected, onSelect, buttonRef }) {
 }
 
 function ReadingPanel({ item, onClose, onDiscussWithMentor }) {
-  const [anotacao, setAnotacao] = useState(item.anotacao);
   const [savedFlash, setSavedFlash] = useState(false);
   const isSimulation = item.origin === "simulado";
   const hasCompleteQuestion = Boolean(item.questao?.enunciado);
-  useEffect(() => setAnotacao(item.anotacao), [item.anotacao]);
-  function salvarAnotacao() {
-    atualizarAnotacao(item.id, anotacao);
+  function salvarAnotacao(event) {
+    atualizarAnotacao(item.id, event.currentTarget.value);
     setSavedFlash(true);
     setTimeout(() => setSavedFlash(false), 1500);
   }
@@ -509,9 +526,9 @@ function ReadingPanel({ item, onClose, onDiscussWithMentor }) {
           {savedFlash && <span className="text-[11px] text-brass">salvo</span>}
         </div>
         <textarea
+          key={item.anotacao ?? ""}
           id={"anotacao-" + item.id}
-          value={anotacao}
-          onChange={(event) => setAnotacao(event.target.value)}
+          defaultValue={item.anotacao ?? ""}
           onBlur={salvarAnotacao}
           placeholder="Ex.: confundi com o art. 5º / lembrar que decadência não interrompe"
           rows={2}
