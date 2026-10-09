@@ -8,6 +8,7 @@
 
 import { authFetchJson } from "./api";
 import { MATERIAS_CRONO, PESO_FGV } from "./materias";
+import { createPlanPersistence } from "./planoPersistence";
 
 export { MATERIAS_CRONO };
 
@@ -18,13 +19,28 @@ const DEFAULT_CONFIG = {
 };
 
 let _config = DEFAULT_CONFIG;
-let _plano = null;
 let _planoFoiCarregado = false;
 let _planoLoadStatus = "loading";
 
 function notify() {
   window.dispatchEvent(new CustomEvent("crono:changed"));
 }
+
+const planoPersistence = createPlanPersistence({
+  put: async (plano) => {
+    const saved = await authFetchJson("/me/cronograma/plano", {
+      method: "PUT",
+      body: JSON.stringify(plano),
+    });
+    _planoFoiCarregado = true;
+    return saved;
+  },
+  remove: async () => {
+    await authFetchJson("/me/cronograma/plano", { method: "DELETE" });
+    _planoFoiCarregado = true;
+  },
+  onChange: notify,
+});
 
 // ============ CONFIG ============
 
@@ -68,7 +84,11 @@ export async function saveConfig(patch, { throwOnError = false } = {}) {
 // ============ PLANO ============
 
 export function loadPlano() {
-  return _plano;
+  return planoPersistence.getLocal();
+}
+
+export function planoPersistenciaStatus() {
+  return planoPersistence.getStatus();
 }
 
 export function planoFoiCarregado() {
@@ -80,54 +100,48 @@ export function planoLoadStatus() {
 }
 
 export async function hydrateCronogramaPlano() {
+  const startedAtVersion = planoPersistence.getVersion();
   _planoLoadStatus = "loading";
   notify();
   try {
-    _plano = await authFetchJson("/me/cronograma/plano");
+    const plano = await authFetchJson("/me/cronograma/plano");
+    planoPersistence.hydrate(plano, startedAtVersion);
     _planoFoiCarregado = true;
     _planoLoadStatus = "ready";
   } catch {
-    _plano = null;
     _planoFoiCarregado = false;
     _planoLoadStatus = "error";
   }
   notify();
-  return _plano;
+  return loadPlano();
 }
 
 export async function savePlano(plano, { throwOnError = false } = {}) {
-  const previous = _plano;
-  _plano = plano;
-  notify();
   try {
-    _plano = await authFetchJson("/me/cronograma/plano", {
-      method: "PUT",
-      body: JSON.stringify(plano),
-    });
-    _planoFoiCarregado = true;
+    await planoPersistence.save(plano);
   } catch (e) {
     console.error("Falha ao salvar plano:", e);
-    _plano = previous;
-    notify();
     if (throwOnError) throw e;
   }
-  notify();
-  return _plano;
+  return loadPlano();
 }
 
 export async function limparPlano({ throwOnError = false } = {}) {
-  const previous = _plano;
-  _plano = null;
-  notify();
   try {
-    await authFetchJson("/me/cronograma/plano", { method: "DELETE" });
-    _planoFoiCarregado = true;
+    await planoPersistence.clear();
   } catch (e) {
     console.error("Falha ao limpar plano:", e);
-    _plano = previous;
-    notify();
     if (throwOnError) throw e;
   }
+}
+
+export async function retryPersistenciaPlano() {
+  try {
+    await planoPersistence.retry();
+  } catch (e) {
+    console.error("Falha ao tentar sincronizar o plano novamente:", e);
+  }
+  return loadPlano();
 }
 
 export function subscribeCrono(cb) {

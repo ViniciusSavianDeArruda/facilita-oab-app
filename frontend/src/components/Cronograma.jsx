@@ -11,12 +11,15 @@ import {
   nomeDiaSemana,
   planoEstaValido,
   planoLoadStatus,
+  planoPersistenciaStatus,
   proximos7Dias,
   recompactarPlano,
+  retryPersistenciaPlano,
   subscribeCrono,
 } from "../lib/cronograma";
 import { loadSettings } from "../lib/settings";
 import { agruparItens, destinoPorTipo } from "../utils/cronogramaHelpers";
+import PlanoPersistenceNotice from "./PlanoPersistenceNotice";
 
 // Fim da semana corrente (semana começa segunda, termina domingo).
 function finalDaSemana(dataStr) {
@@ -127,12 +130,18 @@ function acaoAtividade(tipo) {
 export default function Cronograma({ onOpenConfig, onGoto }) {
   const [plano, setPlano] = useState(loadPlano());
   const [loadStatus, setLoadStatus] = useState(planoLoadStatus());
+  const [persistStatus, setPersistStatus] = useState(planoPersistenciaStatus());
   const [recompactError, setRecompactError] = useState(false);
 
   useEffect(() => {
     const unsub = subscribeCrono(() => {
       setPlano(loadPlano());
-      setLoadStatus(planoLoadStatus());
+      const status = planoLoadStatus();
+      setLoadStatus(status);
+      const saveStatus = planoPersistenciaStatus();
+      setPersistStatus(saveStatus);
+      if (saveStatus === "idle") setRecompactError(false);
+      if (status === "loading") setRecompactError(false);
     });
     return unsub;
   }, []);
@@ -140,7 +149,6 @@ export default function Cronograma({ onOpenConfig, onGoto }) {
   useEffect(() => {
     if (loadStatus !== "ready") return;
     let active = true;
-    setRecompactError(false);
     recompactarPlano().catch(() => {
       if (active) setRecompactError(true);
     });
@@ -185,6 +193,11 @@ export default function Cronograma({ onOpenConfig, onGoto }) {
     return (
       <div className="h-full overflow-y-auto bg-sand-50">
         <div className="mx-auto max-w-5xl px-4 pb-10 pt-6 md:px-8 md:py-8">
+          <PlanoPersistenceNotice
+            status={persistStatus}
+            onRetry={retryPersistenciaPlano}
+            className="mb-5"
+          />
           <h1
             className="font-serif text-3xl text-cream-50 leading-tight tracking-tight mb-3"
             style={{ fontVariationSettings: '"opsz" 96' }}
@@ -244,7 +257,12 @@ export default function Cronograma({ onOpenConfig, onGoto }) {
   return (
     <div className="h-full overflow-y-auto bg-sand-50">
         <div className="mx-auto w-full max-w-[1280px] px-4 pb-10 pt-6 sm:px-6 md:px-8 md:py-8 lg:px-10">
-          {recompactError && (
+          <PlanoPersistenceNotice
+            status={persistStatus}
+            onRetry={retryPersistenciaPlano}
+            className="mb-5"
+          />
+          {recompactError && persistStatus === "idle" && (
             <div role="alert" className="mb-5 text-sm text-alert border border-alert/30 bg-alert/5 rounded-lg px-4 py-3">
               Não foi possível reorganizar as tarefas pendentes. Seu plano anterior foi preservado.
             </div>

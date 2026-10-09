@@ -1,15 +1,19 @@
 import { ArrowLeftIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   MATERIAS_CRONO,
   gerarPlano,
   limparPlano,
   loadConfig,
   loadPlano,
+  planoPersistenciaStatus,
+  retryPersistenciaPlano,
   saveConfig,
   savePlano,
+  subscribeCrono,
 } from "../lib/cronograma";
 import { diasAteProva, loadSettings, saveSettings } from "../lib/settings";
+import PlanoPersistenceNotice from "./PlanoPersistenceNotice";
 
 const LIMITE_FRACAS = 5;
 
@@ -67,6 +71,11 @@ export default function CronogramaConfig({ onBack, onPlanGerado }) {
   const [fracas, setFracas] = useState(new Set(initial.materiasFracas || []));
   const [error, setError] = useState(null);
   const [pending, setPending] = useState(false);
+  const [persistStatus, setPersistStatus] = useState(planoPersistenciaStatus());
+
+  useEffect(() => {
+    return subscribeCrono(() => setPersistStatus(planoPersistenciaStatus()));
+  }, []);
 
   const planoExistente = loadPlano();
   const dias = diasAteProva(dataProva || null);
@@ -109,13 +118,18 @@ export default function CronogramaConfig({ onBack, onPlanGerado }) {
       return;
     }
     setPending(true);
+    let etapa = "config";
     try {
       await saveConfig(config, { throwOnError: true });
+      etapa = "settings";
       await saveSettings({ dataProva: dataProva || null }, { throwOnError: true });
+      etapa = "plano";
       await savePlano(plano, { throwOnError: true });
       onPlanGerado();
     } catch {
-      setError("Não foi possível salvar o plano. Verifique sua conexão e tente novamente.");
+      if (etapa !== "plano") {
+        setError("Não foi possível salvar o plano. Verifique sua conexão e tente novamente.");
+      }
     } finally {
       setPending(false);
     }
@@ -129,7 +143,7 @@ export default function CronogramaConfig({ onBack, onPlanGerado }) {
       await limparPlano({ throwOnError: true });
       onBack();
     } catch {
-      setError("Não foi possível apagar o plano. Verifique sua conexão e tente novamente.");
+      // O store mantém a exclusão pendente e oferece retry no aviso abaixo.
     } finally {
       setPending(false);
     }
@@ -382,6 +396,12 @@ export default function CronogramaConfig({ onBack, onPlanGerado }) {
                 {error}
               </div>
             )}
+
+            <PlanoPersistenceNotice
+              status={persistStatus}
+              onRetry={retryPersistenciaPlano}
+              className="mt-5"
+            />
 
             <button
               type="button"

@@ -7,11 +7,18 @@ import {
   DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
-import { ItemCheckbox } from "./Cronograma";
-import { agruparItens, destinoPorTipo } from "../utils/cronogramaHelpers";
-import { loadPlano, marcarItensConcluidos, subscribeCrono } from "../lib/cronograma";
+import {
+  loadPlano,
+  marcarItensConcluidos,
+  planoPersistenciaStatus,
+  retryPersistenciaPlano,
+  subscribeCrono,
+} from "../lib/cronograma";
 import { diasAteProva, loadSettings } from "../lib/settings";
 import { listarSimulados, subscribeSimulados } from "../lib/simulados";
+import { ItemCheckbox } from "./Cronograma";
+import { agruparItens, destinoPorTipo } from "../utils/cronogramaHelpers";
+import PlanoPersistenceNotice from "./PlanoPersistenceNotice";
 
 const NOMES_MES = [
   "Janeiro",
@@ -87,7 +94,8 @@ const BTN_OUTLINED_DISABLED =
 // (ex.: "Revisar · Direito Constitucional"), só o tipo quando não (ex.:
 // "Simulado rápido"). Não inventa título temático nem descrição livre.
 function nomeBloco(item) {
-  if (item.tipo === "revisar" && item.materia) return `Revisar · ${item.materia}`;
+  if (item.tipo === "revisar" && item.materia)
+    return `Revisar · ${item.materia}`;
   if (item.tipo === "caderno") return "Revisar caderno";
   if (item.tipo === "simulado") return "Simulado rápido";
   return item.tipo;
@@ -117,10 +125,14 @@ function acaoLabel(tipo) {
 
 export default function CronogramaCalendario({ onBack, onGoto }) {
   const [plano, setPlano] = useState(loadPlano());
+  const [persistStatus, setPersistStatus] = useState(planoPersistenciaStatus());
   const [, forceUpdate] = useState(0);
 
   useEffect(() => {
-    const unsubCrono = subscribeCrono(() => setPlano(loadPlano()));
+    const unsubCrono = subscribeCrono(() => {
+      setPlano(loadPlano());
+      setPersistStatus(planoPersistenciaStatus());
+    });
     const unsubSim = subscribeSimulados(() => forceUpdate((n) => n + 1));
     return () => {
       unsubCrono();
@@ -139,11 +151,19 @@ export default function CronogramaCalendario({ onBack, onGoto }) {
     return (
       <div className="h-full overflow-y-auto bg-sand-50">
         <div className="mx-auto w-full max-w-[1280px] px-4 pb-8 pt-6 sm:px-6 md:px-8 md:py-10 lg:px-10">
+          <PlanoPersistenceNotice
+            status={persistStatus}
+            onRetry={retryPersistenciaPlano}
+            className="mb-5"
+          />
           <button
             onClick={onBack}
             className={`mb-6 min-h-10 px-3.5 py-2 text-[13px] ${BTN_OUTLINED}`}
           >
-            <ArrowLeftIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <ArrowLeftIcon
+              className="h-3.5 w-3.5 shrink-0"
+              aria-hidden="true"
+            />
             Voltar
           </button>
           <p className="text-sm text-cream-400">
@@ -204,7 +224,8 @@ export default function CronogramaCalendario({ onBack, onGoto }) {
   );
   const minConcluidos = diasDoMes.reduce(
     (acc, d) =>
-      acc + d.itens.filter((i) => i.concluido).reduce((a, i) => a + i.minutos, 0),
+      acc +
+      d.itens.filter((i) => i.concluido).reduce((a, i) => a + i.minutos, 0),
     0,
   );
   const simuladosDoMes = listarSimulados().filter((r) => {
@@ -237,12 +258,20 @@ export default function CronogramaCalendario({ onBack, onGoto }) {
   return (
     <div className="h-full overflow-y-auto bg-sand-50">
       <div className="mx-auto w-full max-w-[1280px] px-4 pb-10 pt-6 sm:px-6 md:px-8 md:py-8 lg:px-10">
+        <PlanoPersistenceNotice
+          status={persistStatus}
+          onRetry={retryPersistenciaPlano}
+          className="mb-5"
+        />
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <button
             onClick={onBack}
             className={`min-h-10 px-3.5 py-2 text-[13px] ${BTN_OUTLINED}`}
           >
-            <ArrowLeftIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <ArrowLeftIcon
+              className="h-3.5 w-3.5 shrink-0"
+              aria-hidden="true"
+            />
             Voltar
           </button>
           {diasProva !== null && diasProva >= 0 && (
@@ -526,7 +555,9 @@ export default function CronogramaCalendario({ onBack, onGoto }) {
                 )}
 
                 {gruposDiaInfo.length === 0 ? (
-                  <p className="mt-4 text-sm italic text-cream-600">A definir</p>
+                  <p className="mt-4 text-sm italic text-cream-600">
+                    A definir
+                  </p>
                 ) : (
                   <div className="mt-4 divide-y divide-border-subtle">
                     {gruposDiaInfo.map((grupo) => (
