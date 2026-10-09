@@ -1,0 +1,10 @@
+# Dependências e artefatos de build — nunca formatados.
+node_modules/
+dist/
+coverage/
+
+# Lockfile é gerado pelo npm; formatar causaria ruído a cada install.
+package-lock.json
+
+# Conteúdo estático servido como está.
+public/
