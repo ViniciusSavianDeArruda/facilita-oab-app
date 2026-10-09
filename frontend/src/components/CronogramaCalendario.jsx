@@ -7,7 +7,8 @@ import {
   DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
-import { agruparItens, destinoPorTipo, ItemCheckbox } from "./Cronograma";
+import { ItemCheckbox } from "./Cronograma";
+import { agruparItens, destinoPorTipo } from "../utils/cronogramaHelpers";
 import { loadPlano, marcarItensConcluidos, subscribeCrono } from "../lib/cronograma";
 import { diasAteProva, loadSettings } from "../lib/settings";
 import { listarSimulados, subscribeSimulados } from "../lib/simulados";
