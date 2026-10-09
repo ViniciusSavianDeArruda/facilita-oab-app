@@ -152,7 +152,11 @@ export default function Chat({
   const dias = diasAteProva(settings.dataProva);
 
   useEffect(() => {
-    const unsub = subscribeConversas(() => setConversas(listarConversas()));
+    const unsub = subscribeConversas(() => {
+      const atualizadas = listarConversas();
+      setConversas(atualizadas);
+      if (atualizadas.length === 0) setMostrarDrawer(false);
+    });
     let ativo = true;
     hydrateConversas().then(() => {
       if (ativo) setHistoricoCarregado(true);
@@ -352,10 +356,6 @@ export default function Chat({
       }
     />
   );
-
-  useEffect(() => {
-    if (semHistorico) setMostrarDrawer(false);
-  }, [semHistorico]);
 
   return (
     <div className="h-full flex flex-col md:flex-row bg-sand-50">
