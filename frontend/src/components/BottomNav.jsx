@@ -1,3 +1,11 @@
+import {
+  CadernoIcon,
+  ChatIcon,
+  HomeIcon,
+  PlanIcon,
+  SimuladoIcon,
+} from "./icons/NavigationIcons";
+
 export default function BottomNav({ current, cadernoBadge, onGoto }) {
   const items = [
     { key: "inicio", label: "Início", icon: HomeIcon },
@@ -30,7 +38,7 @@ export default function BottomNav({ current, cadernoBadge, onGoto }) {
               }`}
             >
               <div className="relative">
-                <Icon active={isActive} />
+                <Icon active={isActive} size={20} />
                 {item.badge > 0 && (
                   <span className="absolute -top-1 -right-2 bg-brass text-ink-950 text-[9px] font-semibold min-w-[14px] h-[14px] px-1 rounded-full flex items-center justify-center tabular-nums">
                     {item.badge}
@@ -45,89 +53,5 @@ export default function BottomNav({ current, cadernoBadge, onGoto }) {
         })}
       </div>
     </nav>
-  );
-}
-
-function HomeIcon({ active }) {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={active ? 2 : 1.6}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M3 12l9-9 9 9M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10" />
-    </svg>
-  );
-}
-function PlanIcon({ active }) {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={active ? 2 : 1.6}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="3" y="4" width="18" height="18" rx="2" />
-      <path d="M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4" />
-    </svg>
-  );
-}
-function ChatIcon({ active }) {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={active ? 2 : 1.6}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    </svg>
-  );
-}
-function SimuladoIcon({ active }) {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={active ? 2 : 1.6}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M9 11l3 3L22 4" />
-      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-    </svg>
-  );
-}
-function CadernoIcon({ active }) {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={active ? 2 : 1.6}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-    </svg>
   );
 }
