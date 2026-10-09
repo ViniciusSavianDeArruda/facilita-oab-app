@@ -38,7 +38,7 @@ export default function SimuladoLanding({ onStart }) {
         aria-live="polite"
       >
         <h1
-          className="font-serif text-2xl text-cream-50 mb-3"
+          className="font-serif text-2xl text-cream-50 mb-3 leading-tight tracking-tight"
           style={{ fontVariationSettings: '"opsz" 60' }}
         >
           Preparando as questões
@@ -66,77 +66,102 @@ export default function SimuladoLanding({ onStart }) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 pt-8 pb-10 sm:px-6 md:px-8 md:pt-12 md:pb-14">
-      <div className="bg-surface-raised border border-ink-800 rounded-3xl shadow-[0_10px_35px_rgba(42,36,34,0.04)] p-5 sm:p-8 md:p-10">
-        <div className="max-w-xl mx-auto">
-          <h1
-            className="font-serif text-3xl md:text-4xl text-cream-50 leading-tight tracking-tight mb-4"
-            style={{ fontVariationSettings: '"opsz" 96' }}
-          >
-            Dez questões, cerca de quinze minutos.
-          </h1>
-          <p className="text-cream-400 leading-relaxed mb-10 max-w-lg">
-            Cada simulado tem dez questões inéditas geradas no estilo FGV. Ao final,
-            você vê o gabarito, a explicação e pode conversar com o mentor sobre
-            qualquer erro.
-          </p>
+    <div className="w-full max-w-[760px] mx-auto px-4 pt-8 pb-10 sm:px-6 md:px-8 md:pt-12 md:pb-14">
+      {/* Page header — fora do card, ancora a seção sem virar banner. */}
+      <header className="mb-6 md:mb-8">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brass mb-2.5">
+          Simulado
+        </p>
+        <h1
+          className="font-serif text-3xl md:text-4xl text-cream-50 leading-tight tracking-tight"
+          style={{ fontVariationSettings: '"opsz" 96' }}
+        >
+          Como você quer praticar hoje?
+        </h1>
+        <p className="mt-2 text-sm text-cream-400 leading-relaxed">
+          10 questões inéditas · ~15 min · estilo FGV
+        </p>
+      </header>
 
-          <div id="modo-simulado" className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-3">
-            Modo
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8" role="group" aria-labelledby="modo-simulado">
-            <ModoCard
-              selected={modo === "rapido"}
-              onClick={() => setModo("rapido")}
-              title="Rápido"
-              subtitle="10 questões variadas"
-            />
-            <ModoCard
-              selected={modo === "materia"}
-              onClick={() => setModo("materia")}
-              title="Focar em matéria"
-              subtitle="10 de uma área só"
-            />
-          </div>
+      <div className="bg-ink-950 border border-ink-800 rounded-2xl p-5 sm:p-6">
+        <div
+          className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+          role="group"
+          aria-label="Modo do simulado"
+        >
+          <ModoCard
+            selected={modo === "rapido"}
+            onClick={() => setModo("rapido")}
+            title="Rápido"
+            subtitle="10 questões variadas"
+          />
+          <ModoCard
+            selected={modo === "materia"}
+            onClick={() => setModo("materia")}
+            title="Focar em matéria"
+            subtitle="10 de uma área só"
+          />
+        </div>
 
-          {modo === "materia" && (
-            <>
-              <div id="materia-simulado" className="text-[11px] tracking-widest uppercase text-brass-dim font-medium mb-3">
-                Matéria
-              </div>
-              <div className="flex flex-wrap gap-2.5 mb-8" role="group" aria-labelledby="materia-simulado">
-                {MATERIAS_SIMULADO.map((m) => (
+        {modo === "materia" && (
+          <div className="mt-6">
+            <p
+              id="materia-simulado"
+              className="text-[11px] tracking-widest uppercase text-cream-400 font-medium mb-3"
+            >
+              Matéria
+            </p>
+            <div
+              className="flex flex-wrap gap-2"
+              role="group"
+              aria-labelledby="materia-simulado"
+            >
+              {MATERIAS_SIMULADO.map((m) => {
+                const selected = materia === m;
+                return (
                   <button
                     key={m}
+                    type="button"
                     onClick={() => setMateria(m)}
-                    aria-pressed={materia === m}
-                    className={`min-h-10 text-xs px-3 py-2 rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950 ${
-                      materia === m
-                        ? "border-brass bg-brass text-ink-950 font-medium"
-                        : "border-ink-800 text-cream-400 hover:border-brass-dim hover:text-cream-50"
+                    aria-pressed={selected}
+                    className={`min-h-10 text-xs px-3 py-2 rounded-full border transition-[background-color,border-color,color] duration-150 ease-out focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/20 focus-visible:border-brass ${
+                      selected
+                        ? "bg-brass-soft border-brass/25 text-brass font-medium"
+                        : "bg-ink-950 border-surface-border-button text-cream-400 hover:bg-surface-button-hover hover:border-surface-border-button-hover hover:text-cream-50"
                     }`}
                   >
                     {m}
                   </button>
-                ))}
-              </div>
-            </>
-          )}
-
-          {error && (
-            <div role="alert" className="text-sm text-alert border border-alert/30 bg-alert/5 rounded-lg px-4 py-3 mb-4">
-              {error}
+                );
+              })}
             </div>
-          )}
+          </div>
+        )}
 
-          <button
-            onClick={iniciar}
-            disabled={loading}
-            className="w-full min-h-12 bg-brass hover:bg-brass-hover disabled:bg-ink-800 disabled:text-cream-600 disabled:cursor-not-allowed text-ink-950 font-medium py-3 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950"
+        {error && (
+          <div
+            role="alert"
+            className="mt-6 border border-alert/30 bg-alert/5 rounded-lg px-4 py-3"
           >
-            Começar simulado
-          </button>
-        </div>
+            <p className="text-sm text-alert">{error}</p>
+            <button
+              type="button"
+              onClick={iniciar}
+              className="mt-3 inline-flex items-center gap-1.5 min-h-9 px-3.5 py-2 rounded-lg text-[13px] font-medium bg-ink-950 border border-surface-border-button text-cream-50 hover:bg-surface-button-hover hover:border-surface-border-button-hover hover:text-brass transition-[background-color,border-color,color] duration-150 ease-out focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/20 focus-visible:border-brass"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={iniciar}
+          disabled={loading}
+          className="mt-6 w-full inline-flex items-center justify-center gap-1.5 min-h-12 px-4 py-3 rounded-lg bg-brass text-ink-950 font-medium shadow-btn-primary hover:bg-brass-hover hover:shadow-btn-primary-hover disabled:bg-ink-800 disabled:text-cream-600 disabled:shadow-none disabled:cursor-not-allowed transition-[background-color,box-shadow,color] duration-150 ease-out focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/40"
+        >
+          Começar simulado
+        </button>
       </div>
     </div>
   );
@@ -145,26 +170,28 @@ export default function SimuladoLanding({ onStart }) {
 function ModoCard({ selected, onClick, title, subtitle }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       aria-pressed={selected}
-      className={`min-h-[120px] text-left px-4 py-4 rounded-xl border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950 ${
+      className={`relative min-h-[112px] text-left px-4 py-4 rounded-xl border bg-ink-900 transition-[background-color,border-color,box-shadow] duration-200 ease-editorial focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/20 ${
         selected
-          ? "border-brass bg-brass/10 shadow-[0_6px_16px_rgba(139,30,63,0.08)]"
-          : "border-ink-800 bg-ink-900 hover:border-brass-dim hover:bg-ink-800/60"
+          ? "border-brass"
+          : "border-surface-border-subtle hover:bg-surface-subcard-hover hover:border-surface-border-hover hover:shadow-subcard-hover"
       }`}
     >
+      <span
+        aria-hidden="true"
+        className={`absolute top-3 right-3 h-2 w-2 rounded-full transition-colors duration-150 ease-out ${
+          selected ? "bg-brass" : "bg-transparent"
+        }`}
+      />
       <div
-        className={`font-serif text-lg ${selected ? "text-brass" : "text-cream-50"}`}
+        className="font-serif text-lg text-cream-50 leading-tight"
         style={{ fontVariationSettings: '"opsz" 60' }}
       >
         {title}
       </div>
-      <div className="text-xs text-cream-400 mt-0.5">{subtitle}</div>
-      {selected && (
-        <span className="inline-block mt-3 text-[10px] tracking-widest uppercase text-brass font-medium">
-          Selecionado
-        </span>
-      )}
+      <div className="text-xs text-cream-400 mt-1">{subtitle}</div>
     </button>
   );
 }
