@@ -33,7 +33,7 @@ export default function QuestionCard({
 
       <QuestionText
         className={isAnswering
-          ? "font-serif text-xl sm:text-2xl md:text-[1.7rem] leading-relaxed text-text-primary break-words"
+          ? "font-serif text-lg sm:text-[1.375rem] md:text-[1.55rem] leading-relaxed text-text-primary break-words"
           : "font-serif text-lg md:text-xl leading-relaxed text-cream-50 mb-8"}
         style={{ fontVariationSettings: '"opsz" 60' }}
       >
@@ -48,11 +48,17 @@ export default function QuestionCard({
           const isWrong = isReview && isSelected && !isCorrect;
 
           let cls = isAnswering
-            ? "border-border-default bg-surface-raised hover:border-brass-dim hover:bg-surface-subtle"
-            : "border-ink-800 bg-ink-900 hover:border-brass-dim";
-          if (isSelected && !isReview) cls = isAnswering ? "border-action-primary bg-brass/10" : "border-brass bg-brass/10";
-          if (isCorrect) cls = "border-emerald-600/60 bg-emerald-500/10";
-          if (isWrong) cls = "border-alert/60 bg-alert/10";
+            ? "border-border-subtle bg-surface-raised hover:border-brass-dim hover:bg-sand-100"
+            : "border-border-subtle bg-surface-raised";
+          if (isSelected && !isReview) {
+            cls = "border-action-primary bg-surface-subtle";
+          }
+          if (isCorrect) {
+            cls = "border-feedback-success-text/60 bg-feedback-success/5";
+          }
+          if (isWrong) {
+            cls = "border-alert/60 bg-alert/5";
+          }
 
           return (
             <button
@@ -76,6 +82,16 @@ export default function QuestionCard({
               <span className={isAnswering ? "min-w-0 flex-1 text-sm sm:text-[15px] leading-relaxed text-text-primary break-words" : "text-cream-50 leading-snug"}>
                 {isAnswering && <span className="sr-only">Alternativa {letra}. </span>}
                 {texto}
+                {isReview && isSelected && (
+                  <span className={isCorrect ? "ml-2 text-[10px] font-medium uppercase tracking-widest text-feedback-success-text" : "ml-2 text-[10px] font-medium uppercase tracking-widest text-alert"}>
+                    {isCorrect ? "Sua resposta · Gabarito" : "Sua resposta"}
+                  </span>
+                )}
+                {isReview && isCorrect && !isSelected && (
+                  <span className="ml-2 text-[10px] font-medium uppercase tracking-widest text-feedback-success-text">
+                    Gabarito
+                  </span>
+                )}
               </span>
               {isAnswering && isSelected && (
                 <span className="shrink-0 hidden sm:inline text-[10px] tracking-widest uppercase font-medium text-action-primary">

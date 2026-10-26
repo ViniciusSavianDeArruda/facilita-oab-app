@@ -3,8 +3,14 @@ import QuestionCard from "./QuestionCard";
 
 const STORAGE_KEY = "oab-simulado-current";
 
-export default function SimuladoRun({ simulado, onFinish, onExit }) {
+export default function SimuladoRun({
+  simulado,
+  onFinish,
+  onExit,
+}) {
 	const contentRef = useRef(null);
+	const finishDialogRef = useRef(null);
+  const [finishDialogOpen, setFinishDialogOpen] = useState(false);
   // Restaura estado do localStorage se for o mesmo simulado
   const [answers, setAnswers] = useState(() => {
     try {
@@ -57,6 +63,21 @@ export default function SimuladoRun({ simulado, onFinish, onExit }) {
   useEffect(() => {
     contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentIdx]);
+
+  useEffect(() => {
+    if (!finishDialogOpen) return undefined;
+
+    const previousFocus = document.activeElement;
+    finishDialogRef.current?.focus();
+    function closeWithEscape(event) {
+      if (event.key === "Escape") setFinishDialogOpen(false);
+    }
+    document.addEventListener("keydown", closeWithEscape);
+    return () => {
+      document.removeEventListener("keydown", closeWithEscape);
+      previousFocus?.focus?.();
+    };
+  }, [finishDialogOpen]);
 
   // Persistir estado
   useEffect(() => {
@@ -137,8 +158,8 @@ export default function SimuladoRun({ simulado, onFinish, onExit }) {
                   i === currentIdx
                     ? "border-action-primary bg-action-primary text-ink-950"
                     : answers[i] !== undefined
-                      ? "border-brass-dim bg-brass/10 text-action-primary"
-                      : "border-border-default bg-surface-subtle text-text-muted hover:border-brass-dim hover:text-text-primary"
+                      ? "border-brass-dim bg-surface-subtle text-action-primary"
+                      : "border-border-default bg-surface-subtle text-text-muted hover:border-brass-dim hover:bg-sand-100 hover:text-text-primary"
                 }`}
               >
                 {answers[i] !== undefined && i !== currentIdx ? "✓" : i + 1}
@@ -187,7 +208,9 @@ export default function SimuladoRun({ simulado, onFinish, onExit }) {
           {isLast ? (
             <button
 				type="button"
-              onClick={finalizar}
+              onClick={() => {
+                setFinishDialogOpen(true);
+              }}
               disabled={respondidas < total}
               className="min-h-11 justify-self-end inline-flex items-center rounded-xl bg-action-primary hover:bg-action-hover disabled:bg-ink-800 disabled:text-text-muted disabled:cursor-not-allowed px-3 sm:px-5 text-sm font-medium text-ink-950 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-raised"
               title={
@@ -207,6 +230,55 @@ export default function SimuladoRun({ simulado, onFinish, onExit }) {
           )}
         </div>
       </footer>
+
+      {finishDialogOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/60 px-4 py-6"
+          role="presentation"
+        >
+          <div
+            ref={finishDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="finalizar-simulado-titulo"
+            tabIndex={-1}
+            className="w-full max-w-md rounded-2xl border border-border-default bg-surface-raised p-6 shadow-card-subtle sm:p-7"
+          >
+            <h2
+              id="finalizar-simulado-titulo"
+              className="font-serif text-2xl leading-tight text-text-primary"
+              style={{ fontVariationSettings: '"opsz" 60' }}
+            >
+              Finalizar simulado?
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-text-secondary">
+              Você respondeu {respondidas} de {total} questões.
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-text-secondary">
+              Tempo decorrido: {mm}:{ss}
+            </p>
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setFinishDialogOpen(false)}
+                className="min-h-11 rounded-lg border border-border-default bg-surface-raised px-4 py-2.5 text-sm font-medium text-text-primary hover:bg-sand-100 transition-[background-color,border-color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-raised"
+              >
+                Revisar respostas
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFinishDialogOpen(false);
+                  finalizar();
+                }}
+                className="min-h-11 rounded-lg bg-action-primary px-4 py-2.5 text-sm font-medium text-ink-950 hover:bg-action-hover transition-[background-color,transform] duration-150 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-raised"
+              >
+                Finalizar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
