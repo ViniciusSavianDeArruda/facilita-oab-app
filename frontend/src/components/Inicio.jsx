@@ -12,8 +12,6 @@ import {
   MoonIcon,
   SunIcon,
 } from "@heroicons/react/24/outline";
-import Brand from "./Brand";
-import { ItemCheckbox } from "./Cronograma";
 import { useEffect, useState } from "react";
 import { authFetchJson } from "../lib/api";
 import {
@@ -45,6 +43,8 @@ import {
   subscribeSimulados,
   ultimoSimulado,
 } from "../lib/simulados";
+import Brand from "./Brand";
+import { ItemCheckbox } from "./Cronograma";
 
 // Frases motivacionais — trocam por dia (estável dentro do mesmo dia).
 const FRASES_GERAIS = [
@@ -148,7 +148,10 @@ export default function Inicio({ onGoto, onOpenSettings }) {
         // Home num limbo de carregamento.
         const trend = Array.isArray(s.trend) ? s.trend : [];
         const totalQuestoes = trend.reduce((acc, t) => acc + (t.total || 0), 0);
-        const totalAcertos = trend.reduce((acc, t) => acc + (t.acertos || 0), 0);
+        const totalAcertos = trend.reduce(
+          (acc, t) => acc + (t.acertos || 0),
+          0,
+        );
         setResumo({
           totalQuestoes,
           aproveitamento:
@@ -176,10 +179,13 @@ export default function Inicio({ onGoto, onOpenSettings }) {
   const percentualUltimo = ultimoResultado
     ? Math.round((ultimoResultado.acertos / ultimoResultado.total) * 100)
     : null;
-  const diferencaPontos = resultadoAnterior &&
-    Date.parse(ultimoResultado.createdAt) > Date.parse(resultadoAnterior.createdAt)
-    ? percentualUltimo - Math.round((resultadoAnterior.acertos / resultadoAnterior.total) * 100)
-    : null;
+  const diferencaPontos =
+    resultadoAnterior &&
+    Date.parse(ultimoResultado.createdAt) >
+      Date.parse(resultadoAnterior.createdAt)
+      ? percentualUltimo -
+        Math.round((resultadoAnterior.acertos / resultadoAnterior.total) * 100)
+      : null;
 
   const estudouHoje =
     isHoje(lastChat?.updatedAt) ||
@@ -203,18 +209,34 @@ export default function Inicio({ onGoto, onOpenSettings }) {
   // a diferença entre eles é de métrica, não de severidade.
   const indicadores = [
     ...(temQuestoes
-      ? [{ key: "questoes", Icon: CheckBadgeIcon, label: "Questões resolvidas", valor: resumo.totalQuestoes }]
+      ? [
+          {
+            key: "questoes",
+            Icon: CheckBadgeIcon,
+            label: "Questões resolvidas",
+            valor: resumo.totalQuestoes,
+          },
+        ]
       : []),
     ...(temQuestoes && resumo.aproveitamento !== null
-      ? [{
-          key: "aproveitamento",
-          Icon: ChartBarIcon,
-          label: "Aproveitamento",
-          valor: `${resumo.aproveitamento}%`,
-        }]
+      ? [
+          {
+            key: "aproveitamento",
+            Icon: ChartBarIcon,
+            label: "Aproveitamento",
+            valor: `${resumo.aproveitamento}%`,
+          },
+        ]
       : []),
     ...(streak > 0
-      ? [{ key: "sequencia", Icon: FireIcon, label: "Sequência", valor: `${streak} ${streak === 1 ? "dia" : "dias"}` }]
+      ? [
+          {
+            key: "sequencia",
+            Icon: FireIcon,
+            label: "Sequência",
+            valor: `${streak} ${streak === 1 ? "dia" : "dias"}`,
+          },
+        ]
       : []),
   ];
   const INDICADOR_GRID_CLASS = {
@@ -236,8 +258,7 @@ export default function Inicio({ onGoto, onOpenSettings }) {
             tipo: "chat",
             timestamp: lastChat.updatedAt,
             rotulo: "Mentor Jurídico",
-            descricao:
-              lastChat.pergunta || lastChat.materia || "Dúvida geral",
+            descricao: lastChat.pergunta || lastChat.materia || "Dúvida geral",
             destino: "chat",
           },
         ]
@@ -307,15 +328,21 @@ export default function Inicio({ onGoto, onOpenSettings }) {
           style={{ "--dashboard-delay": "40ms" }}
         >
           <div className="min-w-0 sm:max-w-2xl">
-            <div className="mb-2.5 inline-flex w-fit items-center gap-2 rounded-full border border-surface-pill-border bg-surface-pill px-3.5 py-1.5">
+            <div className="mb-2.5 inline-flex w-fit items-center gap-2 rounded-full border border-border-subtle bg-surface-subtle px-3.5 py-1.5">
               <span className="text-[11px] font-semibold uppercase leading-none tracking-[0.14em] text-brass">
                 {formatarDataCurta(new Date())}
               </span>
-              <span className="select-none text-xs leading-none text-brass/[0.35]" aria-hidden="true">
+              <span
+                className="select-none text-xs leading-none text-brass/[0.35]"
+                aria-hidden="true"
+              >
                 •
               </span>
               <span className="inline-flex items-center gap-1 text-xs font-normal leading-none text-cream-450">
-                <turno.Icon className="h-3.5 w-3.5 shrink-0 text-brass/60" aria-hidden="true" />
+                <turno.Icon
+                  className="h-3.5 w-3.5 shrink-0 text-brass/60"
+                  aria-hidden="true"
+                />
                 {turno.label}
               </span>
             </div>
@@ -410,7 +437,7 @@ export default function Inicio({ onGoto, onOpenSettings }) {
               onClick={() => onGoto("cronograma-config")}
               className="w-full sm:w-auto sm:min-w-[240px] shrink-0 bg-ink-950 border border-ink-800 rounded-xl p-3 flex items-center gap-3 hover:border-brass/20 transition-[border-color,transform] duration-150 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:transform-none"
             >
-              <div className="shrink-0 w-12 h-12 bg-brass-soft rounded-lg flex items-center justify-center text-brass">
+              <div className="shrink-0 w-12 h-12 bg-sand-100 rounded-lg flex items-center justify-center text-brass">
                 <span className="text-lg font-bold leading-none">—</span>
               </div>
               <div className="min-w-0 text-left">
@@ -450,15 +477,25 @@ export default function Inicio({ onGoto, onOpenSettings }) {
           >
             <span>Último simulado</span>
             <span className="inline-flex items-baseline gap-2">
-              <span className="text-cream-600" aria-hidden="true">·</span>
-              <span key={`${ultimoResultado.id}-placar`} className="dashboard-value-change inline-block font-medium tabular-nums text-cream-50">
+              <span className="text-cream-600" aria-hidden="true">
+                ·
+              </span>
+              <span
+                key={`${ultimoResultado.id}-placar`}
+                className="dashboard-value-change inline-block font-medium tabular-nums text-cream-50"
+              >
                 {ultimoResultado.acertos}/{ultimoResultado.total}
               </span>
             </span>
             <span className="inline-flex items-baseline gap-2">
-              <span className="text-cream-600" aria-hidden="true">·</span>
+              <span className="text-cream-600" aria-hidden="true">
+                ·
+              </span>
               <span>
-                <span key={`${ultimoResultado.id}-percentual`} className="dashboard-value-change inline-block font-semibold tabular-nums text-brass">
+                <span
+                  key={`${ultimoResultado.id}-percentual`}
+                  className="dashboard-value-change inline-block font-semibold tabular-nums text-brass"
+                >
                   {percentualUltimo}%
                 </span>{" "}
                 de aproveitamento
@@ -466,15 +503,21 @@ export default function Inicio({ onGoto, onOpenSettings }) {
             </span>
             {diferencaPontos !== null && (
               <span className="inline-flex items-baseline gap-2">
-                <span className="text-cream-600" aria-hidden="true">·</span>
-                <span key={`${ultimoResultado.id}-diferenca`} className={`dashboard-value-change inline-block font-medium tabular-nums ${
-                  diferencaPontos > 0
-                    ? "text-feedback-success-text"
-                    : diferencaPontos < 0
-                      ? "text-feedback-danger"
-                      : "text-cream-400"
-                }`}>
-                  {diferencaPontos > 0 ? "+" : ""}{diferencaPontos} p.p. vs anterior
+                <span className="text-cream-600" aria-hidden="true">
+                  ·
+                </span>
+                <span
+                  key={`${ultimoResultado.id}-diferenca`}
+                  className={`dashboard-value-change inline-block font-medium tabular-nums ${
+                    diferencaPontos > 0
+                      ? "text-feedback-success-text"
+                      : diferencaPontos < 0
+                        ? "text-feedback-danger"
+                        : "text-cream-400"
+                  }`}
+                >
+                  {diferencaPontos > 0 ? "+" : ""}
+                  {diferencaPontos} p.p. vs anterior
                 </span>
               </span>
             )}
@@ -491,10 +534,12 @@ export default function Inicio({ onGoto, onOpenSettings }) {
             style={{ "--dashboard-delay": "80ms" }}
           >
             <div className="flex items-center gap-3 min-w-0">
-              {/* Único círculo brass-soft que sobrou: o vocabulário de chip de
-                  dado é quadrado (rounded-lg sobre ink-900). */}
-              <span className="w-8 h-8 rounded-full bg-brass-soft flex items-center justify-center shrink-0">
-                <BookOpenIcon className="w-4 h-4 text-brass" aria-hidden="true" />
+              {/* Círculo neutro para o ícone da faixa de aquecimento. */}
+              <span className="w-8 h-8 rounded-full bg-sand-100 flex items-center justify-center shrink-0">
+                <BookOpenIcon
+                  className="w-4 h-4 text-brass"
+                  aria-hidden="true"
+                />
               </span>
               <p className="text-sm text-cream-400">
                 Comece o dia com um aquecimento de 10 questões comentadas.
@@ -578,7 +623,9 @@ export default function Inicio({ onGoto, onOpenSettings }) {
 
         {/* ===== Indicadores — compactos, só com dado real; ficam acima da divisão em colunas ===== */}
         {indicadores.length > 0 && (
-          <div className={`grid grid-cols-1 gap-3 mb-8 ${INDICADOR_GRID_CLASS[indicadores.length]}`}>
+          <div
+            className={`grid grid-cols-1 gap-3 mb-8 ${INDICADOR_GRID_CLASS[indicadores.length]}`}
+          >
             {indicadores.map((ind, index) => (
               <IndicatorCard
                 key={ind.key}
@@ -617,9 +664,13 @@ export default function Inicio({ onGoto, onOpenSettings }) {
             {diaHoje &&
               (() => {
                 const totalItens = diaHoje.itens.length;
-                const concluidos = diaHoje.itens.filter((i) => i.concluido).length;
-                const progressoHoje = totalItens > 0 ? concluidos / totalItens : 0;
-                const focoCompleto = totalItens > 0 && concluidos === totalItens;
+                const concluidos = diaHoje.itens.filter(
+                  (i) => i.concluido,
+                ).length;
+                const progressoHoje =
+                  totalItens > 0 ? concluidos / totalItens : 0;
+                const focoCompleto =
+                  totalItens > 0 && concluidos === totalItens;
                 const materias = [
                   ...new Set(
                     diaHoje.itens
@@ -656,7 +707,7 @@ export default function Inicio({ onGoto, onOpenSettings }) {
                           className={`self-start shrink-0 text-xs font-medium px-3 py-1.5 rounded-full tabular-nums transition-[background-color,color] duration-200 motion-reduce:transition-none ${
                             focoCompleto
                               ? "bg-feedback-success/10 text-feedback-success-text"
-                              : "bg-brass-soft text-brass"
+                              : "bg-sand-100 text-brass"
                           }`}
                           aria-label={`${concluidos} de ${totalItens} blocos concluídos`}
                           aria-live="polite"
@@ -682,7 +733,9 @@ export default function Inicio({ onGoto, onOpenSettings }) {
                             className={`dashboard-focus-progress block h-full w-full ${
                               focoCompleto ? "bg-feedback-success" : "bg-brass"
                             }`}
-                            style={{ "--dashboard-focus-progress": progressoHoje }}
+                            style={{
+                              "--dashboard-focus-progress": progressoHoje,
+                            }}
                           />
                         </div>
                       </div>
@@ -865,7 +918,9 @@ export default function Inicio({ onGoto, onOpenSettings }) {
                 carregadas (chat, histórico de simulados, caderno)*/}
             <section
               aria-labelledby="atividade-recente"
-              className={estadoInicial ? "sm:col-span-2 xl:col-span-1" : undefined}
+              className={
+                estadoInicial ? "sm:col-span-2 xl:col-span-1" : undefined
+              }
             >
               <div className="h-full bg-ink-950 border border-ink-800 rounded-2xl p-4 sm:p-5">
                 <div className="flex items-baseline justify-between gap-3 pb-3 mb-4 border-b border-border-subtle">
@@ -889,8 +944,8 @@ export default function Inicio({ onGoto, onOpenSettings }) {
                       Nenhuma atividade recente ainda.
                     </p>
                     <p className="mt-1 text-xs leading-relaxed text-cream-600">
-                      Seus estudos aparecerão aqui conforme você usar o
-                      Facilita OAB.
+                      Seus estudos aparecerão aqui conforme você usar o Facilita
+                      OAB.
                     </p>
                   </div>
                 ) : (
@@ -932,7 +987,11 @@ const ETAPAS_INICIAIS = [
   { titulo: "Revise", descricao: "Entenda seus erros com o Mentor" },
 ];
 
-const CATEGORIA_LABEL = { revisar: "Revisão", simulado: "Simulado", caderno: "Caderno" };
+const CATEGORIA_LABEL = {
+  revisar: "Revisão",
+  simulado: "Simulado",
+  caderno: "Caderno",
+};
 
 // Badge de categoria em superfície neutra quente e única. As cores anteriores
 // (azul e âmbar da paleta padrão do Tailwind) eram frias e arbitrárias: não
@@ -946,10 +1005,18 @@ const CATEGORIA_BADGE = "bg-sand-100 text-cream-400";
 function focoHojeTextos(item) {
   const categoria = CATEGORIA_LABEL[item.tipo] || "Revisão";
   if (item.tipo === "simulado") {
-    return { titulo: "Simulado rápido", subtitulo: `10 questões · ~${item.minutos} min`, categoria };
+    return {
+      titulo: "Simulado rápido",
+      subtitulo: `10 questões · ~${item.minutos} min`,
+      categoria,
+    };
   }
   if (item.tipo === "caderno") {
-    return { titulo: "Revisar caderno", subtitulo: `${item.minutos} min`, categoria };
+    return {
+      titulo: "Revisar caderno",
+      subtitulo: `${item.minutos} min`,
+      categoria,
+    };
   }
   return { titulo: item.materia, subtitulo: `${item.minutos} min`, categoria };
 }
@@ -1080,7 +1147,10 @@ function MateriaAtencaoRow({ m, onGoto, ultimo }) {
           <span className="text-sm text-cream-50 font-medium truncate">
             {m.materia}
           </span>
-          <span className="text-xs font-semibold shrink-0 tabular-nums" style={{ color: texto }}>
+          <span
+            className="text-xs font-semibold shrink-0 tabular-nums"
+            style={{ color: texto }}
+          >
             {p}%
           </span>
         </div>
@@ -1276,10 +1346,7 @@ function AtividadeItem({ atividade, ultimo, animationDelay, onGoto }) {
 
   if (!clicavel) {
     return (
-      <div
-        className={base}
-        style={{ "--dashboard-delay": animationDelay }}
-      >
+      <div className={base} style={{ "--dashboard-delay": animationDelay }}>
         {conteudo}
       </div>
     );
