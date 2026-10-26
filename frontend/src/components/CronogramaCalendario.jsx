@@ -16,8 +16,8 @@ import {
 } from "../lib/cronograma";
 import { diasAteProva, loadSettings } from "../lib/settings";
 import { listarSimulados, subscribeSimulados } from "../lib/simulados";
-import { ItemCheckbox } from "./Cronograma";
 import { agruparItens, destinoPorTipo } from "../utils/cronogramaHelpers";
+import { ItemCheckbox } from "./Cronograma";
 import PlanoPersistenceNotice from "./PlanoPersistenceNotice";
 
 const NOMES_MES = [
@@ -275,7 +275,7 @@ export default function CronogramaCalendario({ onBack, onGoto }) {
             Voltar
           </button>
           {diasProva !== null && diasProva >= 0 && (
-            <div className="flex items-center gap-2 rounded-full border border-surface-pill-border bg-surface-pill px-3.5 py-1.5 text-xs">
+            <div className="flex items-center gap-2 rounded-full border border-border-subtle bg-surface-subtle px-3.5 py-1.5 text-xs">
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brass" />
               <span className="text-cream-400">
                 <span className="font-medium text-cream-50">1ª Fase OAB:</span>{" "}
@@ -522,7 +522,7 @@ export default function CronogramaCalendario({ onBack, onGoto }) {
                     </p>
                   </div>
                   {totalItensDia > 0 && (
-                    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-surface-pill-border bg-surface-pill px-3 py-1.5 text-[11px] font-semibold leading-none tabular-nums text-brass">
+                    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border-subtle bg-surface-subtle px-3 py-1.5 text-[11px] font-semibold leading-none tabular-nums text-brass">
                       <ClockIcon className="h-3.5 w-3.5" aria-hidden="true" />
                       {formatarHoraMin(totalMinutosDia)}
                     </span>

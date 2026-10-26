@@ -5,8 +5,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import {
-  loadPlano,
   hydrateCronogramaPlano,
+  loadPlano,
   marcarItensConcluidos,
   nomeDiaSemana,
   planoEstaValido,
@@ -152,7 +152,9 @@ export default function Cronograma({ onOpenConfig, onGoto }) {
     recompactarPlano().catch(() => {
       if (active) setRecompactError(true);
     });
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [loadStatus]);
 
   // Se plano é inválido (data mudou), oferecer regeração
@@ -165,7 +167,9 @@ export default function Cronograma({ onOpenConfig, onGoto }) {
     return (
       <div className="h-full overflow-y-auto bg-sand-50">
         <div className="mx-auto max-w-5xl px-4 pb-8 pt-6 md:px-8 md:py-8">
-          <p className="text-sm text-cream-400" role="status">Carregando seu plano…</p>
+          <p className="text-sm text-cream-400" role="status">
+            Carregando seu plano…
+          </p>
         </div>
       </div>
     );
@@ -175,7 +179,10 @@ export default function Cronograma({ onOpenConfig, onGoto }) {
     return (
       <div className="h-full overflow-y-auto bg-sand-50">
         <div className="mx-auto max-w-5xl px-4 pb-8 pt-6 md:px-8 md:py-8">
-          <div role="alert" className="max-w-xl text-sm text-alert border border-alert/30 bg-alert/5 rounded-lg px-4 py-3">
+          <div
+            role="alert"
+            className="max-w-xl text-sm text-alert border border-alert/30 bg-alert/5 rounded-lg px-4 py-3"
+          >
             Não foi possível carregar seu plano. Tente novamente.
           </div>
           <button
@@ -233,7 +240,8 @@ export default function Cronograma({ onOpenConfig, onGoto }) {
   // em vez de uma janela fixa que sobrava/faltava dependendo do dia.
   const diasRestantesNaSemana = hoje
     ? Math.round(
-        (new Date(fimDaSemana + "T00:00:00") - new Date(hoje.data + "T00:00:00")) /
+        (new Date(fimDaSemana + "T00:00:00") -
+          new Date(hoje.data + "T00:00:00")) /
           86400000,
       ) + 1
     : 0;
@@ -256,51 +264,64 @@ export default function Cronograma({ onOpenConfig, onGoto }) {
 
   return (
     <div className="h-full overflow-y-auto bg-sand-50">
-        <div className="mx-auto w-full max-w-[1280px] px-4 pb-10 pt-6 sm:px-6 md:px-8 md:py-8 lg:px-10">
+      <div className="mx-auto w-full max-w-[1280px] px-4 pb-10 pt-6 sm:px-6 md:px-8 md:py-8 lg:px-10">
+        {persistStatus === "error" && (
           <PlanoPersistenceNotice
             status={persistStatus}
             onRetry={retryPersistenciaPlano}
             className="mb-5"
           />
-          {recompactError && persistStatus === "idle" && (
-            <div role="alert" className="mb-5 text-sm text-alert border border-alert/30 bg-alert/5 rounded-lg px-4 py-3">
-              Não foi possível reorganizar as tarefas pendentes. Seu plano anterior foi preservado.
-            </div>
-          )}
-          {/* Header do plano */}
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="mb-1 text-[11px] font-medium uppercase tracking-widest text-brass">
-                Plano
-              </p>
-              <h1
-                className="font-serif text-3xl text-cream-50 leading-tight tracking-tight"
-                style={{ fontVariationSettings: '"opsz" 96' }}
-              >
-                Próximos dias
-              </h1>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {diasMostrados < totalDiasFuturos && (
-                <button
-                  onClick={() => onGoto("cronograma-completo")}
-                  className="flex min-h-10 items-center gap-1.5 rounded-lg border border-surface-border-button bg-ink-950 px-3.5 py-2 text-xs font-medium text-cream-50 transition-[background-color,border-color,color] duration-150 hover:border-surface-border-button-hover hover:bg-surface-button-hover hover:text-brass focus-visible:outline-none focus-visible:border-brass focus-visible:ring-2 focus-visible:ring-brass/20"
-                >
-                  <CalendarDaysIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                  Ver cronograma completo
-                </button>
-              )}
+        )}
+        {recompactError && persistStatus === "idle" && (
+          <div
+            role="alert"
+            className="mb-5 text-sm text-alert border border-alert/30 bg-alert/5 rounded-lg px-4 py-3"
+          >
+            Não foi possível reorganizar as tarefas pendentes. Seu plano
+            anterior foi preservado.
+          </div>
+        )}
+        {/* Header do plano */}
+        <div className="relative mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="mb-1 text-[11px] font-medium uppercase tracking-widest text-brass">
+              Plano
+            </p>
+            <h1
+              className="font-serif text-3xl text-cream-50 leading-tight tracking-tight"
+              style={{ fontVariationSettings: '"opsz" 96' }}
+            >
+              Próximos dias
+            </h1>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {diasMostrados < totalDiasFuturos && (
               <button
-                onClick={onOpenConfig}
+                onClick={() => onGoto("cronograma-completo")}
                 className="flex min-h-10 items-center gap-1.5 rounded-lg border border-surface-border-button bg-ink-950 px-3.5 py-2 text-xs font-medium text-cream-50 transition-[background-color,border-color,color] duration-150 hover:border-surface-border-button-hover hover:bg-surface-button-hover hover:text-brass focus-visible:outline-none focus-visible:border-brass focus-visible:ring-2 focus-visible:ring-brass/20"
               >
-                <AdjustmentsHorizontalIcon
-                  className="h-3.5 w-3.5"
-                  aria-hidden="true"
-                />
-                Ajustar plano
+                <CalendarDaysIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                Ver cronograma completo
               </button>
-            </div>
+            )}
+            <button
+              onClick={onOpenConfig}
+              className="flex min-h-10 items-center gap-1.5 rounded-lg border border-surface-border-button bg-ink-950 px-3.5 py-2 text-xs font-medium text-cream-50 transition-[background-color,border-color,color] duration-150 hover:border-surface-border-button-hover hover:bg-surface-button-hover hover:text-brass focus-visible:outline-none focus-visible:border-brass focus-visible:ring-2 focus-visible:ring-brass/20"
+            >
+              <AdjustmentsHorizontalIcon
+                className="h-3.5 w-3.5"
+                aria-hidden="true"
+              />
+              Ajustar plano
+            </button>
+          </div>
+          {persistStatus === "pending" && (
+            <PlanoPersistenceNotice
+              status={persistStatus}
+              onRetry={retryPersistenciaPlano}
+              className="pointer-events-none absolute left-0 top-full mt-1"
+            />
+          )}
         </div>
 
         <div className="space-y-5 sm:space-y-6">
@@ -457,175 +478,112 @@ function TileDia({ dia, isHoje }) {
   );
 }
 
-// Card mestre de Hoje — a prioridade principal da tela. Cabeçalho com data,
-// volume e progresso; no corpo, a próxima atividade promovida e o restante
-// como linhas.
+// Agenda de Hoje: cabeçalho e atividades no mesmo fluxo. A ordem dos grupos
+// permanece estável quando uma atividade é marcada ou desmarcada.
 function CardHoje({ dia, onGoto }) {
   const totalItens = dia.itens.length;
   const concluidos = dia.itens.filter((i) => i.concluido).length;
   const grupos = agruparItens(dia.itens);
+  const indiceAseguir = grupos.findIndex((grupo) => !grupo.todasConcluidas);
   const totalMinutos = dia.itens.reduce((acc, i) => acc + i.minutos, 0);
   const restantes = minutosRestantes(dia);
   const progresso =
     totalItens > 0 ? Math.round((concluidos / totalItens) * 100) : 0;
 
-  // Próxima atividade = primeiro grupo ainda pendente, derivado do estado
-  // real. Sem pendência não há o que destacar: o card mostra o dia fechado
-  // e a lista continua inteira, pra permitir desmarcar.
-  const idxProximo = grupos.findIndex((g) => !g.todasConcluidas);
-  const proximo = idxProximo >= 0 ? grupos[idxProximo] : null;
-  const demais = grupos.filter((_, i) => i !== idxProximo);
-
   return (
     <section
       aria-labelledby="dia-hoje"
-      className="rounded-2xl border border-ink-800 bg-ink-950"
+      className="min-w-0 rounded-2xl border border-ink-800 bg-ink-950"
     >
-      <div className="flex flex-wrap items-end justify-between gap-x-5 gap-y-3 border-b border-border-subtle px-5 py-4 sm:px-6 sm:py-5">
-        <div className="min-w-0">
-          <h2
-            id="dia-hoje"
-            className="font-serif text-2xl leading-tight text-cream-50"
-            style={{ fontVariationSettings: '"opsz" 60' }}
-          >
-            Hoje
-          </h2>
-          <p className="mt-1 text-[13px] text-cream-400">
-            {nomeDiaSemanaPorExtenso(dia.data)}, {formatarDiaMes(dia.data)}
-            {totalItens > 0 && (
-              <>
-                {" · "}
-                {plural(totalItens, "atividade", "atividades")}
-                {" · "}
-                {formatarDuracao(totalMinutos)}
-              </>
-            )}
-          </p>
-        </div>
+      <div className="border-b border-border-subtle px-5 pb-5 pt-5 sm:px-6 sm:pb-6 sm:pt-6">
+        <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+          <div className="min-w-0">
+            <h2
+              id="dia-hoje"
+              className="font-serif text-3xl leading-tight text-cream-50"
+              style={{ fontVariationSettings: '"opsz" 60' }}
+            >
+              Hoje
+            </h2>
+            <p className="mt-1 text-[13px] tabular-nums text-cream-400">
+              {nomeDiaSemanaPorExtenso(dia.data)}, {formatarDiaMes(dia.data)}
+              {totalItens > 0 && (
+                <>
+                  {" · "}
+                  {plural(totalItens, "atividade", "atividades")} {" · "}
+                  {formatarDuracao(totalMinutos)}
+                </>
+              )}
+            </p>
+          </div>
 
-        {totalItens > 0 && (
-          <div className="w-full sm:w-auto sm:min-w-[260px]">
-            <div className="flex items-baseline justify-between gap-4 text-[13px]">
-              <span
-                id="progresso-hoje"
-                className={`font-medium tabular-nums ${dia.concluido ? "text-feedback-success-text" : "text-cream-50"}`}
-              >
-                {concluidos} de {totalItens} concluídas
-              </span>
-              {restantes > 0 && (
-                <span className="shrink-0 tabular-nums text-cream-400">
+          {totalItens > 0 && (
+            <div className="w-full max-w-sm sm:w-72">
+              <div className="flex items-baseline justify-between gap-4 text-[13px] tabular-nums text-cream-400">
+                <span
+                  id="progresso-hoje"
+                  className={
+                    dia.concluido
+                      ? "font-medium text-feedback-success-text"
+                      : "font-medium text-cream-50"
+                  }
+                >
+                  {concluidos} de {totalItens} concluídas
+                </span>
+                <span className="shrink-0">
                   {formatarDuracao(restantes)} restantes
                 </span>
-              )}
-            </div>
-            <div
-              className="mt-2 h-1 overflow-hidden rounded-full bg-surface-track"
-              role="progressbar"
-              aria-labelledby="progresso-hoje"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={progresso}
-            >
+              </div>
               <div
-                className="h-full rounded-full bg-brass transition-[width] duration-500 motion-reduce:transition-none"
-                style={{ width: `${progresso}%` }}
-              />
+                className="mt-3 h-1 overflow-hidden rounded-full bg-surface-track"
+                role="progressbar"
+                aria-labelledby="progresso-hoje"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={progresso}
+              >
+                <div
+                  className="h-full rounded-full bg-brass transition-[width] duration-300 ease-editorial motion-reduce:transition-none"
+                  style={{ width: `${progresso}%` }}
+                />
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      <div className="px-5 py-4 sm:px-6 sm:py-5">
+      <div className="min-w-0 px-5 sm:px-6">
         {grupos.length === 0 ? (
-          <p className="text-sm italic text-cream-400">A definir</p>
+          <p className="py-5 text-sm italic text-cream-400">A definir</p>
         ) : (
-          <>
-            {proximo ? (
-              <ProximaAtividade
-                grupo={proximo}
-                dataDia={dia.data}
-                onGoto={onGoto}
-              />
-            ) : (
-              <div className="rounded-xl border border-surface-border-subtle bg-ink-900 px-4 py-3.5 sm:px-5 sm:py-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-feedback-success-text">
-                  Dia concluído
-                </p>
-                <p className="mt-1.5 text-[13px] text-cream-400">
-                  Todas as atividades de hoje estão marcadas. Desmarque alguma
-                  se precisar retomar.
-                </p>
-              </div>
-            )}
+          <ul>
+            {grupos.map((grupo, index) => {
+              const eAseguir = index === indiceAseguir;
+              const classeLinha = eAseguir
+                ? "my-4 rounded-xl border border-surface-border-subtle bg-ink-900 px-3 sm:px-4"
+                : index > 0
+                  ? "border-t border-border-subtle"
+                  : "";
 
-            {demais.length > 0 && (
-              <div className="mt-4 divide-y divide-border-subtle">
-                {demais.map((grupo) => (
+              return (
+                <li key={grupo.chave} className={classeLinha}>
+                  {eAseguir && (
+                    <p className="px-1 pt-3 text-[11px] font-medium uppercase tracking-[0.12em] text-brass">
+                      A seguir
+                    </p>
+                  )}
                   <ItemRowGroup
-                    key={grupo.chave}
                     grupo={grupo}
                     dataDia={dia.data}
                     onGoto={onGoto}
                   />
-                ))}
-              </div>
-            )}
-          </>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </div>
     </section>
-  );
-}
-
-// Primeira atividade pendente de hoje, promovida pra fechar a dúvida de "o
-// que eu faço agora". Superfície neutra com borda vinho à esquerda e ação
-// primária vinho — sem preenchimento rosa.
-function ProximaAtividade({ grupo, dataDia, onGoto }) {
-  const { item, count, idxs, todasConcluidas } = grupo;
-
-  function toggle() {
-    marcarItensConcluidos(dataDia, idxs, !todasConcluidas);
-  }
-
-  return (
-    <div className="rounded-xl border border-l-[3px] border-surface-border-subtle border-l-brass bg-ink-900 px-4 py-3.5 sm:px-5 sm:py-4">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brass">
-        A seguir
-      </p>
-      <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-3">
-        {/* Mesma compensação do alvo de 44px usada nas linhas abaixo. */}
-        <div className="-ml-3 shrink-0">
-          <ItemCheckbox
-            marcado={todasConcluidas}
-            onToggle={toggle}
-            rotulo={`${count > 1 ? `${count} atividades de ` : ""}${tituloAtividade(item)}, ${item.minutos} min, ${formatarDiaMes(dataDia)}`}
-          />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-base font-semibold leading-snug text-cream-50">
-            {count > 1 && <span className="text-brass">{count}× </span>}
-            {tituloAtividade(item)}
-          </p>
-          <p className="mt-1 text-[13px] text-cream-400">
-            {metaAtividade(item)}
-            {count > 1 ? " cada" : ""}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => onGoto(destinoPorTipo(item.tipo))}
-          className="group/btn inline-flex w-full min-h-11 shrink-0 appearance-none items-center justify-center gap-1.5 rounded-lg bg-brass px-5 py-2.5 text-[13px] font-medium text-ink-950 shadow-btn-primary transition-[background-color,box-shadow] duration-150 ease-out hover:bg-brass-hover hover:shadow-btn-primary-hover focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-ink-900 sm:w-auto"
-        >
-          {acaoAtividade(item.tipo)}
-          <span
-            aria-hidden="true"
-            className="transition-transform duration-150 ease-out group-hover/btn:translate-x-[3px] motion-reduce:transition-none"
-          >
-            →
-          </span>
-        </button>
-      </div>
-    </div>
   );
 }
 
@@ -719,7 +677,9 @@ function LinhaDiaSemana({ dia }) {
                 >
                   <span className="font-medium">
                     {grupo.count > 1 && (
-                      <span className={grupo.todasConcluidas ? "" : "text-brass"}>
+                      <span
+                        className={grupo.todasConcluidas ? "" : "text-brass"}
+                      >
                         {grupo.count}×{" "}
                       </span>
                     )}
@@ -795,10 +755,14 @@ function ProximaSemana({ dias }) {
         hidden={!aberta}
         className={
           aberta
-            ? "grid gap-x-8 px-5 pb-4 sm:px-6 sm:pb-5 md:grid-cols-2"
+            ? "relative grid gap-x-8 px-5 pb-4 sm:px-6 sm:pb-5 md:grid-cols-2"
             : undefined
         }
       >
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-px -translate-x-1/2 bg-border-subtle md:block"
+        />
         {dias.map((dia) => (
           <BlocoDiaProximaSemana key={dia.data} dia={dia} />
         ))}
@@ -882,7 +846,12 @@ function BlocoDiaProximaSemana({ dia }) {
 // Checkbox interativo redondo (marcado = preenchido com check) — usado
 // no card "Hoje" do Cronograma.jsx e reaproveitado no painel de detalhe
 // do dia em CronogramaCalendario.jsx, pra não duplicar o visual/estado.
-export function ItemCheckbox({ marcado, onToggle, rotulo }) {
+export function ItemCheckbox({
+  marcado,
+  onToggle,
+  rotulo,
+  animacaoHoje = false,
+}) {
   const acao = marcado ? "Desmarcar" : "Marcar concluído";
   return (
     <button
@@ -892,13 +861,28 @@ export function ItemCheckbox({ marcado, onToggle, rotulo }) {
       aria-label={rotulo ? `${acao}: ${rotulo}` : acao}
       aria-pressed={marcado}
     >
-      <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-        marcado
-          ? "bg-brass border-brass"
-          : "bg-transparent border-ink-700"
-      }`}>
-        {marcado && (
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <span
+        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+          animacaoHoje
+            ? "transition-[background-color,border-color] duration-200 ease-editorial motion-reduce:transition-none"
+            : "transition-colors"
+        } ${
+          marcado ? "bg-brass border-brass" : "bg-transparent border-ink-700"
+        }`}
+      >
+        {(animacaoHoje || marcado) && (
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
+            aria-hidden="true"
+            className={
+              animacaoHoje
+                ? `transition-opacity duration-200 ease-editorial motion-reduce:transition-none ${marcado ? "opacity-100" : "opacity-0"}`
+                : undefined
+            }
+          >
             <path
               d="M2.5 6.5L4.5 8.5L9.5 3.5"
               stroke="#FFFCF6"
@@ -929,7 +913,7 @@ function ItemRowGroup({ grupo, dataDia, onGoto }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-3 py-2.5 first:pt-0 last:pb-0 sm:py-3">
+    <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1 py-4 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:py-5">
       {/* Compensa o alvo de 44px do checkbox pra que o círculo fique
           alinhado à borda de conteúdo do card, e não 12px adentro. */}
       <div className="-ml-3 shrink-0">
@@ -937,21 +921,32 @@ function ItemRowGroup({ grupo, dataDia, onGoto }) {
           marcado={todasConcluidas}
           onToggle={toggle}
           rotulo={`${count > 1 ? `${count} blocos de ` : ""}${tituloAtividade(item)}, ${item.minutos} min, ${formatarDiaMes(dataDia)}`}
+          animacaoHoje
         />
       </div>
-      <div className="min-w-0 flex-1">
-        <p className={`text-[15px] font-semibold leading-snug ${todasConcluidas ? "text-cream-600 line-through" : "text-cream-50"}`}>
-          {count > 1 && <span className={todasConcluidas ? "" : "text-brass"}>{count}× </span>}
+      <div className="min-w-0">
+        <p
+          className={`font-serif text-lg font-medium leading-snug transition-[color,opacity] duration-200 ease-editorial motion-reduce:transition-none ${todasConcluidas ? "text-cream-400 opacity-80 line-through" : "text-cream-50 opacity-100"}`}
+        >
+          {count > 1 && (
+            <span className={todasConcluidas ? "" : "text-brass"}>
+              {count}×{" "}
+            </span>
+          )}
           {tituloAtividade(item)}
         </p>
-        <p className="mt-1 text-[13px] text-cream-400">
-          {metaAtividade(item)}{count > 1 ? " cada" : ""}
+        <p className="mt-1 text-[13px] leading-relaxed text-cream-400">
+          {metaAtividade(item)}
+          {count > 1 ? " cada" : ""}
         </p>
       </div>
-      {!todasConcluidas && (
+      <div className="col-span-2 grid min-h-10 w-full shrink-0 items-center sm:col-span-1 sm:w-auto sm:min-w-24">
         <button
+          type="button"
           onClick={irPra}
-          className="group/btn inline-flex w-full min-h-10 shrink-0 appearance-none items-center justify-center gap-1.5 rounded-lg border border-surface-border-button bg-ink-950 px-3.5 py-2 text-[13px] font-medium text-cream-50 transition-[background-color,border-color,color] duration-150 ease-out hover:border-surface-border-button-hover hover:bg-surface-button-hover hover:text-brass focus:outline-none focus-visible:outline-none focus-visible:border-brass focus-visible:ring-2 focus-visible:ring-brass/20 sm:ml-auto sm:w-auto"
+          disabled={todasConcluidas}
+          aria-hidden={todasConcluidas}
+          className={`group/btn col-start-1 row-start-1 inline-flex min-h-10 w-full appearance-none items-center gap-1.5 rounded text-[13px] font-medium text-brass transition-[color,opacity] duration-200 ease-editorial hover:text-brass-link-hover hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950 motion-reduce:transition-none sm:justify-end ${todasConcluidas ? "pointer-events-none opacity-0" : "opacity-100"}`}
         >
           {acaoAtividade(item.tipo)}
           <span
@@ -961,7 +956,13 @@ function ItemRowGroup({ grupo, dataDia, onGoto }) {
             →
           </span>
         </button>
-      )}
+        <span
+          aria-hidden={!todasConcluidas}
+          className={`pointer-events-none col-start-1 row-start-1 flex min-h-10 items-center text-xs font-medium text-feedback-success-text transition-opacity duration-200 ease-editorial motion-reduce:transition-none sm:justify-end ${todasConcluidas ? "opacity-100" : "opacity-0"}`}
+        >
+          {count > 1 ? "Concluídas" : "Concluída"}
+        </span>
+      </div>
     </div>
   );
 }
