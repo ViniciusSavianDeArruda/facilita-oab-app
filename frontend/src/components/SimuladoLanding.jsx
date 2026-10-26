@@ -3,7 +3,9 @@ import { gerarSimulado } from "../lib/api";
 import { mensagemErroAmigavel } from "../lib/erros";
 import { MATERIAS_SIMULADO } from "../lib/materias";
 
-export default function SimuladoLanding({ onStart }) {
+export default function SimuladoLanding({
+  onStart,
+}) {
   const [modo, setModo] = useState("rapido");
   const [materia, setMateria] = useState(MATERIAS_SIMULADO[0]);
   const [loading, setLoading] = useState(false);
@@ -65,10 +67,14 @@ export default function SimuladoLanding({ onStart }) {
     );
   }
 
+  const resumo =
+    modo === "materia"
+      ? `10 questões de ${materia} · ~15 min`
+      : "10 questões variadas · ~15 min";
+
   return (
-    <div className="w-full max-w-[760px] mx-auto px-4 pt-8 pb-10 sm:px-6 md:px-8 md:pt-12 md:pb-14">
-      {/* Page header — fora do card, ancora a seção sem virar banner. */}
-      <header className="mb-6 md:mb-8">
+    <div className="w-full max-w-[900px] mx-auto px-4 pt-8 pb-10 sm:px-6 md:px-8 md:pt-12 md:pb-14">
+      <header className="mb-8 md:mb-12">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brass mb-2.5">
           Simulado
         </p>
@@ -83,9 +89,9 @@ export default function SimuladoLanding({ onStart }) {
         </p>
       </header>
 
-      <div className="bg-ink-950 border border-ink-800 rounded-2xl p-5 sm:p-6">
+      <div>
         <div
-          className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+          className="grid grid-cols-1 gap-4 md:grid-cols-2"
           role="group"
           aria-label="Modo do simulado"
         >
@@ -93,26 +99,32 @@ export default function SimuladoLanding({ onStart }) {
             selected={modo === "rapido"}
             onClick={() => setModo("rapido")}
             title="Rápido"
-            subtitle="10 questões variadas"
+            description="Uma amostra variada da prova, como um treino geral."
+            detail="10 questões variadas"
           />
           <ModoCard
             selected={modo === "materia"}
             onClick={() => setModo("materia")}
             title="Focar em matéria"
-            subtitle="10 de uma área só"
+            description="Todas as questões de uma única área, para aprofundar."
+            detail="10 de uma área só"
           />
         </div>
 
         {modo === "materia" && (
-          <div className="mt-6">
+          <div className="mt-8">
             <p
               id="materia-simulado"
-              className="text-[11px] tracking-widest uppercase text-cream-400 font-medium mb-3"
+              className="font-serif text-lg text-cream-50 leading-tight"
+              style={{ fontVariationSettings: '"opsz" 60' }}
             >
-              Matéria
+              Qual matéria?
+            </p>
+            <p className="mt-1 text-sm text-cream-400">
+              Escolha uma — as 10 questões virão dela.
             </p>
             <div
-              className="flex flex-wrap gap-2"
+              className="mt-4 flex flex-wrap gap-2"
               role="group"
               aria-labelledby="materia-simulado"
             >
@@ -126,10 +138,11 @@ export default function SimuladoLanding({ onStart }) {
                     aria-pressed={selected}
                     className={`min-h-10 text-xs px-3 py-2 rounded-full border transition-[background-color,border-color,color] duration-150 ease-out focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/20 focus-visible:border-brass ${
                       selected
-                        ? "bg-brass-soft border-brass/25 text-brass font-medium"
+                        ? "bg-surface-subtle border-brass text-brass font-medium"
                         : "bg-ink-950 border-surface-border-button text-cream-400 hover:bg-surface-button-hover hover:border-surface-border-button-hover hover:text-cream-50"
                     }`}
                   >
+                    {selected && <span aria-hidden="true">✓ </span>}
                     {m}
                   </button>
                 );
@@ -137,6 +150,28 @@ export default function SimuladoLanding({ onStart }) {
             </div>
           </div>
         )}
+
+        <div className="mt-10 border-t border-border-subtle pt-6 md:mt-12 md:flex md:items-end md:justify-between md:gap-8">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-cream-400">
+              Seu simulado
+            </p>
+            <p className="mt-2 font-serif text-lg text-cream-50">
+              {resumo}
+            </p>
+          </div>
+
+          <div className="mt-5 md:mt-0 md:shrink-0">
+            <button
+              type="button"
+              onClick={iniciar}
+              disabled={loading}
+              className="w-full md:w-auto inline-flex items-center justify-center gap-2 min-h-12 px-6 py-3 rounded-lg bg-brass text-ink-950 font-medium shadow-btn-primary hover:bg-brass-hover hover:shadow-btn-primary-hover active:translate-y-px disabled:bg-ink-800 disabled:text-cream-600 disabled:shadow-none disabled:cursor-not-allowed transition-[background-color,box-shadow,color,transform] duration-150 ease-out focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/40"
+            >
+              Começar simulado <span aria-hidden="true">→</span>
+            </button>
+          </div>
+        </div>
 
         {error && (
           <div
@@ -153,27 +188,18 @@ export default function SimuladoLanding({ onStart }) {
             </button>
           </div>
         )}
-
-        <button
-          type="button"
-          onClick={iniciar}
-          disabled={loading}
-          className="mt-6 w-full inline-flex items-center justify-center gap-1.5 min-h-12 px-4 py-3 rounded-lg bg-brass text-ink-950 font-medium shadow-btn-primary hover:bg-brass-hover hover:shadow-btn-primary-hover disabled:bg-ink-800 disabled:text-cream-600 disabled:shadow-none disabled:cursor-not-allowed transition-[background-color,box-shadow,color] duration-150 ease-out focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/40"
-        >
-          Começar simulado
-        </button>
       </div>
     </div>
   );
 }
 
-function ModoCard({ selected, onClick, title, subtitle }) {
+function ModoCard({ selected, onClick, title, description, detail }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={selected}
-      className={`relative min-h-[112px] text-left px-4 py-4 rounded-xl border bg-ink-900 transition-[background-color,border-color,box-shadow] duration-200 ease-editorial focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/20 ${
+      className={`relative min-h-[138px] text-left px-5 py-5 rounded-xl border bg-ink-900 transition-[background-color,border-color,box-shadow] duration-200 ease-editorial focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/20 ${
         selected
           ? "border-brass"
           : "border-surface-border-subtle hover:bg-surface-subcard-hover hover:border-surface-border-hover hover:shadow-subcard-hover"
@@ -181,17 +207,28 @@ function ModoCard({ selected, onClick, title, subtitle }) {
     >
       <span
         aria-hidden="true"
-        className={`absolute top-3 right-3 h-2 w-2 rounded-full transition-colors duration-150 ease-out ${
-          selected ? "bg-brass" : "bg-transparent"
+        className={`absolute top-5 right-5 h-5 w-5 rounded-full border transition-[border-color,background-color] duration-150 ease-out ${
+          selected
+            ? "border-brass bg-brass"
+            : "border-surface-border-button bg-ink-950"
         }`}
-      />
+      >
+        {selected && (
+          <span className="absolute inset-1 rounded-full bg-ink-950" />
+        )}
+      </span>
       <div
-        className="font-serif text-lg text-cream-50 leading-tight"
+        className="pr-8 font-serif text-2xl text-cream-50 leading-tight"
         style={{ fontVariationSettings: '"opsz" 60' }}
       >
         {title}
       </div>
-      <div className="text-xs text-cream-400 mt-1">{subtitle}</div>
+      <p className="mt-2 max-w-[34rem] text-sm leading-relaxed text-cream-400">
+        {description}
+      </p>
+      <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-brass">
+        {detail}
+      </p>
     </button>
   );
 }
