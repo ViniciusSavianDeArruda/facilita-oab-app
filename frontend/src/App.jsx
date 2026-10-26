@@ -189,9 +189,17 @@ O gabarito é a **${questao.correta}**: "${correta}"` +
             }}
           />
         )}
-        {view === 'simulado-landing' && <SimuladoLanding onStart={startSimulado} />}
+        {view === 'simulado-landing' && (
+          <SimuladoLanding
+            onStart={startSimulado}
+          />
+        )}
         {view === 'simulado-run' && simulado && (
-          <SimuladoRun simulado={simulado} onFinish={finishSimulado} onExit={exitSimulado} />
+          <SimuladoRun
+            simulado={simulado}
+            onFinish={finishSimulado}
+            onExit={exitSimulado}
+          />
         )}
         {view === 'simulado-results' && result && (
           <SimuladoResults

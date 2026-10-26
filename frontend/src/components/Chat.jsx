@@ -480,7 +480,7 @@ export default function Chat({
               </div>
             </div>
             {dias !== null && dias >= 0 && (
-              <div className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-brass/25 bg-brass-soft px-3 py-1.5">
+              <div className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface-subtle px-3 py-1.5">
                 <span className="font-serif text-brass text-sm leading-none tabular-nums">
                   {dias}
                 </span>
@@ -575,7 +575,7 @@ export default function Chat({
                     {error && (
                       <div
                         role="alert"
-                        className="flex items-start gap-3 rounded-xl px-4 py-3.5 bg-[#FDF1ED] border border-[#E3D8D4]"
+                        className="flex items-start gap-3 rounded-xl px-4 py-3.5 bg-surface-subtle border border-border-subtle"
                       >
                         <ExclamationTriangleIcon className="w-4 h-4 text-alert shrink-0 mt-0.5" />
                         <div className="flex-1 min-w-0">
@@ -688,7 +688,7 @@ function ItemConversa({
     <div
       className={`group relative w-full rounded-lg border transition-colors duration-200 ease-in-out ${
         ativa
-          ? "bg-brass-soft border-brass/25"
+          ? "bg-surface-subtle border-brass/40"
           : "border-transparent hover:bg-surface-nav-hover"
       }`}
     >
@@ -713,12 +713,14 @@ function ItemConversa({
           e.stopPropagation();
           setMenuAberto((v) => !v);
         }}
-        className={`absolute right-1.5 top-1.5 min-h-9 min-w-9 p-1 rounded-md text-cream-600 hover:text-cream-50 hover:bg-ink-800 transition-opacity opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-inset ${
+        className={`group/actions absolute right-1.5 top-1.5 min-h-9 min-w-9 p-1 rounded-md text-cream-600 hover:text-cream-50 transition-opacity opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-inset ${
           menuAberto ? "md:opacity-100" : ""
         }`}
         aria-label="Mais opções"
       >
-        <EllipsisHorizontalIcon className="w-4 h-4" />
+        <span className="inline-flex h-7 w-7 items-center justify-center rounded-md transition-[background-color] duration-150 ease-out group-hover/actions:bg-surface-button-hover">
+          <EllipsisHorizontalIcon className="w-4 h-4" />
+        </span>
       </button>
 
       {menuAberto && (
@@ -900,7 +902,7 @@ function Message({ role, content, streaming, pergunta, materia }) {
     <div className="fade-in">
       <div className="min-w-0 rounded-2xl border border-ink-800 bg-ink-950 px-5 py-4 sm:px-6 sm:py-5">
         <div className="flex items-center gap-2.5 pb-4 mb-5 border-b border-border-subtle">
-          <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brass-soft">
+          <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sand-100">
             <SparklesIcon className="h-4 w-4 text-brass" aria-hidden="true" />
           </span>
           <span className="font-sans text-[11px] tracking-[0.16em] uppercase font-semibold text-brass">
@@ -936,7 +938,7 @@ function Message({ role, content, streaming, pergunta, materia }) {
             {saveStatus === "saved" ? (
               <span
                 role="status"
-                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-brass/25 bg-brass-soft px-3 py-1.5 text-xs font-medium text-brass"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-surface-border-button bg-surface-subtle px-3 py-1.5 text-xs font-medium text-brass"
               >
                 <CheckIcon className="h-3.5 w-3.5" aria-hidden="true" />
                 Salvo no caderno
@@ -1013,7 +1015,7 @@ function EmptyState({ onPick, primeiroUso = false }) {
   return (
     <div className="mx-auto w-full max-w-[760px] pt-6 pb-2 md:pt-8 md:pb-3">
       <div className="flex flex-col items-center text-center">
-        <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-brass-soft border border-brass/[0.14]">
+        <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-sand-100 border border-brass/[0.14]">
           <SparklesIcon className="h-6 w-6 text-brass" aria-hidden="true" />
         </span>
         <p className="text-[10px] tracking-[0.14em] uppercase text-brass font-semibold mt-4">
