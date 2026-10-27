@@ -1,3 +1,4 @@
+import asyncio
 import json
 from datetime import datetime
 
@@ -65,6 +66,38 @@ async def stream_chat(messages: list[dict], subject: str | None = None):
 	async for chunk in stream:
 		if chunk.text:
 			yield chunk.text
+
+
+# Grava a pergunta do usuário, exceto se for repetição de uma tentativa que falhou:
+# a última mensagem da conversa é a mesma pergunta e nenhuma resposta a seguiu.
+def registrar_pergunta(db: Session, conversa_id: int, pergunta: str) -> None:
+	ultima = db.scalars(
+		select(MensagemChat)
+		.where(MensagemChat.conversa_id == conversa_id)
+		.order_by(MensagemChat.id.desc())
+		.limit(1)
+	).first()
+
+	if ultima is not None and ultima.papel == "user" and ultima.conteudo == pergunta:
+		return
+
+	db.add(MensagemChat(conversa_id=conversa_id, papel="user", conteudo=pergunta, criado_em=datetime.utcnow()))
+	db.commit()
+
+
+# Sessão própria: a injetada por Depends() não é garantida viva
+# até aqui, já que o streaming continua depois da rota retornar.
+def registrar_resposta(conversa_id: int, texto: str) -> None:
+	with SessionLocal() as db_stream:
+		db_stream.add(MensagemChat(
+			conversa_id=conversa_id,
+			papel="assistant",
+			conteudo=texto,
+			criado_em=datetime.utcnow(),
+		))
+		conversa_atual = db_stream.get(Conversa, conversa_id)
+		conversa_atual.atualizado_em = datetime.utcnow()
+		db_stream.commit()
 
 
 # Rotas de conversas do chat (histórico).
@@ -201,8 +234,7 @@ async def chat(body: ChatRequest, request: Request, db: Session = Depends(get_se
 		db.commit()
 		db.refresh(conversa)
 
-	db.add(MensagemChat(conversa_id=conversa.id, papel="user", conteudo=pergunta, criado_em=datetime.utcnow()))
-	db.commit()
+	registrar_pergunta(db, conversa.id, pergunta)
 
 	conversa_id = conversa.id
 
@@ -214,24 +246,19 @@ async def chat(body: ChatRequest, request: Request, db: Session = Depends(get_se
 			messages = [message.model_dump() for message in body.messages]
 			resposta_acumulada = ""
 
-			async for chunk in stream_chat(messages, subject=body.materia):
-				resposta_acumulada += chunk
-				data = json.dumps({"text": chunk}, ensure_ascii=False)
-				yield f"data: {data}\n\n"
+			try:
+				async for chunk in stream_chat(messages, subject=body.materia):
+					resposta_acumulada += chunk
+					data = json.dumps({"text": chunk}, ensure_ascii=False)
+					yield f"data: {data}\n\n"
+			except asyncio.CancelledError:
+				# O usuário parou o stream: a tela mantém o trecho já recebido, então o histórico também.
+				if resposta_acumulada:
+					registrar_resposta(conversa_id, resposta_acumulada)
+				raise
 
-			# Sessão própria: a injetada por Depends() não é garantida viva
-			# até aqui, já que o streaming continua depois da rota retornar.
 			if resposta_acumulada:
-				with SessionLocal() as db_stream:
-					db_stream.add(MensagemChat(
-						conversa_id=conversa_id,
-						papel="assistant",
-						conteudo=resposta_acumulada,
-						criado_em=datetime.utcnow(),
-					))
-					conversa_atual = db_stream.get(Conversa, conversa_id)
-					conversa_atual.atualizado_em = datetime.utcnow()
-					db_stream.commit()
+				registrar_resposta(conversa_id, resposta_acumulada)
 
 			yield "data: [DONE]\n\n"
 

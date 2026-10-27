@@ -7,6 +7,7 @@
  */
 
 import { getToken, handleAuthExpired } from "./authClient";
+import { mensagemDeDetalhe } from "./erroApi";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
 
@@ -25,7 +26,8 @@ async function parseErrorMessage(res) {
   const text = await res.text();
   try {
     const body = JSON.parse(text);
-    if (body?.detail) return body.detail;
+    const detalhe = mensagemDeDetalhe(body?.detail);
+    if (detalhe) return detalhe;
   } catch {
     // não era JSON — usa o texto cru mesmo
   }

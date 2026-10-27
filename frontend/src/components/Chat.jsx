@@ -35,6 +35,7 @@ import {
 } from "../lib/conversas";
 import { mensagemErroAmigavel } from "../lib/erros";
 import { saveLastChat } from "../lib/lastActivity";
+import { recortarHistorico } from "../lib/chatLimites";
 import { parseRevisaoQuestao } from "../lib/revisaoQuestao";
 import { diasAteProva, loadSettings, subscribeSettings } from "../lib/settings";
 import ChatComposer from "./ChatComposer";
@@ -278,6 +279,7 @@ export default function Chat({
 
     const newMessages = [...baseMessages, { role: "user", content }];
     setMessages([...newMessages, { role: "assistant", content: "" }]);
+    const historico = recortarHistorico(newMessages);
     setIsStreaming(true);
 
     const controller = new AbortController();
@@ -287,7 +289,7 @@ export default function Chat({
       let accumulated = "";
 
       for await (const evento of streamChat({
-        messages: newMessages,
+        messages: historico,
         materia,
         conversaId: conversaAtivaId,
         tituloConversa,
