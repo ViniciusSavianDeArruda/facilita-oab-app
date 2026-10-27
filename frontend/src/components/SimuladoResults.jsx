@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { getResultSaveState, saveResultOnce } from "../lib/simulados";
+import {
+  getResultSaveState,
+  retrySaveResult,
+  saveResultOnce,
+} from "../lib/simulados";
 import QuestionCard from "./QuestionCard";
 
 export default function SimuladoResults({ result, onRetry, onExit, onDiscussWithMentor }) {
@@ -24,12 +28,19 @@ export default function SimuladoResults({ result, onRetry, onExit, onDiscussWith
   const [saveState, setSaveState] = useState(() =>
     getResultSaveState(simulado.id) ?? { status: "saving", savedCount: 0 },
   );
+  const payload = { simulado, answers, elapsedSec, acertos: stats.acertos, total: stats.total, porMateria: stats.porMateria };
   useEffect(() => {
     let cancelled = false;
     saveResultOnce({ simulado, answers, elapsedSec, acertos: stats.acertos, total: stats.total, porMateria: stats.porMateria })
       .then((state) => { if (!cancelled) setSaveState(state); });
     return () => { cancelled = true; };
   }, [simulado, answers, elapsedSec, stats]);
+  const tentarSalvarDeNovo = () => {
+    const tentativa = retrySaveResult(payload);
+    if (!tentativa) return;
+    setSaveState({ status: "saving", savedCount: 0 });
+    tentativa.then(setSaveState);
+  };
   const savedCount = saveState.status === "saved" ? saveState.savedCount : 0;
   const mm = String(Math.floor(elapsedSec / 60)).padStart(2, "0");
   const ss = String(elapsedSec % 60).padStart(2, "0");
@@ -55,6 +66,7 @@ export default function SimuladoResults({ result, onRetry, onExit, onDiscussWith
             <p role={saveState.status === "unconfirmed" ? "alert" : "status"} className={`mt-5 text-sm leading-relaxed ${saveState.status === "saved" ? "text-feedback-success-text" : saveState.status === "unconfirmed" ? "text-alert" : "text-text-secondary"}`}>
               {saveState.status === "saved" ? "Resultado salvo." : saveState.status === "unconfirmed" ? "Não foi possível confirmar o salvamento. O resultado pode ter sido registrado; confira o histórico antes de iniciar outra prova." : "Salvando resultado…"}
             </p>
+            {saveState.status === "unconfirmed" && <button type="button" onClick={tentarSalvarDeNovo} className="mt-3 inline-flex min-h-9 items-center rounded-lg border border-surface-border-button bg-surface-raised px-3.5 py-2 text-[13px] font-medium text-text-primary transition-[background-color,border-color,color] duration-150 ease-out hover:border-surface-border-button-hover hover:bg-surface-button-hover hover:text-brass focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/20 focus-visible:border-brass">Tentar salvar novamente</button>}
             {eticaAlerta && <div className="mt-5 rounded-xl border border-alert/40 bg-alert/5 p-4"><div className="mb-1.5 text-[11px] font-medium uppercase tracking-widest text-alert">Atenção — Ética</div><p className="text-sm leading-relaxed text-text-primary">Você acertou {eticaStats.acertos} de {eticaStats.total} em Ética. Ética tem peso alto na aprovação — vale revisar as questões erradas e treinar essa matéria antes de outros temas.</p></div>}
             {savedCount > 0 && <p className="mt-4 text-xs text-brass-dim">{savedCount === 1 ? "1 questão foi para o seu caderno." : `${savedCount} questões foram para o seu caderno.`}</p>}
           </section>

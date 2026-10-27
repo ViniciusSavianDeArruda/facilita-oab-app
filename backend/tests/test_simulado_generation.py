@@ -1,3 +1,7 @@
+import os
+
+os.environ.setdefault("ENV", "test")
+
 import asyncio
 import unittest
 from types import SimpleNamespace

@@ -7,6 +7,7 @@ from time import perf_counter
 from fastapi import APIRouter, Depends, HTTPException, Request
 from google.genai import types
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ..activity import get_client_today, register_activity
@@ -87,13 +88,6 @@ async def generate_questions(
 			raise InvalidGenerationResponseError(
 				"A resposta estruturada contém uma quantidade de questões diferente da solicitada."
 			)
-	except GenerationTimeoutError as error:
-		logger.warning(
-			"simulado_question_parse_or_generation_failed request_id=%s exception_type=%s",
-			request_id,
-			type(error).__name__,
-		)
-		raise
 	except (AttributeError, TypeError, ValueError) as error:
 		logger.warning(
 			"simulado_question_parse_or_generation_failed request_id=%s exception_type=%s",
@@ -155,7 +149,18 @@ async def create_simulation(
 
 
 # Salva o resultado e adiciona no caderno os itens errados que ainda nao existem.
+# Duas requisicoes simultaneas (ex.: reenvio com o original em voo) podem inserir o
+# mesmo item/dia antes do commit; os indices unicos barram a segunda, que repete uma vez
+# ja enxergando o que a primeira gravou.
 def save_simulation_result(db: Session, body: CreateSimulationResult, today: date) -> tuple[ResultadoSimulado, int]:
+	try:
+		return _save_simulation_result_once(db, body, today)
+	except IntegrityError:
+		db.rollback()
+		return _save_simulation_result_once(db, body, today)
+
+
+def _save_simulation_result_once(db: Session, body: CreateSimulationResult, today: date) -> tuple[ResultadoSimulado, int]:
 	result = insert_result_repo(db, body)
 
 	existing_questions = get_existing_notebook_enunciados_repo(db)
@@ -185,17 +190,36 @@ def save_simulation_result(db: Session, body: CreateSimulationResult, today: dat
 
 
 # Helpers de persistencia mantidos aqui para evitar espalhar a logica do resultado.
+# Recalcula o placar a partir das questoes e respostas: os totais enviados pelo
+# cliente nao sao confiaveis e alimentam as estatisticas.
+def calcular_placar(body: CreateSimulationResult) -> tuple[int, int, dict[str, dict[str, int]]]:
+	por_materia: dict[str, dict[str, int]] = {}
+	acertos = 0
+
+	for index, question in enumerate(body.questoes):
+		acertou = body.answers.get(str(index)) == question.correta
+		acertos += acertou
+
+		materia = por_materia.setdefault(question.materia, {"total": 0, "acertos": 0})
+		materia["total"] += 1
+		materia["acertos"] += acertou
+
+	return acertos, len(body.questoes), por_materia
+
+
 # Insere o resultado bruto no banco.
 def insert_result_repo(db: Session, body: CreateSimulationResult) -> ResultadoSimulado:
+	acertos, total, por_materia = calcular_placar(body)
+
 	result = ResultadoSimulado(
 		modo=body.modo,
 		materia_filtro=body.materiaFiltro,
-		acertos=body.acertos,
-		total=body.total,
+		acertos=acertos,
+		total=total,
 		duracao_segundos=body.elapsedSec,
 		questoes_json=[question.model_dump() for question in body.questoes],
 		respostas_json=body.answers,
-		por_materia_json=body.porMateria,
+		por_materia_json=por_materia,
 	)
 
 	db.add(result)

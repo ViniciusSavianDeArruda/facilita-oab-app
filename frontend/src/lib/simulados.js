@@ -6,7 +6,8 @@
 
 import { authFetchJson } from "./api";
 import { hydrateCaderno } from "./caderno";
-import { createResultSaveRegistry } from "./simuladoResultSave";
+import { limparFalha, registrarFalha } from "./cargaFalhas";
+import { createResultSaveRegistry, mesmoResultado } from "./simuladoResultSave";
 
 let _historico = [];
 const resultSaves = createResultSaveRegistry({
@@ -22,6 +23,21 @@ export function saveResultOnce(payload) {
   return resultSaves.start(payload.simulado.id, () =>
     enviarResultadoSimulado(payload),
   );
+}
+
+export function retrySaveResult(payload) {
+  return resultSaves.retry(payload.simulado.id, async () => {
+    // O POST não é idempotente: antes de reenviar, confere se a tentativa
+    // anterior chegou a ser gravada.
+    const historico = await authFetchJson("/me/simulados");
+    if (historico.some((registro) => mesmoResultado(registro, payload))) {
+      _historico = historico;
+      notify();
+      await hydrateCaderno();
+      return { savedCount: 0 };
+    }
+    return enviarResultadoSimulado(payload);
+  });
 }
 
 function notify() {
@@ -56,8 +72,10 @@ export function ultimoSimulado() {
 export async function hydrateSimulados() {
   try {
     _historico = await authFetchJson("/me/simulados");
+    limparFalha("simulados");
   } catch {
     _historico = [];
+    registrarFalha("simulados");
   }
   notify();
   return _historico;

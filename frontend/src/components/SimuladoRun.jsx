@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import {
+  limparSimuladoSalvo,
+  SIMULADO_STORAGE_KEY as STORAGE_KEY,
+} from "../lib/simuladoSessao";
 import QuestionCard from "./QuestionCard";
-
-const STORAGE_KEY = "oab-simulado-current";
 
 export default function SimuladoRun({
   simulado,
@@ -85,12 +87,13 @@ export default function SimuladoRun({
       STORAGE_KEY,
       JSON.stringify({
         id: simulado.id,
+        simulado,
         answers,
         currentIdx,
         startedAt,
       }),
     );
-  }, [answers, currentIdx, startedAt, simulado.id]);
+  }, [answers, currentIdx, startedAt, simulado]);
 
   const total = simulado.questoes.length;
   const questao = simulado.questoes[currentIdx];
@@ -114,7 +117,7 @@ export default function SimuladoRun({
   }
 
   function finalizar() {
-    localStorage.removeItem(STORAGE_KEY);
+    limparSimuladoSalvo();
     onFinish({ simulado, answers, elapsedSec });
   }
 
@@ -125,6 +128,7 @@ export default function SimuladoRun({
         "Sair do simulado? Esta tentativa será abandonada.",
       )
     ) {
+      limparSimuladoSalvo();
       onExit();
     }
   }
