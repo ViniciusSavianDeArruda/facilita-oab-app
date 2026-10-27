@@ -7,6 +7,8 @@
  */
 
 import { authFetchJson } from "./api";
+import { limparFalha, registrarFalha } from "./cargaFalhas";
+import { executarMutacao } from "./mutacao";
 
 let _items = [];
 
@@ -36,8 +38,10 @@ export function contarPorStatus() {
 export async function hydrateCaderno() {
   try {
     _items = sortByCreatedAtDesc(await authFetchJson("/me/caderno"));
+    limparFalha("caderno");
   } catch {
     _items = [];
+    registrarFalha("caderno");
   }
   notify();
   return _items;
@@ -75,49 +79,54 @@ export async function salvarDoChat({ pergunta, resposta, materia }) {
   }
 }
 
-export async function atualizarStatus(id, status) {
+// As três gravações abaixo devolvem true/false para a tela avisar a falha.
+export function atualizarStatus(id, status) {
   const previous = _items;
   _items = _items.map((i) => (i.id === id ? { ...i, status } : i));
   notify();
-  try {
-    await authFetchJson(`/me/caderno/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ status }),
-    });
-  } catch (e) {
-    console.error("Falha ao atualizar status:", e);
-    _items = previous;
-    notify();
-  }
+  return executarMutacao({
+    enviar: () =>
+      authFetchJson(`/me/caderno/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      }),
+    aoFalhar: (e) => {
+      console.error("Falha ao atualizar status:", e);
+      _items = previous;
+      notify();
+    },
+  });
 }
 
-export async function atualizarAnotacao(id, anotacao) {
-  const previous = _items;
-  _items = _items.map((i) => (i.id === id ? { ...i, anotacao } : i));
-  notify();
-  try {
-    await authFetchJson(`/me/caderno/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ anotacao }),
-    });
-  } catch (e) {
-    console.error("Falha ao atualizar anotação:", e);
-    _items = previous;
-    notify();
-  }
+// Sem atualização otimista: o campo é não controlado e o rollback apagaria o
+// texto digitado. Em caso de falha o texto permanece para nova tentativa.
+export function atualizarAnotacao(id, anotacao) {
+  return executarMutacao({
+    enviar: () =>
+      authFetchJson(`/me/caderno/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ anotacao }),
+      }),
+    aoSucesso: () => {
+      _items = _items.map((i) => (i.id === id ? { ...i, anotacao } : i));
+      notify();
+    },
+    aoFalhar: (e) => console.error("Falha ao atualizar anotação:", e),
+  });
 }
 
-export async function remover(id) {
+export function remover(id) {
   const previous = _items;
   _items = _items.filter((i) => i.id !== id);
   notify();
-  try {
-    await authFetchJson(`/me/caderno/${id}`, { method: "DELETE" });
-  } catch (e) {
-    console.error("Falha ao remover item:", e);
-    _items = previous;
-    notify();
-  }
+  return executarMutacao({
+    enviar: () => authFetchJson(`/me/caderno/${id}`, { method: "DELETE" }),
+    aoFalhar: (e) => {
+      console.error("Falha ao remover item:", e);
+      _items = previous;
+      notify();
+    },
+  });
 }
 
 export function subscribe(callback) {

@@ -8,6 +8,7 @@
  */
 
 import { authFetchJson } from "./api";
+import { limparFalha, registrarFalha } from "./cargaFalhas";
 import { dataCivilHoje, diasEntre } from "./dataCivil";
 
 const DEFAULT = { nome: "", dataProva: null };
@@ -22,8 +23,10 @@ export async function hydrateSettings() {
   try {
     const data = await authFetchJson("/me");
     _settings = { nome: data.nome, dataProva: data.dataProva };
+    limparFalha("ajustes");
   } catch {
     _settings = DEFAULT;
+    registrarFalha("ajustes");
   }
   window.dispatchEvent(new CustomEvent("settings:changed"));
   return _settings;
