@@ -20,6 +20,7 @@ single-user, com autenticação privada, usado em contexto real de estudo.
 - Design System: .claude/docs/design-system.md (fonte de verdade visual; o Dashboard é a referência principal)
 - Fluxo de design e ordem das skills visuais: .claude/docs/design-workflow.md
 - Limitações e riscos conhecidos: .claude/docs/debito-tecnico.md
+- Decisões arquiteturais: docs/DECISIONS.md
 - Pendências acionáveis: TODO.md
 
 ## Princípios de trabalho

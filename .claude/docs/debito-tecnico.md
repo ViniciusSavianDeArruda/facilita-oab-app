@@ -1,21 +1,64 @@
 # Débito técnico conhecido
 
-Este documento registra limitações persistentes, riscos e decisões adiadas.
-Pendências acionáveis e priorizáveis ficam em TODO.md.
+Registra limitações persistentes, riscos e decisões adiadas após a V2.
+Pendências acionáveis ficam em TODO.md.
 
-## Race condition no cronograma (issue aberta no GitHub)
+## Rate limit atrás do proxy do Render — pendente de validação
 
-Cliques rápidos (<200ms de intervalo) ao marcar tarefas causam estado inconsistente — respostas de requests antigos podem sobrescrever estado mais recente. Causa: múltiplos PUTs concorrentes + latência Render↔Neon (~2.4s). Solução já especificada: versionamento de requests em savePlano (cronograma.js) — descartar resposta se não for a versão mais recente. Não implementado ainda.
+O backend roda com `uvicorn` sem `--forwarded-allow-ips`; o padrão só confia
+em `X-Forwarded-For` de `127.0.0.1`. Atrás do Render, o `request.client.host`
+visto pelo `slowapi` pode ser o IP do proxy — o que agruparia todos os clientes
+sob o mesmo endereço: 5 tentativas erradas de login em um minuto bloqueiam a
+conta mesmo para o dono legítimo.
 
-## Dados de teste
+Não confirmado em produção (IP real visto pelo app no Render não foi verificado).
+Não configurar `FORWARDED_ALLOW_IPS=*`: o uvicorn passaria a confiar no primeiro
+IP do cabeçalho `X-Forwarded-For`, que é forjável pelo cliente, anulando o rate
+limit de login. A correção segura exige confirmar a faixa de IPs do proxy do
+Render e restringir `--forwarded-allow-ips` a ela.
 
-Os itens acionáveis de limpeza de dados de teste estão em TODO.md. Este risco permanece relevante enquanto ambientes de desenvolvimento forem reutilizados como demonstração.
+## POST /me/simulados sem idempotência — risco aceito
 
-## Rate limit atrás do proxy do Render
+Reenviar o mesmo resultado cria um segundo registro no banco. A UI evita
+duplicação conferindo o histórico antes de tentar de novo após uma falha de
+rede, mas qualquer outro cliente, ou um reenvio que a tela não detecte, duplica
+o registro e distorce as estatísticas (total de simulados, médias, evolução).
 
-O `Dockerfile` roda `uvicorn` sem `--forwarded-allow-ips`; o padrão confia em `X-Forwarded-For` só de `127.0.0.1`. Atrás do Render o cabeçalho é ignorado e o limite (`slowapi`, por `request.client.host`) tende a agrupar todos os clientes sob o IP do proxy: nenhuma burla por cabeçalho forjado (coberto por teste), mas 5 tentativas erradas de login/minuto de qualquer origem bloqueiam também o dono. Não confirmado em produção (IP visto pelo app no Render). Não definir `FORWARDED_ALLOW_IPS=*`: o uvicorn usaria o primeiro IP do cabeçalho, forjável pelo cliente, e anularia o limite de login. Correção segura exige confirmar a faixa de IPs do proxy do Render e restringir `--forwarded-allow-ips` a ela.
+Para app single-user com interface controlada, o risco é aceito como está.
+A correção definitiva seria uma chave de idempotência enviada pelo cliente
+(ex.: UUID gerado no início do simulado) e verificada pelo servidor com
+`ON CONFLICT DO NOTHING`.
 
+## CSP no frontend da Vercel — pendente
 
-## Cabeçalhos de segurança do frontend (Vercel)
+O backend emite CSP restritiva em produção. O frontend servido pela Vercel não
+tem `vercel.json` com `Content-Security-Policy`. O token JWT fica em
+`localStorage`, o que torna uma CSP útil como defesa em profundidade contra XSS.
 
-A API envia CSP restritiva (`default-src 'none'`), HSTS, `nosniff` e `X-Frame-Options`; CORS libera só `CORS_ORIGINS`, métodos e cabeçalhos usados, sem credenciais. O frontend servido pela Vercel não tem `vercel.json` nem CSP/cabeçalhos próprios. Definir uma CSP exige mapear fontes, estilos inline do Tailwind/Vite e a URL da API e testar em navegador; fica pendente para não quebrar a interface em produção. O token JWT continua em `localStorage`, o que torna uma CSP útil contra XSS.
+Implementar exige mapear todas as origens (fontes, estilos inline do
+Tailwind/Vite, URL da API) e testar em navegador para não quebrar a interface.
+Fica pendente para a próxima iteração de segurança.
+
+## Falhas silenciosas de carga em alguns módulos
+
+`App.jsx` exibe a faixa global de aviso quando `cargaFalhas.js` registra uma
+falha de hidratação. Os módulos `hydrateCaderno`, `hydrateSimulados` e
+`hydrateSettings` reportam por essa via. Os módulos de cronograma, última
+atividade e conversas **não reportam** falhas individuais — o usuário não recebe
+aviso caso esses dados não carreguem.
+
+## Múltiplas abas simultâneas no Plano
+
+A fila de escritas de `planoPersistence.js` garante serialização dentro de uma
+aba. Em duas abas abertas ao mesmo tempo, a segunda pode sobrescrever o estado
+salvo pela primeira se ambas fizerem PUT concorrentes. A solução completa
+exigiria versionamento ou ETag no backend.
+
+## Deduplicação do Caderno por enunciado ignora itens dominados
+
+Ao salvar o resultado de um Simulado, o backend inclui no Caderno somente
+questões erradas ainda não presentes, comparando pelo enunciado. Itens já
+marcados como "dominado" são considerados presentes e não são reinseridos —
+o que significa que uma questão errada de novo em "dominado" não retorna ao
+estado "aberto". É um comportamento intencional simplificado; pode ser revisado
+se necessário.
