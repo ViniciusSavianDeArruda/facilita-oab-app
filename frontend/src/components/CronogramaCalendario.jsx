@@ -14,6 +14,7 @@ import {
   retryPersistenciaPlano,
   subscribeCrono,
 } from "../lib/cronograma";
+import { dataCivilHoje } from "../lib/dataCivil";
 import { diasAteProva, loadSettings } from "../lib/settings";
 import { listarSimulados, subscribeSimulados } from "../lib/simulados";
 import { agruparItens, destinoPorTipo } from "../utils/cronogramaHelpers";
@@ -143,7 +144,7 @@ export default function CronogramaCalendario({ onBack, onGoto }) {
   const settings = loadSettings();
   const diasProva = diasAteProva(settings.dataProva);
 
-  const hojeStr = new Date().toISOString().slice(0, 10);
+  const hojeStr = dataCivilHoje();
   const [mesAtual, setMesAtual] = useState(() => mesDaData(hojeStr));
   const [diaSelecionado, setDiaSelecionado] = useState(null);
 

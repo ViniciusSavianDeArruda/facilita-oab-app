@@ -8,6 +8,7 @@
  */
 
 import { authFetchJson } from "./api";
+import { dataCivilHoje, diasEntre } from "./dataCivil";
 
 const DEFAULT = { nome: "", dataProva: null };
 
@@ -58,11 +59,7 @@ export function subscribeSettings(cb) {
 // Utility: dias restantes até a prova
 export function diasAteProva(dataProvaStr) {
   if (!dataProvaStr) return null;
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  const prova = new Date(dataProvaStr + "T00:00:00");
-  const ms = prova - hoje;
-  return Math.ceil(ms / (1000 * 60 * 60 * 24));
+  return diasEntre(dataCivilHoje(), dataProvaStr);
 }
 
 // Utility: saudação por horário
