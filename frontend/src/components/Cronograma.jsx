@@ -17,17 +17,16 @@ import {
   retryPersistenciaPlano,
   subscribeCrono,
 } from "../lib/cronograma";
+import { diaDaSemana, diasEntre, somarDias } from "../lib/dataCivil";
 import { loadSettings } from "../lib/settings";
 import { agruparItens, destinoPorTipo } from "../utils/cronogramaHelpers";
 import PlanoPersistenceNotice from "./PlanoPersistenceNotice";
 
 // Fim da semana corrente (semana começa segunda, termina domingo).
 function finalDaSemana(dataStr) {
-  const d = new Date(dataStr + "T00:00:00");
-  const diaSemana = d.getDay(); // 0=Dom, 1=Seg, ..., 6=Sáb
+  const diaSemana = diaDaSemana(dataStr); // 0=Dom, 1=Seg, ..., 6=Sáb
   const diasAteDomingo = diaSemana === 0 ? 0 : 7 - diaSemana;
-  d.setDate(d.getDate() + diasAteDomingo);
-  return d.toISOString().slice(0, 10);
+  return somarDias(dataStr, diasAteDomingo);
 }
 
 // Soma de minutos -> "1h20" (ou "45 min" se for menos de 1h).
@@ -239,11 +238,7 @@ export default function Cronograma({ onOpenConfig, onGoto }) {
   // (7 dias fechados, seg-dom) — o tamanho varia com o dia da semana atual,
   // em vez de uma janela fixa que sobrava/faltava dependendo do dia.
   const diasRestantesNaSemana = hoje
-    ? Math.round(
-        (new Date(fimDaSemana + "T00:00:00") -
-          new Date(hoje.data + "T00:00:00")) /
-          86400000,
-      ) + 1
+    ? diasEntre(hoje.data, fimDaSemana) + 1
     : 0;
   const janela = proximos7Dias(plano, diasRestantesNaSemana + 7);
   const restoDaSemana = janela.slice(1).filter((d) => d.data <= fimDaSemana);

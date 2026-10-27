@@ -12,6 +12,7 @@ import {
   savePlano,
   subscribeCrono,
 } from "../lib/cronograma";
+import { dataCivilHoje } from "../lib/dataCivil";
 import { diasAteProva, loadSettings, saveSettings } from "../lib/settings";
 import PlanoPersistenceNotice from "./PlanoPersistenceNotice";
 
@@ -54,15 +55,6 @@ function listarMaterias(lista) {
   return `${lista.slice(0, -1).join(", ")} e ${lista[lista.length - 1]}`;
 }
 
-// Data de hoje em ISO no fuso local — `toISOString()` direto usa UTC e, à
-// noite no Brasil, bloquearia o próprio dia de hoje no `min` do input.
-function hojeISO() {
-  const d = new Date();
-  return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, 10);
-}
-
 export default function CronogramaConfig({ onBack, onPlanGerado }) {
   const initial = loadConfig();
   const settingsIniciais = loadSettings();
@@ -79,7 +71,7 @@ export default function CronogramaConfig({ onBack, onPlanGerado }) {
 
   const planoExistente = loadPlano();
   const dias = diasAteProva(dataProva || null);
-  const minData = hojeISO();
+  const minData = dataCivilHoje();
   // Data preenchida mas sem nenhum dia à frente — estado distinto de "sem
   // data", que o painel tratava como a mesma coisa.
   const dataInvalida = dataProva !== "" && dias !== null && dias <= 0;

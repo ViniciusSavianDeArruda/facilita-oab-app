@@ -7,6 +7,7 @@
  */
 
 import { authFetchJson } from "./api";
+import { dataCivilHoje, diaDaSemana, diasEntre, somarDias } from "./dataCivil";
 import { MATERIAS_CRONO, PESO_FGV } from "./materias";
 import { createPlanPersistence } from "./planoPersistence";
 
@@ -165,10 +166,8 @@ const DIAS_ROTATIVO = 180;
  */
 export function gerarPlano(dataProvaStr, config) {
   if (!dataProvaStr) return gerarPlanoRotativo(config);
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  const prova = new Date(dataProvaStr + "T00:00:00");
-  const diasRestantes = Math.ceil((prova - hoje) / (1000 * 60 * 60 * 24));
+  const hoje = dataCivilHoje();
+  const diasRestantes = diasEntre(hoje, dataProvaStr);
   if (diasRestantes <= 0) return null;
 
   const horasPorDia = Math.max(0.5, config.horasPorDia || 2);
@@ -229,9 +228,7 @@ export function gerarPlano(dataProvaStr, config) {
   const dias = [];
   let idxMateria = 0;
   for (let d = 0; d < diasRestantes; d++) {
-    const data = new Date(hoje);
-    data.setDate(data.getDate() + d);
-    const dataStr = data.toISOString().slice(0, 10);
+    const dataStr = somarDias(hoje, d);
 
     // A cada 4 dias, é simulado
     const isSimuladoDay = (d + 1) % 4 === 0;
@@ -282,8 +279,7 @@ export function gerarPlano(dataProvaStr, config) {
  * segunda volta menor, dando o dobro de frequência a elas.
  */
 function gerarPlanoRotativo(config) {
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
+  const hoje = dataCivilHoje();
 
   const horasPorDia = Math.max(0.5, config.horasPorDia || 2);
   const fracas = Array.from(config.materiasFracas || []);
@@ -292,9 +288,7 @@ function gerarPlanoRotativo(config) {
 
   const dias = [];
   for (let d = 0; d < DIAS_ROTATIVO; d++) {
-    const data = new Date(hoje);
-    data.setDate(data.getDate() + d);
-    const dataStr = data.toISOString().slice(0, 10);
+    const dataStr = somarDias(hoje, d);
 
     const materia = filaMaterias[d % filaMaterias.length];
     const totalMin = Math.round(horasPorDia * 60);
@@ -327,7 +321,7 @@ function gerarPlanoRotativo(config) {
 export function planoEstaValido(plano, dataProvaAtual) {
   if (!plano || !plano.dias || plano.dias.length === 0) return false;
   if (plano.dataProva !== dataProvaAtual) return false;
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = dataCivilHoje();
   // Plano ainda tem dias futuros ou de hoje — continua válido
   const ultimoDia = plano.dias[plano.dias.length - 1]?.data;
   return ultimoDia >= hoje;
@@ -335,13 +329,13 @@ export function planoEstaValido(plano, dataProvaAtual) {
 
 export function planoDeHoje(plano) {
   if (!plano) return null;
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = dataCivilHoje();
   return plano.dias.find((d) => d.data === hoje) || null;
 }
 
 export function proximos7Dias(plano, qtd = 7) {
   if (!plano) return [];
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = dataCivilHoje();
   return plano.dias.filter((d) => d.data >= hoje).slice(0, qtd);
 }
 
@@ -394,7 +388,7 @@ export function marcarItensConcluidos(dataDia, indices, concluido) {
 export async function recompactarPlano() {
   const plano = loadPlano();
   if (!plano) return;
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = dataCivilHoje();
   const novoPlano = {
     ...plano,
     dias: plano.dias.map((d) => ({
@@ -450,10 +444,7 @@ export function itemDescricao(item) {
 }
 
 export function nomeDiaSemana(dataStr, hoje = null) {
-  const d = new Date(dataStr + "T00:00:00");
-  const h = hoje ? new Date(hoje + "T00:00:00") : new Date();
-  h.setHours(0, 0, 0, 0);
-  const diff = Math.round((d - h) / (1000 * 60 * 60 * 24));
+  const diff = diasEntre(hoje || dataCivilHoje(), dataStr);
   if (diff === 0) return "Hoje";
   if (diff === 1) return "Amanhã";
   const nomes = [
@@ -465,5 +456,5 @@ export function nomeDiaSemana(dataStr, hoje = null) {
     "Sexta",
     "Sábado",
   ];
-  return nomes[d.getDay()];
+  return nomes[diaDaSemana(dataStr)];
 }
