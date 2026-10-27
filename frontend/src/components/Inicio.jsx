@@ -14,6 +14,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import { authFetchJson } from "../lib/api";
+import { formatarDuracao } from "../lib/format";
 import {
   listar as listarCaderno,
   subscribe as subscribeCaderno,
@@ -1420,13 +1421,4 @@ function formatarDataCurta(d) {
     "DEZEMBRO",
   ];
   return `${dias[d.getDay()]}, ${d.getDate()} DE ${meses[d.getMonth()]}`;
-}
-
-// Soma de minutos -> "1h20" (ou "45 min" se for menos de 1h).
-function formatarDuracao(totalMinutos) {
-  const h = Math.floor(totalMinutos / 60);
-  const min = totalMinutos % 60;
-  if (h === 0) return `${min} min`;
-  if (min === 0) return `${h}h`;
-  return `${h}h${String(min).padStart(2, "0")}`;
 }
