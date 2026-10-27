@@ -12,6 +12,10 @@ funcionalidades em produção.
 
 ## Fontes de referência
 
+- Início de novas sessões: consulte primeiro `docs/CURRENT_STATE.md`; use o
+  contexto completo apenas quando precisar recuperar histórico ou decisões
+  antigas.
+
 - README.md: visão geral, setup e deploy.
 - .claude/docs/workflow.md: processo detalhado de desenvolvimento e validação.
 - .claude/docs/data-models.md: contratos e modelos consumidos pelo frontend.

@@ -11,6 +11,9 @@ single-user, com autenticação privada, usado em contexto real de estudo.
 
 ## Referências oficiais
 
+- Início de novas sessões: leia `docs/CURRENT_STATE.md`; consulte o contexto
+  completo apenas para histórico ou decisões antigas.
+
 - Visão geral, setup e deploy: README.md
 - Fluxo de desenvolvimento: .claude/docs/workflow.md
 - Contratos e modelos relevantes ao frontend: .claude/docs/data-models.md
