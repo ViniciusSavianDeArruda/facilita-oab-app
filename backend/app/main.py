@@ -10,20 +10,25 @@ from slowapi.errors import RateLimitExceeded
 from .rate_limit import limiter
 
 
-# Headers de resposta padrão pra hardening básico (sem HSTS — o Fly.io já
-# aplica na borda — nem CSP, que fica pra depois).
+# Configuracoes globais e acesso ao banco de dados.
+from .config import settings
+from .db import SessionLocal, Perfil
+from .routers import stats, auth, perfil, caderno, cronograma, simulado, chat
+
+
+# Headers de resposta padrão pra hardening básico. A API só devolve JSON/SSE,
+# então a CSP bloqueia qualquer conteúdo ativo. Em dev as docs interativas
+# (Swagger) carregam scripts externos, por isso ficam sem CSP e sem HSTS.
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 	async def dispatch(self, request: Request, call_next):
 		response = await call_next(request)
 		response.headers["X-Content-Type-Options"] = "nosniff"
 		response.headers["X-Frame-Options"] = "DENY"
 		response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+		if settings.ENV != "dev":
+			response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
+			response.headers["Strict-Transport-Security"] = "max-age=31536000"
 		return response
-
-# Configuracoes globais e acesso ao banco de dados.
-from .config import settings
-from .db import SessionLocal, Perfil
-from .routers import stats, auth, perfil, caderno, cronograma, simulado, chat
 
 
 # Lifecycle da aplicacao: aplica migrations e prepara dados basicos na subida.
@@ -82,9 +87,9 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(
 	CORSMiddleware,
 	allow_origins=settings.cors_origins_list,
-	allow_credentials=True,
-	allow_methods=["*"],
-	allow_headers=["*"],
+	allow_credentials=False,
+	allow_methods=["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"],
+	allow_headers=["Authorization", "Content-Type", "X-Tz-Offset-Minutes"],
 )
 
 app.add_middleware(SecurityHeadersMiddleware)
