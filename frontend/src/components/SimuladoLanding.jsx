@@ -1,35 +1,82 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { gerarSimulado } from "../lib/api";
 import { mensagemErroAmigavel } from "../lib/erros";
 import { MATERIAS_SIMULADO } from "../lib/materias";
+
+// Uma geração por vez, mesmo que o usuário saia da tela e volte: evita novas
+// chamadas ao Gemini (cota de 30/h) e permite reaproveitar o simulado pronto.
+let geracaoPendente = null;
+
+function obterGeracao(params) {
+  if (!geracaoPendente) {
+    const geracao = gerarSimulado(params);
+    geracaoPendente = geracao;
+    geracao.catch(() => {
+      if (geracaoPendente === geracao) geracaoPendente = null;
+    });
+  }
+  return geracaoPendente;
+}
 
 export default function SimuladoLanding({
   onStart,
 }) {
   const [modo, setModo] = useState("rapido");
   const [materia, setMateria] = useState(MATERIAS_SIMULADO[0]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(() => geracaoPendente !== null);
   const [error, setError] = useState(null);
   const iniciandoRef = useRef(false);
+  const onStartRef = useRef(onStart);
+  const montadoRef = useRef(false);
+  useEffect(() => {
+    onStartRef.current = onStart;
+  });
 
-  async function iniciar() {
-    if (iniciandoRef.current) return;
+  // Só a instância montada consome o resultado; sair da tela não o descarta.
+  function concluir(geracao, sim) {
+    if (!montadoRef.current || geracaoPendente !== geracao) return;
+    geracaoPendente = null;
+    onStartRef.current(sim);
+  }
+
+  function falhar(e) {
+    if (!montadoRef.current) return;
+    setError(mensagemErroAmigavel(e));
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    montadoRef.current = true;
+    const geracao = geracaoPendente;
+    if (geracao) {
+      geracao.then(
+        (sim) => concluir(geracao, sim),
+        (e) => falhar(e),
+      );
+    }
+    return () => {
+      montadoRef.current = false;
+    };
+  }, []);
+
+  function iniciar() {
+    if (iniciandoRef.current || geracaoPendente) return;
 
     iniciandoRef.current = true;
     setLoading(true);
     setError(null);
-    try {
-      const sim = await gerarSimulado({
-        modo,
-        materia: modo === "materia" ? materia : null,
+    const geracao = obterGeracao({
+      modo,
+      materia: modo === "materia" ? materia : null,
+    });
+    geracao
+      .then(
+        (sim) => concluir(geracao, sim),
+        (e) => falhar(e),
+      )
+      .finally(() => {
+        iniciandoRef.current = false;
       });
-      onStart(sim);
-    } catch (e) {
-      setError(mensagemErroAmigavel(e));
-      setLoading(false);
-    } finally {
-      iniciandoRef.current = false;
-    }
   }
 
   if (loading) {

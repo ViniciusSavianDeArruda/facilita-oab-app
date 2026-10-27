@@ -18,6 +18,8 @@ import { isAuthenticated, subscribeAuth } from './lib/authClient'
 import { hydrateSettings } from './lib/settings'
 import { hydrateCronogramaConfig, hydrateCronogramaPlano } from './lib/cronograma'
 import { hydrateSimulados } from './lib/simulados'
+import { temFalhasDeCarga } from './lib/cargaFalhas'
+import { lerSimuladoSalvo } from './lib/simuladoSessao'
 import { hydrateLastActivity } from './lib/lastActivity'
 import { hasLegacyData, importLegacyData, dismissLegacyImport } from './lib/importLegacy'
 
@@ -30,9 +32,11 @@ const HIDE_BOTTOM_NAV_ON = ['simulado-run', 'settings', 'cronograma-config']
 export default function App() {
   const [authStatus, setAuthStatus] = useState(isAuthenticated() ? 'hydrating' : 'unauthenticated')
   const [showImportPrompt, setShowImportPrompt] = useState(false)
+  const [falhaCarga, setFalhaCarga] = useState(false)
+  const [recarregando, setRecarregando] = useState(false)
 
-  const [view, setView] = useState('inicio')
-  const [simulado, setSimulado] = useState(null)
+  const [simulado, setSimulado] = useState(() => lerSimuladoSalvo())
+  const [view, setView] = useState(() => (simulado ? 'simulado-run' : 'inicio'))
   const [result, setResult] = useState(null)
   const [prefillChat, setPrefillChat] = useState(null)
   const [prefillTitle, setPrefillTitle] = useState(null)
@@ -62,6 +66,7 @@ export default function App() {
       hydrateLastActivity(),
     ]).then(() => {
       if (cancelled) return
+      setFalhaCarga(temFalhasDeCarga())
       setAuthStatus('ready')
       if (hasLegacyData()) setShowImportPrompt(true)
     })
@@ -69,6 +74,16 @@ export default function App() {
       cancelled = true
     }
   }, [authStatus])
+
+  async function recarregarDados() {
+    setRecarregando(true)
+    try {
+      await Promise.all([hydrateSettings(), hydrateCaderno(), hydrateSimulados()])
+      setFalhaCarga(temFalhasDeCarga())
+    } finally {
+      setRecarregando(false)
+    }
+  }
 
   function goto(key) {
     // Mapeia chave da bottom nav pra view real
@@ -172,6 +187,22 @@ O gabarito é a **${questao.correta}**: "${correta}"` +
         />
       )}
       <main className="flex-1 min-h-0 flex flex-col">
+        {falhaCarga && (
+          <div
+            role="alert"
+            className="shrink-0 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-alert/30 bg-alert/5 px-4 py-2 text-xs text-alert"
+          >
+            <span>Não foi possível carregar alguns dados. O que aparece pode estar incompleto.</span>
+            <button
+              type="button"
+              onClick={recarregarDados}
+              disabled={recarregando}
+              className="font-medium underline underline-offset-2 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass"
+            >
+              {recarregando ? 'Carregando…' : 'Tentar de novo'}
+            </button>
+          </div>
+        )}
         {view === 'inicio' && (
           <Inicio
             onGoto={goto}
