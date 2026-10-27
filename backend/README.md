@@ -162,10 +162,9 @@ Todas obrigatórias, exceto onde indicado:
 |----------|-----------|---------|
 | `DATABASE_URL` | Connection string PostgreSQL | `postgresql+psycopg2://user:pass@host:5432/db` |
 | `GEMINI_API_KEY` | Chave da API Google Gemini | `AIza...` |
-| `JWT_SECRET` | Chave para assinar JWT | Gerar com `secrets.token_hex(32)` |
-| `APP_PASSWORD` | Senha única do app | String forte |
+| `JWT_SECRET` | Chave para assinar JWT (mín. 32 caracteres; fora de dev/test o app não sobe com segredo fraco) | Gerar com `secrets.token_hex(32)` |
+| `APP_PASSWORD` | Senha única do app | String forte (mín. 8 caracteres) |
 | `CORS_ORIGINS` | Domínios permitidos no CORS | `https://facilita-oab.vercel.app` |
-| `ENV` | Ambiente (opcional) | `production` ou vazio pra dev |
 | `GEMINI_MODEL` | Modelo do Gemini usado | Opcional, default `gemini-3.5-flash` |
 | `GEMINI_MODEL_FALLBACK` | Modelo usado se o principal ficar indisponível (5xx) | Opcional, default `gemini-3.6-flash` |
 | `ACCESS_TOKEN_EXPIRE_DAYS` | Validade do token JWT em dias | Opcional, default 30 |
