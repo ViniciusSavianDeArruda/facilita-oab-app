@@ -12,7 +12,12 @@ import {
   savePlano,
   subscribeCrono,
 } from "../lib/cronograma";
-import { dataCivilHoje } from "../lib/dataCivil";
+import {
+  dataCivilHoje,
+  DIAS_MAX_ATE_PROVA,
+  situacaoDataProva,
+  somarDias,
+} from "../lib/dataCivil";
 import { diasAteProva, loadSettings, saveSettings } from "../lib/settings";
 import PlanoPersistenceNotice from "./PlanoPersistenceNotice";
 
@@ -74,7 +79,10 @@ export default function CronogramaConfig({ onBack, onPlanGerado }) {
   const minData = dataCivilHoje();
   // Data preenchida mas sem nenhum dia à frente — estado distinto de "sem
   // data", que o painel tratava como a mesma coisa.
-  const dataInvalida = dataProva !== "" && dias !== null && dias <= 0;
+  const situacao = situacaoDataProva(dataProva);
+  const dataInvalida = situacao !== "sem-data" && situacao !== "ok";
+  const dataDistante = situacao === "distante" || situacao === "invalida";
+  const maxData = somarDias(minData, DIAS_MAX_ATE_PROVA);
   const semData = dataProva === "";
   const limiteAtingido = fracas.size >= LIMITE_FRACAS;
 
@@ -178,6 +186,7 @@ export default function CronogramaConfig({ onBack, onPlanGerado }) {
                 id="data-prova"
                 type="date"
                 min={minData}
+                max={maxData}
                 value={dataProva}
                 onChange={(e) => setDataProva(e.target.value)}
                 aria-invalid={dataInvalida || undefined}
@@ -196,8 +205,9 @@ export default function CronogramaConfig({ onBack, onPlanGerado }) {
                   role="alert"
                   className="mt-2 text-xs text-alert"
                 >
-                  Escolha uma data futura — o plano precisa de pelo menos um dia
-                  à frente.
+                  {dataDistante
+                    ? `Escolha uma data em até ${DIAS_MAX_ATE_PROVA} dias (cerca de 2 anos).`
+                    : "Escolha uma data futura — o plano precisa de pelo menos um dia à frente."}
                 </p>
               )}
               <p id="data-prova-ajuda" className="text-xs text-cream-600 mt-2">
@@ -334,7 +344,7 @@ export default function CronogramaConfig({ onBack, onPlanGerado }) {
               {semData
                 ? `${formatarHoras(horasPorDia)}/dia · sem data definida`
                 : dataInvalida
-                  ? `${formatarHoras(horasPorDia)}/dia · data no passado`
+                  ? `${formatarHoras(horasPorDia)}/dia · ${dataDistante ? "data distante demais" : "data no passado"}`
                   : `${formatarHoras(horasPorDia)}/dia por ${dias} ${dias === 1 ? "dia" : "dias"}`}
             </h3>
 
@@ -353,7 +363,11 @@ export default function CronogramaConfig({ onBack, onPlanGerado }) {
                 {semData ? (
                   "Rodízio contínuo — sem data de fim"
                 ) : dataInvalida ? (
-                  "Escolha uma data futura para ver o total"
+                  dataDistante ? (
+                    "Escolha uma data mais próxima para ver o total"
+                  ) : (
+                    "Escolha uma data futura para ver o total"
+                  )
                 ) : (
                   <>
                     <span className="text-cream-50 font-medium">

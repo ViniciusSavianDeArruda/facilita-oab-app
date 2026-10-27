@@ -18,6 +18,7 @@ import {
   subscribeCrono,
 } from "../lib/cronograma";
 import { diaDaSemana, diasEntre, somarDias } from "../lib/dataCivil";
+import { formatarDuracao } from "../lib/format";
 import { loadSettings } from "../lib/settings";
 import { agruparItens, destinoPorTipo } from "../utils/cronogramaHelpers";
 import PlanoPersistenceNotice from "./PlanoPersistenceNotice";
@@ -27,15 +28,6 @@ function finalDaSemana(dataStr) {
   const diaSemana = diaDaSemana(dataStr); // 0=Dom, 1=Seg, ..., 6=Sáb
   const diasAteDomingo = diaSemana === 0 ? 0 : 7 - diaSemana;
   return somarDias(dataStr, diasAteDomingo);
-}
-
-// Soma de minutos -> "1h20" (ou "45 min" se for menos de 1h).
-function formatarDuracao(totalMinutos) {
-  const h = Math.floor(totalMinutos / 60);
-  const min = totalMinutos % 60;
-  if (h === 0) return `${min} min`;
-  if (min === 0) return `${h}h`;
-  return `${h}h${String(min).padStart(2, "0")}`;
 }
 
 const DIAS_ABREVIADOS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];

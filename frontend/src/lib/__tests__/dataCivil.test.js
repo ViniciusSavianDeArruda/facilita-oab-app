@@ -6,7 +6,7 @@ import {
   diaDaSemana,
   diasEntre,
   somarDias,
-} from "./dataCivil.js";
+} from "../dataCivil.js";
 
 test("26/10/2026 22:30 em São Paulo (UTC 01:30 do dia 27) ainda é dia 26", () => {
   assert.equal(dataCivilHoje(new Date("2026-10-27T01:30:00Z")), "2026-10-26");

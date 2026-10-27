@@ -7,7 +7,13 @@
  */
 
 import { authFetchJson } from "./api";
-import { dataCivilHoje, diaDaSemana, diasEntre, somarDias } from "./dataCivil";
+import {
+  dataCivilHoje,
+  diaDaSemana,
+  diasEntre,
+  situacaoDataProva,
+  somarDias,
+} from "./dataCivil";
 import { MATERIAS_CRONO, PESO_FGV } from "./materias";
 import { createPlanPersistence } from "./planoPersistence";
 
@@ -167,8 +173,8 @@ const DIAS_ROTATIVO = 180;
 export function gerarPlano(dataProvaStr, config) {
   if (!dataProvaStr) return gerarPlanoRotativo(config);
   const hoje = dataCivilHoje();
+  if (situacaoDataProva(dataProvaStr, hoje) !== "ok") return null;
   const diasRestantes = diasEntre(hoje, dataProvaStr);
-  if (diasRestantes <= 0) return null;
 
   const horasPorDia = Math.max(0.5, config.horasPorDia || 2);
   const fracas = new Set(config.materiasFracas || []);

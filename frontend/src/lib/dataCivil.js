@@ -34,6 +34,20 @@ export function diasEntre(de, ate) {
   return Math.round((paraUtc(ate) - paraUtc(de)) / MS_DIA);
 }
 
+// Teto de dias até a prova: o plano gera um item por dia, então datas absurdas
+// (o input aceita anos de 6 dígitos) travariam a aba.
+export const DIAS_MAX_ATE_PROVA = 730;
+
+/** "sem-data" | "ok" | "passada" | "distante" | "invalida" */
+export function situacaoDataProva(dataStr, hoje = dataCivilHoje()) {
+  if (!dataStr) return "sem-data";
+  const dias = diasEntre(hoje, dataStr);
+  if (Number.isNaN(dias)) return "invalida";
+  if (dias <= 0) return "passada";
+  if (dias > DIAS_MAX_ATE_PROVA) return "distante";
+  return "ok";
+}
+
 export function diaDaSemana(dataStr) {
   return new Date(paraUtc(dataStr)).getUTCDay();
 }
