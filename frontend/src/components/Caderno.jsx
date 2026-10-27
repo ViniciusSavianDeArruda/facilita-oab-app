@@ -7,9 +7,10 @@ import {
   PencilSquareIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { reduzirAviso } from "../lib/avisoCaderno";
 import {
   atualizarAnotacao,
   atualizarStatus,
@@ -17,6 +18,7 @@ import {
   remover,
   subscribe,
 } from "../lib/caderno";
+import { cx } from "../lib/format";
 
 const STATUS_LABELS = {
   aberto: "Aberto",
@@ -47,9 +49,6 @@ const MARKDOWN_COMPONENTS = {
     );
   },
 };
-function cx(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
 function stripMarkdown(text) {
   return (text || "")
     .replace(/[*_`#>]+/g, "")
@@ -75,6 +74,7 @@ export default function Caderno({ onDiscussWithMentor }) {
   const [comAnotacao, setComAnotacao] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [mobileReading, setMobileReading] = useState(false);
+  const [aviso, dispatchAviso] = useReducer(reduzirAviso, null);
   const rootRef = useRef(null);
   const panelRef = useRef(null);
   const listScrollTopRef = useRef(0);
@@ -84,6 +84,7 @@ export default function Caderno({ onDiscussWithMentor }) {
   useEffect(
     () =>
       subscribe(() => {
+        dispatchAviso("limpar");
         const nextItems = listar();
         setItems(nextItems);
         setSelectedId((currentId) =>
@@ -141,6 +142,7 @@ export default function Caderno({ onDiscussWithMentor }) {
       );
   }
   function escolherStatus(status) {
+    dispatchAviso("filtrar");
     setFiltroStatus(status);
     if (
       selected &&
@@ -149,6 +151,7 @@ export default function Caderno({ onDiscussWithMentor }) {
       setSelectedId(null);
   }
   function escolherMateria(materia) {
+    dispatchAviso("filtrar");
     setFiltroMateria(materia);
     if (
       selected &&
@@ -157,6 +160,7 @@ export default function Caderno({ onDiscussWithMentor }) {
       setSelectedId(null);
   }
   function alternarAnotacao() {
+    dispatchAviso("filtrar");
     const next = !comAnotacao;
     setComAnotacao(next);
     if (
@@ -189,6 +193,7 @@ export default function Caderno({ onDiscussWithMentor }) {
     listButtonRefs.current.get(target.id)?.scrollIntoView({ block: "nearest" });
   }
   function selectItem(id) {
+    dispatchAviso("selecionar");
     if (selectedId === id) return closeReading();
     listScrollTopRef.current = rootRef.current?.scrollTop || 0;
     setSelectedId(id);
@@ -309,6 +314,14 @@ export default function Caderno({ onDiscussWithMentor }) {
         </div>
       </header>
 
+      {aviso && (
+        <div className="shrink-0 px-4 pt-4 sm:px-6 lg:mx-auto lg:w-full lg:max-w-[1400px] lg:px-6 lg:pb-0 lg:pt-4 xl:px-10">
+          <p role="alert" className="text-sm text-alert">
+            {aviso}
+          </p>
+        </div>
+      )}
+
       <div
         className="shrink-0 lg:mx-auto lg:grid lg:min-h-0 lg:w-full lg:max-w-[1400px] lg:flex-1 lg:grid-cols-[minmax(15rem,0.34fr)_minmax(0,0.66fr)] lg:gap-5 lg:px-6 lg:py-4 xl:grid-cols-[minmax(18rem,0.32fr)_minmax(0,0.68fr)] xl:px-10"
         onClick={(event) => {
@@ -366,6 +379,7 @@ export default function Caderno({ onDiscussWithMentor }) {
                 key={selected.id}
                 item={selected}
                 onClose={closeReading}
+                onRemocaoFalhou={() => dispatchAviso("remocao-falhou")}
                 onDiscussWithMentor={onDiscussWithMentor}
                 position={selectedIndex + 1}
                 total={filtered.length}
@@ -619,6 +633,7 @@ const NAV_BUTTON =
 function ReadingPanel({
   item,
   onClose,
+  onRemocaoFalhou,
   onDiscussWithMentor,
   position = 0,
   total = 0,
@@ -626,15 +641,32 @@ function ReadingPanel({
   onNext,
 }) {
   const [savedFlash, setSavedFlash] = useState(false);
+  const [erro, setErro] = useState("");
   const isSimulation = item.origin === "simulado";
   const hasCompleteQuestion = Boolean(item.questao?.enunciado);
-  function salvarAnotacao(event) {
-    atualizarAnotacao(item.id, event.currentTarget.value);
-    setSavedFlash(true);
-    setTimeout(() => setSavedFlash(false), 1500);
+  async function salvarAnotacao(event) {
+    const texto = event.currentTarget.value;
+    if (texto === (item.anotacao ?? "")) return;
+    setErro("");
+    if (await atualizarAnotacao(item.id, texto)) {
+      setSavedFlash(true);
+      setTimeout(() => setSavedFlash(false), 1500);
+    } else {
+      setErro(
+        "Não foi possível salvar a anotação. Clique fora do campo para tentar de novo.",
+      );
+    }
   }
-  function deletarItem() {
-    if (confirm("Remover este item do caderno?")) remover(item.id);
+  async function mudarStatus(status) {
+    setErro("");
+    if (!(await atualizarStatus(item.id, status))) {
+      setErro("Não foi possível alterar o status. Tente novamente.");
+    }
+  }
+  async function deletarItem() {
+    if (!confirm("Remover este item do caderno?")) return;
+    setErro("");
+    if (!(await remover(item.id))) onRemocaoFalhou();
   }
   function discutir() {
     if (isSimulation) {
@@ -749,6 +781,11 @@ function ReadingPanel({
           </label>
           {savedFlash && <span className="text-[11px] text-brass">salvo</span>}
         </div>
+        {erro && (
+          <p role="alert" className="mb-2 text-xs text-alert">
+            {erro}
+          </p>
+        )}
         <textarea
           key={item.anotacao ?? ""}
           id={"anotacao-" + item.id}
@@ -768,7 +805,7 @@ function ReadingPanel({
             <button
               type="button"
               key={status}
-              onClick={() => atualizarStatus(item.id, status)}
+              onClick={() => mudarStatus(status)}
               aria-pressed={item.status === status}
               className={cx(
                 "inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass",

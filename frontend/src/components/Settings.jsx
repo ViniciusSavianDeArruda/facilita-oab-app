@@ -6,11 +6,21 @@ export default function Settings({ onBack }) {
   const initial = loadSettings();
   const [nome, setNome] = useState(initial.nome);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [erro, setErro] = useState("");
 
-  function handleSave() {
-    saveSettings({ nome: nome.trim() });
-    setSaved(true);
-    setTimeout(() => onBack(), 500);
+  async function handleSave() {
+    setSaving(true);
+    setErro("");
+    try {
+      await saveSettings({ nome: nome.trim() }, { throwOnError: true });
+      setSaved(true);
+      setTimeout(() => onBack(), 500);
+    } catch {
+      setErro("Não foi possível salvar. Verifique a conexão e tente de novo.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -51,12 +61,18 @@ export default function Settings({ onBack }) {
           </div>
         </div>
 
+        {erro && (
+          <p role="alert" className="mt-6 text-xs text-alert">
+            {erro}
+          </p>
+        )}
+
         <button
           onClick={handleSave}
-          disabled={saved}
+          disabled={saved || saving}
           className="w-full mt-10 bg-brass hover:bg-brass-hover disabled:bg-brass-dim text-ink-950 font-medium py-3 rounded-xl transition-colors"
         >
-          {saved ? "Salvo ✓" : "Salvar"}
+          {saved ? "Salvo ✓" : saving ? "Salvando…" : "Salvar"}
         </button>
 
         <button
