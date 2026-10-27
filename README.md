@@ -1,173 +1,122 @@
 # Facilita OAB
 
-Companion de estudo pra 1ª fase do Exame da OAB, com mentor jurídico via IA, simulados inéditos, caderno de erros unificado e cronograma automático distribuído por peso FGV.
+Companion de estudos para a primeira fase do Exame da OAB, com mentor jurídico
+via IA, simulados inéditos gerados pelo Gemini, caderno de erros unificado e
+cronograma automático distribuído por peso FGV.
 
-> **Projeto pessoal** desenvolvido pra apoiar preparação real pra prova da OAB. App single-user com autenticação privada.
+> **Projeto pessoal** desenvolvido para apoiar preparação real para a prova da
+> OAB. App single-user com autenticação privada.
 
 ## Motivação
 
-Vi a oportunidade de aplicar boas práticas de engenharia num contexto real e útil: um companion de estudos personalizado, com mentor jurídico afinado no estilo FGV, gerador de simulados inéditos e organização automatizada de erros. Todas as decisões arquiteturais foram tomadas priorizando manutenibilidade, segurança e custo zero de operação.
+Aplicar boas práticas de engenharia em um contexto real e útil: um companion de
+estudos personalizado, com mentor jurídico especializado no estilo FGV, gerador
+de simulados inéditos e organização automatizada de erros. As decisões
+arquiteturais priorizam manutenibilidade, segurança e custo operacional próximo
+de zero.
 
-## Screenshots
+## Funcionalidades
 
-*(em breve)*
-
-<!--
-Depois de tirar as screenshots, descomente esse bloco:
-
-### Login
-![Login](docs/screenshots/login.png)
-
-### Chat com mentor
-![Chat](docs/screenshots/chat.png)
-
-### Simulados
-![Simulado](docs/screenshots/simulado.png)
-
-### Caderno de erros
-![Caderno](docs/screenshots/caderno.png)
-
-### Cronograma
-![Cronograma](docs/screenshots/cronograma.png)
-
-### Estatísticas
-![Stats](docs/screenshots/stats.png)
--->
+- **Mentor Jurídico** — streaming SSE em tempo real, histórico de conversas,
+  cancelamento, retry e integração com o Caderno de Erros
+- **Simulados** — 10 questões inéditas via structured output do Gemini, modo
+  rápido (matérias variadas) ou focado por matéria; recuperação automática de
+  sessão após atualizar a página; feedback explícito de salvamento com retry
+- **Caderno de Erros** — alimentado por Simulados e Chat; status por item
+  (aberto → revisando → dominado), anotações com salvamento automático,
+  rollback otimista e aviso de falha visível
+- **Plano de Estudos** — cronograma adaptável com data de prova, distribuição
+  por peso FGV, serialização de escritas e feedback de falhas de sincronização
+- **Estatísticas** — evolução das notas ao longo do tempo, acerto por matéria,
+  sequência de dias estudando, indicador de evolução e funil do Caderno
+- **Home** — visão diária com streak, último simulado, atividade recente e
+  atalhos para as áreas principais
 
 ## Stack
 
 **Frontend**
-- React 18 + Vite + Tailwind CSS
-- Heroicons + react-markdown
+- React 18 + Vite 6 + Tailwind CSS 3
+- Heroicons + react-markdown (GFM)
+- Design System editorial: Fraunces (títulos) + Manrope (interface)
 - Deploy: Vercel
 
 **Backend**
-- FastAPI + SQLAlchemy 2 + Alembic
+- Python 3.12 + FastAPI + SQLAlchemy 2 + Alembic
 - 7 routers organizados por domínio
 - Rate limiting com slowapi
-- Streaming SSE pro chat
+- Streaming SSE para o chat
 - Deploy: Render
 
-**Banco**
-- PostgreSQL (Neon em produção, Docker local em dev)
-- Migrations versionadas com Alembic
+**Banco de dados**
+- PostgreSQL (Neon em produção; Docker local em desenvolvimento)
+- Migrations versionadas com Alembic, executadas automaticamente no startup
 
 **IA**
-- Google Gemini (`gemini-3.5-flash`, com fallback pra `gemini-3.6-flash` se indisponível)
-- Structured output pra geração de simulados
+- Google Gemini (`gemini-3.5-flash`, com fallback para `gemini-3.6-flash`)
+- Structured output para geração de simulados (schema Pydantic + JSON)
 
 **CI/CD**
-- GitHub Actions (valida build de backend e frontend a cada push)
+- GitHub Actions: lint, testes automatizados e build a cada push
 
-**Monitoring**
-- UptimeRobot (anti cold-start no Render Free)
-
-## Documentação de trabalho
-
-- [Modelos e contratos de integração](.claude/docs/data-models.md)
-- [Design System](.claude/docs/design-system.md)
-- [Fluxo de desenvolvimento](.claude/docs/workflow.md)
-- [Dívida técnica conhecida](.claude/docs/debito-tecnico.md)
-
-
-## Features
-
-- **Chat mentor**: streaming em tempo real, histórico de conversas por sessão, contextualização automática com caderno de erros
-- **Simulados**: 10 questões inéditas via structured output do Gemini, modo rápido (variado) ou focado por matéria, alerta especial de Ética < 50%
-- **Caderno de erros unificado**: chat e simulado alimentam a mesma fonte, status por item (aberto → revisando → dominado), anotações com salvamento automático
-- **Cronograma adaptável**: com data de prova gera plano com reserva ~25% pra simulado/revisão, sem data vira rodízio contínuo pelas 18 matérias
-- **Estatísticas**: nota por simulado ao longo do tempo, acerto por matéria, sequência de dias estudando, funil aberto/revisando/dominado
-
-## Arquitetura
-
-Backend foi refatorado de `main.py` monolítico (1104 linhas) pra routers por domínio (112 linhas — só bootstrap). Cada router tem responsabilidade clara e importa helpers compartilhados.
-
-### Estrutura
+## Estrutura do repositório
 
 ```
-backend/app/
-├── main.py              Bootstrap: config, middleware, lifespan, include_router
-├── config.py            Configuração via pydantic-settings
-├── db.py                Engine + modelos SQLAlchemy
-├── security.py          Verificação de senha, JWT, dependency de auth
-├── auth.py              Serviço de login
-├── ai.py                Cliente Gemini + tradução de erro
-├── schemas.py           Modelos Pydantic
-├── serializers.py       Serialização compartilhada
-├── parsers.py           Parse seguro de datas (422 em vez de 500)
-├── activity.py          Helpers cross-cutting (register_activity)
-├── rate_limit.py        Limiter compartilhado (slowapi)
-├── materias.py          Fonte única de matérias + peso FGV
-├── backup.py            Export/import JSON
-├── routers/
-│   ├── auth.py          POST /auth/login (5/min)
-│   ├── perfil.py        GET/PATCH /me + backup
-│   ├── caderno.py       CRUD do caderno
-│   ├── cronograma.py    Config + plano de estudos
-│   ├── simulado.py      Geração (30/hour) + salvar resultado
-│   ├── chat.py          Conversas + streaming SSE (60/min)
-│   └── stats.py         GET /me/stats
-└── prompts/
-    ├── mentor.md        Persona do mentor jurídico
-    └── simulado.md      Instruções pra gerador de questões
+facilita-oab/
+├── backend/
+│   ├── app/
+│   │   ├── main.py          Bootstrap: middleware, CORS, lifespan, routers
+│   │   ├── config.py        Configuração via pydantic-settings
+│   │   ├── db.py            Engine + modelos SQLAlchemy (ORM)
+│   │   ├── security.py      JWT HS256, validação de senha, dependency de auth
+│   │   ├── schemas.py       Contratos Pydantic com validação de limites
+│   │   ├── ai.py            Cliente Gemini + mapeamento de erros
+│   │   ├── activity.py      Registro de atividade e helpers cross-cutting
+│   │   ├── rate_limit.py    Limiter compartilhado (slowapi)
+│   │   ├── serializers.py   Serialização de datas para ISO UTC
+│   │   ├── parsers.py       Parse seguro de datas (retorna 422 em vez de 500)
+│   │   ├── materias.py      Lista canônica de matérias + pesos FGV
+│   │   ├── backup.py        Export/import JSON
+│   │   ├── routers/
+│   │   │   ├── auth.py      POST /auth/login (5 req/min)
+│   │   │   ├── perfil.py    GET/PATCH /me, backup
+│   │   │   ├── caderno.py   CRUD do Caderno de Erros
+│   │   │   ├── cronograma.py Config + plano de estudos
+│   │   │   ├── simulado.py  Geração (30 req/hora) + salvar resultado
+│   │   │   ├── chat.py      Conversas + streaming SSE (60 req/min)
+│   │   │   └── stats.py     GET /me/stats
+│   │   └── prompts/
+│   │       ├── mentor.md    Persona do Mentor Jurídico
+│   │       └── simulado.md  Instruções para geração de questões
+│   ├── migrations/          Alembic (versionamento de schema)
+│   ├── tests/               Testes Python (unittest)
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx          Shell autenticado e roteador por estado
+│   │   ├── components/      Telas e componentes React
+│   │   └── lib/             Caches, utilitários e contratos do frontend
+│   ├── package.json
+│   └── package-lock.json
+├── docs/
+│   ├── CURRENT_STATE.md     Estado atual para novas sessões do Claude
+│   ├── DECISIONS.md         Decisões arquiteturais
+│   └── continuity/          Registros históricos datados
+├── .claude/
+│   └── docs/                Referências técnicas para o Claude Code
+├── .github/workflows/ci.yml
+├── AGENTS.md
+└── CLAUDE.md
 ```
 
-### Decisões técnicas
-
-- **PostgreSQL (Neon) em vez de SQLite**: Render Free usa
-  containers efêmeros — o disco local é recriado a cada
-  deploy/restart, o que apagaria um banco SQLite. Neon oferece
-  Postgres gerenciado no free tier sem esse risco, mantendo
-  persistência real com custo zero.
-- **SQLAlchemy como ORM**: traduz operações Python pra SQL sem
-  expor queries cruas no código, reduzindo superfície de SQL
-  Injection e tornando o acesso a dados mais legível
-  (`db.query(Caderno).filter_by(status="aberto")` em vez de SQL
-  string concatenado).
-- **Alembic pra migrations**: versiona a estrutura do banco como
-  código. Toda alteração de schema vira um arquivo de migration
-  rastreável no Git, aplicado automaticamente no startup — sem
-  edição manual de tabelas em produção.
-- **Router por domínio, sem camada de service adicional**:
-  adequado ao contexto single-user. Camada de service faria
-  sentido em app multi-user ou multi-consumidor (HTTP + CLI +
-  jobs), o que não é o caso.
-- **JWT com HS256 explícito**: simples pra single-user, sem
-  cadastro/multi-tenant.
-- **Rate limit por IP**: `key_func=get_remote_address`,
-  compartilhado entre routers via `rate_limit.py`.
-- **Streaming SSE com `SessionLocal()` explícito**:
-  `Depends(get_session)` não tem vida garantida após
-  `StreamingResponse` retornar, então o generator abre sessão
-  própria pra persistência pós-streaming.
-- **`parsers.py` centralizado**: `try/except ValueError`
-  retornando 422 estruturado em vez de 500 cru. Aplicado em 6
-  pontos que faziam parse de datas do usuário.
-- **Python no backend**: escolhido pela integração natural com
-  a SDK do Google Gemini e pelo ecossistema maduro de IA — o
-  restante da stack (FastAPI, SQLAlchemy) segue essa escolha
-  inicial.
-
-## Segurança
-
-- **Auth**: `hmac.compare_digest` (timing-safe), rate limit no login (5/min)
-- **Autorização**: 24/24 rotas protegidas testadas em cenários sem token, token inválido, token expirado
-- **SQL Injection**: 100% ORM/parametrizado, zero concatenação em query
-- **XSS**: backend só retorna JSON, sem execução de conteúdo da IA como código
-- **Rate limit**: 5/min login, 60/min chat, 30/hour simulado
-- **CORS**: origem restrita ao domínio do frontend em produção
-- **Headers**: X-Content-Type-Options, X-Frame-Options, Referrer-Policy
-- **Segredos**: env vars separadas por ambiente, `.env` fora do git
-- **/docs**: desabilitado em produção via `ENV=production`
-- **Dependências**: PyJWT pinado em versão sem CVEs conhecidos; Starlette (dependência transitiva do FastAPI) acompanhado via atualização do FastAPI
-
-## Setup local
+## Configuração local
 
 ### Requisitos
 
 - Docker + Docker Compose
-- Node.js 20+ e pnpm
-- Chave grátis do Gemini: https://aistudio.google.com/apikey
+- Node.js 20+ e npm
+- Chave gratuita do Gemini: https://aistudio.google.com/apikey
 
 ### 1. Variáveis de ambiente
 
@@ -178,97 +127,144 @@ cp .env.example .env
 
 Edite `.env`:
 - `GEMINI_API_KEY` — chave do Gemini
-- `APP_PASSWORD` — senha do app
+- `APP_PASSWORD` — senha do app (mínimo 8 caracteres)
 - `JWT_SECRET` — gere com `python -c "import secrets; print(secrets.token_hex(32))"`
 
-### 2. Backend
+### 2. Backend (Docker)
 
 ```bash
 docker compose up -d
 ```
 
-Sobe backend em `http://localhost:8000` e Postgres em `localhost:5433`. Migrations do Alembic rodam sozinhas no startup.
+Sobe o backend em `http://localhost:8000` e Postgres em `localhost:5433`.
+Migrations do Alembic rodam automaticamente no startup.
+
+### Backend sem Docker
+
+```bash
+cd backend
+python -m venv .venv
+.venv/Scripts/activate        # Windows
+# source .venv/bin/activate   # Linux/macOS
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+Nesse caso, ajuste `DATABASE_URL` no `.env` para apontar para um PostgreSQL
+local, ou remova-a para usar SQLite (`sqlite:///facilita.db`).
 
 ### 3. Frontend
 
 ```bash
 cd frontend
-pnpm install
-pnpm dev
+npm install
+npm run dev
 ```
 
-Abre em `http://localhost:5173`. O Vite proxya `/api/*` pro backend automaticamente (não precisa configurar `VITE_API_URL` em dev).
+Abre em `http://localhost:5173`. O Vite faz proxy de `/api/*` para o backend
+em desenvolvimento; `VITE_API_URL` não precisa ser configurada nesse modo.
+
+## Testes
+
+**Backend** (52 testes):
+```bash
+cd backend
+python -m unittest discover -s tests
+```
+
+**Frontend** (43 testes):
+```bash
+cd frontend
+npm test
+```
+
+**Lint e build:**
+```bash
+npm --prefix frontend run lint
+npm --prefix frontend run build
+```
+
+## Arquitetura
+
+### Comunicação frontend ↔ backend
+
+O frontend se comunica com o backend exclusivamente via HTTP/JSON (rotas
+privadas) e SSE (streaming do chat). Todas as rotas privadas exigem
+`Authorization: Bearer <JWT>`. O token JWT é gerado pelo backend no login e
+armazenado em `localStorage` pelo frontend.
+
+### Autenticação
+
+Senha única compartilhada validada com `hmac.compare_digest` (timing-safe).
+JWT HS256 com expiração obrigatória e campo `sub` validado. Tokens sem
+expiração ou sem o `sub` correto são rejeitados com 401.
+
+Em produção, a aplicação valida na inicialização que `JWT_SECRET` tem pelo
+menos 32 caracteres e que `APP_PASSWORD` tem pelo menos 8 — segredos fracos
+ou em branco fazem o backend recusar a inicialização.
+
+### Banco de dados
+
+Os modelos ORM ficam em `backend/app/db.py`. O banco de produção é PostgreSQL
+no Neon. O Render hospeda o backend; o banco não está no Render. SQLite é
+suportado como banco de desenvolvimento (valor padrão configurável via
+`DATABASE_URL`).
+
+### Headers de segurança
+
+O backend aplica um middleware (`SecurityHeadersMiddleware`) que emite
+`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `CSP` e `HSTS`
+em produção. Em desenvolvimento (`ENV=dev`), CSP e HSTS são omitidos para
+permitir o Swagger UI.
 
 ## Deploy em produção
 
-CI/CD: GitHub Actions valida build (backend Python + frontend React) a cada push; Vercel e Render fazem deploy automático em seguida; UptimeRobot mantém o backend ativo (anti cold-start).
+A publicação ocorre via push para `main`:
 
-1. `git push origin main`
-2. GitHub Actions roda `py_compile` do backend e `pnpm build` do frontend (~1 min)
-3. Render detecta push → rebuilda backend → deploy (~3 min)
-4. Vercel detecta push → rebuilda frontend → deploy (~2 min)
-5. UptimeRobot pinga `/health` a cada 5 min pra evitar cold start
+1. GitHub Actions roda lint, testes Python, testes de frontend e build (Ubuntu)
+2. Render detecta o push, rebuilda o backend e faz deploy (~3 min)
+3. Vercel detecta o push, rebuilda o frontend e faz deploy (~2 min)
 
-### Serviços
-
-| Serviço | Provedor
-|---------|----------
-| Frontend | Vercel |
-| Backend | Render |
-| Banco | Neon |
-| Monitor | UptimeRobot
-
-### Env vars em produção
+### Variáveis de ambiente em produção
 
 **Render (backend):**
-- `DATABASE_URL` (Neon com `+psycopg2` e `?sslmode=require`)
+- `DATABASE_URL` — string de conexão PostgreSQL do Neon (com `?sslmode=require`)
 - `GEMINI_API_KEY`
-- `JWT_SECRET` (chave forte, diferente de dev)
-- `APP_PASSWORD`
-- `CORS_ORIGINS` (URL do Vercel, sem barra final)
+- `JWT_SECRET` — mínimo 32 caracteres, diferente do valor de desenvolvimento
+- `APP_PASSWORD` — mínimo 8 caracteres
+- `CORS_ORIGINS` — URL exata do frontend na Vercel, sem barra final
 - `ENV=production`
 
 **Vercel (frontend):**
-- `VITE_API_URL` (URL do backend Render)
+- `VITE_API_URL` — URL do backend no Render
 
-## Persistência e migrations
+### Migrations em produção
 
-Mudanças de schema ou dados viram migration do Alembic — nunca `DROP`/`CREATE` manual. Fluxo:
+As migrations do Alembic rodam automaticamente no startup do Render. Nunca
+altere tabelas manualmente. Para criar uma migration:
 
 ```bash
-docker compose run --name gerar_migration backend alembic revision --autogenerate -m "descrição"
-docker cp gerar_migration:/app/migrations/versions/<arquivo>.py migrations/versions/
-docker rm gerar_migration
+docker compose run --name gen backend alembic revision --autogenerate -m "descricao"
+docker cp gen:/app/migrations/versions/<arquivo>.py migrations/versions/
+docker rm gen
 ```
 
-Migrations rodam sozinhas (`alembic upgrade head`) toda vez que o container sobe (local ou Render).
+## Documentação técnica
+
+- [Estado atual do projeto](docs/CURRENT_STATE.md)
+- [Decisões arquiteturais](docs/DECISIONS.md)
+- [Contratos de API e modelos](`.claude/docs/data-models.md`)
+- [Design System](`.claude/docs/design-system.md`)
+- [Débito técnico e riscos](`.claude/docs/debito-tecnico.md`)
+- [Fluxo de desenvolvimento](`.claude/docs/workflow.md`)
+- [Backend](backend/README.md)
 
 ## Prompts vivos
 
-Comportamento das IAs vem dos `.md` em `backend/app/prompts/`. Iterar qualidade = editar em português, sem tocar em código.
-
-## Trabalho realizado (resumo)
-
-- Migração SQLite → PostgreSQL preservando dados
-- Refactor de `main.py`: 1104 → 112 linhas
-- 7 routers extraídos por domínio + 4 módulos cross-cutting
-- Auditoria de segurança com 27+ checks
-- 3 fixes de segurança aplicados pré-deploy (PyJWT, Starlette, 422 em vez de 500)
-- CI (GitHub Actions) validando build a cada push + deploy automático em Render + Vercel + Neon
-- Monitoring com anti cold-start
-
-## Status do projeto
-
-Em produção e manutenção contínua.
-
-O escopo funcional está relativamente estável. A manutenção continua com atualizações de dependências, correções reativas, melhorias de confiabilidade e refinamentos pontuais de UX, sem adicionar complexidade sem necessidade concreta.
-
-Manutenção ativa contempla:
-
-- Atualizações periódicas de dependências e correções de CVEs
-- Ajustes reativos conforme uso real
-- Refinamentos pontuais de performance e UX
-
+O comportamento do Mentor Jurídico e do gerador de simulados vem dos arquivos
+`backend/app/prompts/mentor.md` e `backend/app/prompts/simulado.md`. Para
+ajustar o estilo ou o tom da IA, edite esses arquivos em português, sem
+necessidade de alterar código.
 
 ## Licença
 
