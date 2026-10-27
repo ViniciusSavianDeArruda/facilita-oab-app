@@ -3,6 +3,8 @@
  */
 
 import { apiUrl } from './api'
+import { mensagemErroLogin } from './loginErrors.js'
+
 
 const TOKEN_KEY = 'facilita-oab-token'
 
@@ -15,15 +17,17 @@ export function isAuthenticated() {
 }
 
 export async function login(password) {
-  const res = await fetch(apiUrl('/auth/login'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ password }),
-  })
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(body.detail || 'Senha incorreta.')
+  let res
+  try {
+    res = await fetch(apiUrl('/auth/login'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    })
+  } catch {
+    throw new Error('Sem conexão com o servidor. Verifique a internet e tente de novo.')
   }
+  if (!res.ok) throw new Error(mensagemErroLogin(res.status))
   const { token } = await res.json()
   localStorage.setItem(TOKEN_KEY, token)
   window.dispatchEvent(new CustomEvent('auth:changed'))

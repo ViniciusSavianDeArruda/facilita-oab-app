@@ -1,10 +1,22 @@
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import AfterValidator, BaseModel, Field
+from typing import Annotated, Literal, Optional
+
+from .materias import MATERIAS_CANONICAS
+
+
+def _materia_conhecida(valor: str | None) -> str | None:
+    # A materia entra no prompt do Gemini: so nomes da lista fechada passam.
+    if valor is not None and valor not in MATERIAS_CANONICAS:
+        raise ValueError("Matéria desconhecida.")
+    return valor
+
+
+MateriaDoPrompt = Annotated[str | None, AfterValidator(_materia_conhecida)]
 
 
 # --- auth ---
 class LoginRequest(BaseModel):
-    password: str
+    password: str = Field(max_length=256)
 
 
 class TokenResponse(BaseModel):
@@ -18,10 +30,10 @@ class Message(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    messages: list[Message]
-    materia: str | None = None
+    messages: list[Message] = Field(max_length=200)
+    materia: MateriaDoPrompt = Field(default=None, max_length=100)
     conversaId: int | None = None
-    tituloConversa: str | None = None
+    tituloConversa: str | None = Field(default=None, max_length=200)
 
 
 class ConversaResumo(BaseModel):
@@ -56,20 +68,20 @@ class AtualizarTituloRequest(BaseModel):
 
 # --- caderno ---
 class CreateNotebookItemFromChat(BaseModel):
-    pergunta: str
-    resposta: str
-    materia: str | None = None
+    pergunta: str = Field(max_length=10_000)
+    resposta: str = Field(max_length=50_000)
+    materia: str | None = Field(default=None, max_length=100)
 
 
 class UpdateNotebookItem(BaseModel):
-    status: str | None = None
+    status: Literal["aberto", "revisando", "dominado"] | None = None
     anotacao: str | None = Field(default=None, max_length=5_000)
 
 
 # --- cronograma ---
 class ConfigScheduleRequest(BaseModel):
     horasPorDia: float
-    materiasFracas: list
+    materiasFracas: list = Field(max_length=50)
 
 
 class ConfigScheduleResponse(BaseModel):
@@ -82,7 +94,7 @@ class SchedulePlanRequest(BaseModel):
     geradoEm: str
     dataProva: str | None = None
     horasPorDia: float
-    dias: list
+    dias: list = Field(max_length=400)
 
 
 class SchedulePlanResponse(BaseModel):
@@ -107,14 +119,14 @@ class ProfileResponse(BaseModel):
 
 
 class UpdateProfileRequest(BaseModel):
-    nome: str | None = None
-    dataProva: str | None = None
+    nome: str | None = Field(default=None, max_length=100)
+    dataProva: str | None = Field(default=None, max_length=32)
 
 
 class LastConversationRequest(BaseModel):
-    pergunta: str
-    resposta: str
-    materia: str | None = None
+    pergunta: str = Field(max_length=10_000)
+    resposta: str = Field(max_length=50_000)
+    materia: str | None = Field(default=None, max_length=100)
 
 
 # --- simulados ---
@@ -147,15 +159,15 @@ class Simulation(BaseModel):
 
 class SimuladoRequest(BaseModel):
     modo: str = Field(pattern="^(rapido|materia)$")
-    materia: str | None = None
+    materia: MateriaDoPrompt = None
 
 
 class CreateSimulationResult(BaseModel):
-    modo: str
-    materiaFiltro: str | None = None
-    questoes: list[Question]
-    answers: dict[str, str]
-    elapsedSec: int
+    modo: str = Field(max_length=32)
+    materiaFiltro: str | None = Field(default=None, max_length=100)
+    questoes: list[Question] = Field(max_length=100)
+    answers: dict[str, str] = Field(max_length=100)
+    elapsedSec: int = Field(ge=0)
     acertos: int
     total: int
     porMateria: dict[str, dict]
@@ -183,14 +195,14 @@ class LegacySchedulePlan(BaseModel):
     geradoEm: str
     dataProva: str | None = None
     horasPorDia: float
-    dias: list
+    dias: list = Field(max_length=400)
 
 
 class ImportRequest(BaseModel):
     nome: str | None = None
     dataProva: str | None = None
-    caderno: list[LegacyNotebookItem]
-    simulados: list[dict]
+    caderno: list[LegacyNotebookItem] = Field(max_length=5_000)
+    simulados: list[dict] = Field(max_length=1_000)
     cronogramaConfig: LegacyScheduleConfig | None = None
     cronogramaPlano: LegacySchedulePlan | None = None
 

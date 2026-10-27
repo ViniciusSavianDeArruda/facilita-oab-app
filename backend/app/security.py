@@ -12,6 +12,7 @@ from fastapi import HTTPException, Request
 from .config import settings
 
 ALGORITHM = "HS256"
+TOKEN_SUBJECT = "app"
 
 
 # Compara a senha informada com a senha configurada de forma segura.
@@ -27,7 +28,7 @@ def create_access_token() -> str:
     expires_at = datetime.now(timezone.utc) + timedelta(
         days=settings.ACCESS_TOKEN_EXPIRE_DAYS
     )
-    payload = {"sub": "app", "exp": expires_at}
+    payload = {"sub": TOKEN_SUBJECT, "exp": expires_at}
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=ALGORITHM)
 
 
@@ -41,8 +42,16 @@ def require_authentication(request: Request) -> None:
     token = authorization.removeprefix("Bearer ").strip()
 
     try:
-        jwt.decode(token, settings.JWT_SECRET, algorithms=[ALGORITHM])
+        claims = jwt.decode(
+            token,
+            settings.JWT_SECRET,
+            algorithms=[ALGORITHM],
+            options={"require": ["exp", "sub"]},
+        )
     except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Token inválido ou expirado.")
+
+    if claims.get("sub") != TOKEN_SUBJECT:
         raise HTTPException(status_code=401, detail="Token inválido ou expirado.")
 
 

@@ -7,6 +7,13 @@ from sqlalchemy.orm import Session
 from .db import RegistroAtividade
 
 
+# Brasília (UTC-3, sem horário de verão): usado quando o cabeçalho falta ou é
+# inválido, em vez de UTC, que viraria o dia às 21h para quem estuda à noite.
+TZ_PADRAO_MINUTOS = 180
+# Limites reais de getTimezoneOffset() (UTC+14 a UTC-12).
+TZ_OFFSET_MIN, TZ_OFFSET_MAX = -840, 720
+
+
 # Calcula a data local do usuário utilizando o offset de fuso horário
 # enviado pelo frontend no cabeçalho da requisição.
 def get_client_today(request: Request) -> date:
@@ -14,10 +21,13 @@ def get_client_today(request: Request) -> date:
 
 	try:
 		# Offset em minutos em relação ao UTC.
-		timezone_offset = int(request.headers.get("X-Tz-Offset-Minutes", "0"))
+		timezone_offset = int(request.headers.get("X-Tz-Offset-Minutes", TZ_PADRAO_MINUTOS))
 	except ValueError:
-		# Caso o valor recebido seja inválido, assume UTC.
-		timezone_offset = 0
+		timezone_offset = TZ_PADRAO_MINUTOS
+
+	# Valor absurdo estouraria o cálculo de data (500) ou gravaria um dia falso.
+	if not TZ_OFFSET_MIN <= timezone_offset <= TZ_OFFSET_MAX:
+		timezone_offset = TZ_PADRAO_MINUTOS
 
 	# Converte o horário UTC para a data correspondente ao fuso do cliente.
 	return (
