@@ -1,4 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { LIMITE_MENSAGEM, mensagemMuitoLonga } from "../lib/chatLimites";
 
 const ChatComposer = forwardRef(function ChatComposer(
   {
@@ -11,6 +12,7 @@ const ChatComposer = forwardRef(function ChatComposer(
   ref,
 ) {
   const [input, setInput] = useState("");
+  const [excedeuLimite, setExcedeuLimite] = useState(false);
   const textareaRef = useRef(null);
 
   useImperativeHandle(ref, () => ({
@@ -31,6 +33,10 @@ const ChatComposer = forwardRef(function ChatComposer(
   function handleSend() {
     const content = input.trim();
     if (!content || disabled) return;
+    if (mensagemMuitoLonga(content)) {
+      setExcedeuLimite(true);
+      return;
+    }
     setInput("");
     onSend(content);
   }
@@ -49,7 +55,10 @@ const ChatComposer = forwardRef(function ChatComposer(
           <textarea
             ref={textareaRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value);
+              setExcedeuLimite(false);
+            }}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             rows={1}
@@ -77,6 +86,11 @@ const ChatComposer = forwardRef(function ChatComposer(
             </button>
           )}
         </div>
+        {excedeuLimite && (
+          <p role="alert" className="mt-2 px-1 text-xs text-alert">
+            A mensagem tem mais de {LIMITE_MENSAGEM.toLocaleString("pt-BR")} caracteres. Encurte o texto para enviar.
+          </p>
+        )}
         <p className="text-[10px] leading-relaxed text-cream-600 mt-2 px-1 text-center">
           Enter envia · Shift+Enter quebra linha · o mentor pode errar em
           jurisprudência específica, sempre confira números de súmula.
